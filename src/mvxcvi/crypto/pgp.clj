@@ -70,7 +70,26 @@
 
 
 
-;; KEY UTILITIES
+;; KEY STORAGE INTERFACE
+
+(defprotocol KeyStore
+  "Protocol for obtaining PGP keys."
+
+  (list-public-keys [this]
+    "Enumerates the available public keys.")
+
+  (get-public-key [this id]
+    "Loads a public key by id.")
+
+  (list-secret-keys [this]
+    "Enumerates the available secret keys.")
+
+  (get-secret-key [this id]
+    "Loads a secret key by id."))
+
+
+
+;; KEY FUNCTIONS
 
 (defmulti ^PGPPublicKey public-key
   "Determines the public PGP key associated with the argument."
@@ -86,7 +105,7 @@
 
 
 (defmulti key-id
-  "Determines the numeric PGP key identifier from the argument."
+  "Returns the numeric PGP key identifier for the given value."
   class)
 
 (defmethod key-id nil [_] nil)
@@ -115,14 +134,16 @@
 
 
 (defmulti key-algorithm
-  "Constructs a numeric PGP key identifier from the argument."
+  "Returns a keyword identifying the PGP key algorithm used by the given value."
   class)
 
 (defmethod key-algorithm nil [_] nil)
 
-(defmethod key-algorithm Number [code] (code->name public-key-algorithms code))
-
 (defmethod key-algorithm clojure.lang.Keyword [kw] kw)
+
+(defmethod key-algorithm Number
+  [code]
+  (code->name public-key-algorithms code))
 
 (defmethod key-algorithm PGPPublicKey
   [^PGPPublicKey pubkey]
@@ -282,22 +303,3 @@
                (str "Data did not contain a PGPSignatureList: " sigs))))
     (when-not (.isEmpty sigs)
       (.get sigs 0))))
-
-
-
-;; KEY STORE PROTOCOL
-
-(defprotocol KeyStore
-  "Protocol for obtaining PGP keys."
-
-  (list-public-keys [this]
-    "Enumerates the available public keys.")
-
-  (get-public-key [this id]
-    "Loads a public key by id.")
-
-  (list-secret-keys [this]
-    "Enumerates the available secret keys.")
-
-  (get-secret-key [this id]
-    "Loads a secret key by id."))
