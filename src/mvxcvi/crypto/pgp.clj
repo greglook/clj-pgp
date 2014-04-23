@@ -210,6 +210,16 @@
 
 ;; SERIALIZATION
 
+(defmethod print-method PGPPublicKey
+  [k ^java.io.Writer w]
+  (.write w (str "#<PGPPublicKey " (key-info k) ">")))
+
+
+(defmethod print-method PGPSecretKey
+  [k ^java.io.Writer w]
+  (.write w (str "#<PGPSecretKey " (key-info k) ">")))
+
+
 (defmulti encode
   "Encodes a PGP object into a byte sequence."
   class)
