@@ -11,13 +11,13 @@ TODO: publish on clojars
 
 The library contains many functions for working with and inspecting PGP keys.
 Keyrings can be read using the `pgp-keyring` function. Various `key-` functions
+provide info about the key objects.
 
 ```clojure
 (require
   '[clojure.java.io :as io]
-  '(mvxcvi.crypto
-     [pgp :as pgp]
-     [keyring :refer [pgp-keyring]]))
+  '[mvxcvi.crypto.pgp :as pgp]
+  '[mvxcvi.crypto.pgp.keyring :refer [pgp-keyring]]))
 
 (def keyring
   (pgp-keyring
