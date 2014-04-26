@@ -1,4 +1,10 @@
-(in-ns 'mvxcvi.crypto.pgp)
+(ns mvxcvi.crypto.pgp.tags
+  (:require
+    [clojure.string :as str])
+  (:import
+    (org.bouncycastle.bcpg
+      HashAlgorithmTags
+      PublicKeyAlgorithmTags)))
 
 
 (defn- map-tags
@@ -17,7 +23,7 @@
          (into {}))))
 
 
-(defn- code->name
+(defn code->name
   "Look up the keyword of an algorithm given the numeric code."
   [codes code]
   (some #(if (= (val %) code) (key %)) codes))

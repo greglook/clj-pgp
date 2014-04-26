@@ -1,4 +1,16 @@
-(in-ns 'mvxcvi.crypto.pgp)
+(ns mvxcvi.crypto.pgp.keyring
+  (:require
+    byte-streams
+    [mvxcvi.crypto.pgp.key :as k])
+  (:import
+    (org.bouncycastle.openpgp
+      PGPPublicKey
+      PGPPublicKeyRing
+      PGPPublicKeyRingCollection
+      PGPSecretKey
+      PGPSecretKeyRing
+      PGPSecretKeyRingCollection
+      PGPUtil)))
 
 
 (defprotocol KeyRing
@@ -28,7 +40,7 @@
     (->> this .getPublicKeys iterator-seq))
 
   (get-public-key [this id]
-    (.getPublicKey this (key-id id)))
+    (.getPublicKey this (k/key-id id)))
 
   PGPPublicKeyRingCollection
 
@@ -36,7 +48,7 @@
     (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
 
   (get-public-key [this id]
-    (.getPublicKey this (key-id id)))
+    (.getPublicKey this (k/key-id id)))
 
   PGPSecretKeyRing
 
@@ -44,13 +56,13 @@
     (->> this .getPublicKeys iterator-seq))
 
   (get-public-key [this id]
-    (.getPublicKey this (key-id id)))
+    (.getPublicKey this (k/key-id id)))
 
   (list-secret-keys [this]
     (.getSecretKeys this))
 
   (get-secret-key [this id]
-    (.getSecretKey this (key-id id)))
+    (.getSecretKey this (k/key-id id)))
 
   PGPSecretKeyRingCollection
 
@@ -58,13 +70,13 @@
     (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
 
   (get-public-key [this id]
-    (.getPublicKey (.getSecretKey this (key-id id))))
+    (.getPublicKey (.getSecretKey this (k/key-id id))))
 
   (get-secret-keys [this]
     (->> this .getKeyRings iterator-seq (map list-secret-keys) flatten))
 
   (get-secret-key [this id]
-    (.getSecretKey this (key-id id))))
+    (.getSecretKey this (k/key-id id))))
 
 
 (defn load-public-keyring

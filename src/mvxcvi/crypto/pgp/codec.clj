@@ -1,16 +1,34 @@
-(in-ns 'mvxcvi.crypto.pgp)
+(ns mvxcvi.crypto.pgp.codec
+  (:require
+    byte-streams
+    [clojure.java.io :as io]
+    (mvxcvi.crypto.pgp
+      [key :as k]))
+  (:import
+    (java.io
+      ByteArrayOutputStream)
+    (org.bouncycastle.bcpg
+      ArmoredOutputStream
+      BCPGOutputStream)
+    (org.bouncycastle.openpgp
+      PGPObjectFactory
+      PGPPublicKey
+      PGPSecretKey
+      PGPSignature
+      PGPSignatureList
+      PGPUtil)))
 
 
 ;; PRINT METHODS
 
 (defmethod print-method PGPPublicKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPPublicKey " (key-info k) ">")))
+  (.write w (str "#<PGPPublicKey " (k/key-info k) ">")))
 
 
 (defmethod print-method PGPSecretKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPSecretKey " (key-info k) ">")))
+  (.write w (str "#<PGPSecretKey " (k/key-info k) ">")))
 
 
 
@@ -62,7 +80,7 @@
   "Decodes a public key from the given data."
   ^PGPPublicKey
   [source]
-  (-> source decode first public-key))
+  (-> source decode first k/public-key))
 
 
 (defn decode-signature
