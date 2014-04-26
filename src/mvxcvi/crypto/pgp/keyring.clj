@@ -1,77 +1,83 @@
-(ns mvxcvi.crypto.pgp.keyring
-  "Keyring store implementation."
-  (:require
-    byte-streams
-    [clojure.java.io :as io]
-    [mvxcvi.crypto.pgp :as pgp :refer [KeyStore]])
-  (:import
-    (org.bouncycastle.openpgp
-      PGPPublicKeyRing
-      PGPPublicKeyRingCollection
-      PGPSecretKeyRing
-      PGPSecretKeyRingCollection
-      PGPUtil)))
+(in-ns mvxcvi.crypto.pgp)
 
 
-;; KEYRING UTILITIES
-
-(defn- load-public-keyrings
-  "Loads a public keyring file into a sequence of vectors of public keys."
-  [source]
-  (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream source))]
-    (map (fn [^PGPPublicKeyRing keyring]
-           (vec (iterator-seq (.getPublicKeys keyring))))
-         (-> stream
-             PGPPublicKeyRingCollection.
-             .getKeyRings
-             iterator-seq))))
-
-
-(defn- load-secret-keyrings
-  "Loads a secret keyring file into a sequence of vectors of secret keys."
-  [source]
-  (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream source))]
-    (map (fn [^PGPSecretKeyRing keyring]
-           (vec (iterator-seq (.getSecretKeys keyring))))
-         (-> stream
-             PGPSecretKeyRingCollection.
-             .getKeyRings
-             iterator-seq))))
-
-
-(defn- find-key
-  "Locates a key in a sequence by id. Nested sequences are flattened, so this
-  works directly on keyrings and keyring collections."
-  [id key-seq]
-  (let [id (pgp/key-id id)]
-    (some #(when (= id (pgp/key-id %)) %)
-          (flatten key-seq))))
-
-
-
-;; KEYRING STORE
-
-(defrecord PGPKeyring [pubring secring])
-
-(extend-protocol KeyStore
-  PGPKeyring
+(defprotocol KeyRing
+  "Protocol for obtaining PGP keys."
 
   (list-public-keys [this]
-    (-> this :pubring load-public-keyrings flatten))
+    "Enumerates the available public keys.")
 
-  (get-public-key [this id]
-    (->> this :pubring load-public-keyrings (find-key id)))
+  (get-public-key
+    ^PGPPublicKey
+    [this id]
+    "Loads a public key by id.")
 
   (list-secret-keys [this]
-    (-> this :secring load-secret-keyrings flatten))
+    "Enumerates the available secret keys.")
+
+  (get-secret-key
+    ^PGPSecretKey
+    [this id]
+    "Loads a secret key by id."))
+
+
+(extend-protocol KeyRing
+  PGPPublicKeyRing
+
+  (list-public-keys [this]
+    (->> this .getPublicKeys iterator-seq))
+
+  (get-public-key [this id]
+    (.getPublicKey this (key-id id)))
+
+  PGPPublicKeyRingCollection
+
+  (list-public-keys [this]
+    (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
+
+  (get-public-key [this id]
+    (.getPublicKey this (key-id id)))
+
+  PGPSecretKeyRing
+
+  (list-public-keys [this]
+    (->> this .getPublicKeys iterator-seq))
+
+  (get-public-key [this id]
+    (.getPublicKey this (key-id id)))
+
+  (list-secret-keys [this]
+    (.getSecretKeys this))
 
   (get-secret-key [this id]
-    (->> this :secring load-secret-keyrings (find-key id))))
+    (.getSecretKey this (key-id id)))
+
+  PGPSecretKeyRingCollection
+
+  (get-public-keys [this]
+    (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
+
+  (get-public-key [this id]
+    (.getPublicKey (.getSecretKey this (key-id id))))
+
+  (get-secret-keys [this]
+    (->> this .getKeyRings iterator-seq (map list-secret-keys) flatten))
+
+  (get-secret-key [this id]
+    (.getSecretKey this (key-id id))))
 
 
-(defn pgp-keyring
-  "Constructs a PGPKeyring for the given keyring files."
-  [pubring secring]
-  (->PGPKeyring (io/file pubring) (io/file secring)))
+(defn load-public-keyring
+  "Loads a public keyring collection from a file."
+  [source]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (byte-streams/to-input-stream source))]
+    (PGPPublicKeyRingCollection. stream)))
+
+
+(defn load-secret-keyring
+  "Loads a secret keyring collection from a file."
+  [source]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (byte-streams/to-input-stream source))]
+    (PGPSecretKeyRingCollection. stream)))
