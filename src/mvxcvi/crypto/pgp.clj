@@ -1,41 +1,28 @@
 (ns mvxcvi.crypto.pgp
   "Functions for interacting with BouncyCastle's OpenPGP library."
   (:require
-    byte-streams
-    [clojure.java.io :as io]
-    [clojure.string :as str]
-    [mvxcvi.crypto.util :refer [do-bytes hex-str]])
-  (:import
-    (java.io
-      ByteArrayOutputStream)
-    (org.bouncycastle.bcpg
-      ArmoredOutputStream
-      BCPGOutputStream
-      HashAlgorithmTags
-      PublicKeyAlgorithmTags)
-    (org.bouncycastle.openpgp
-      PGPKeyRing
-      PGPObjectFactory
-      PGPPrivateKey
-      PGPPublicKey
-      PGPPublicKeyRing
-      PGPPublicKeyRingCollection
-      PGPSecretKey
-      PGPSecretKeyRing
-      PGPSecretKeyRingCollection
-      PGPSignature
-      PGPSignatureGenerator
-      PGPSignatureList
-      PGPUtil)
-    (org.bouncycastle.openpgp.operator.bc
-      BcPGPContentSignerBuilder
-      BcPGPContentVerifierBuilderProvider
-      BcPGPDigestCalculatorProvider
-      BcPBESecretKeyDecryptorBuilder)))
+    [potemkin :refer [import-vars]]
+    (mvxcvi.crypto.pgp
+      codec key keyring signature)))
 
 
-(load "pgp/conf")
-(load "pgp/key")
-(load "pgp/keyring")
-(load "pgp/signature")
-(load "pgp/io")
+(import-vars
+  (mvxcvi.crypto.pgp.key
+    public-key
+    secret-key
+    key-id
+    key-algorithm
+    unlock-key
+    key-info)
+  (mvxcvi.crypto.pgp.keyring
+    load-public-keyring
+    load-secret-keyring)
+  (mvxcvi.crypto.pgp.signature
+    sign
+    verify)
+  (mvxcvi.crypto.pgp.codec
+    encode
+    encode-ascii
+    decode
+    decode-public-key
+    decode-signature))
