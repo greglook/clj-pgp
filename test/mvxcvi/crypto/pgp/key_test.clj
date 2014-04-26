@@ -2,7 +2,8 @@
   (:require
     [clojure.java.io :as io]
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp :as pgp])
+    [mvxcvi.crypto.pgp :as pgp]
+    [mvxcvi.crypto.pgp.test-keys :as keys])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -10,17 +11,10 @@
       PGPSecretKey)))
 
 
-(def test-keyring
-  (-> "test-resources/pgp/secring.gpg"
-      io/resource
-      io/file
-      pgp/load-secret-keyring))
-
-
 (deftest public-key-functions
   (let [hex-id "923b1c1c4392318a"
-        pubkey (pgp/get-public-key test-keyring hex-id)]
-    (is (instance? PGPPublicKey (pgp/public-key test-keyring)))
+        pubkey (pgp/get-public-key keys/secring hex-id)]
+    (is (instance? PGPPublicKey (pgp/public-key keys/secring)))
     (is (identical? pubkey (pgp/public-key pubkey)))
     (is (= (pgp/key-id hex-id) (pgp/key-id pubkey)))
     (let [info (pgp/key-info pubkey)]
@@ -36,8 +30,8 @@
 
 (deftest secret-key-functions
   (let [hex-id "3f40edec41c6cb7d"
-        seckey (pgp/get-secret-key test-keyring hex-id)]
-    (is (instance? PGPSecretKey (pgp/secret-key test-keyring)))
+        seckey (pgp/get-secret-key keys/secring hex-id)]
+    (is (instance? PGPSecretKey (pgp/secret-key keys/secring)))
     (is (identical? seckey (pgp/secret-key seckey)))
     (is (= (pgp/key-id hex-id)
            (pgp/key-id seckey)
@@ -57,7 +51,7 @@
 
 (deftest private-key-functions
   (let [hex-id "3f40edec41c6cb7d"
-        seckey (pgp/get-secret-key test-keyring hex-id)
+        seckey (pgp/get-secret-key keys/secring hex-id)
         privkey (pgp/unlock-key seckey "test password")]
     (is (instance? PGPPrivateKey privkey))
     (is (= (pgp/key-id seckey) (pgp/key-id privkey)))
