@@ -19,13 +19,13 @@
   (list-public-keys [this]
     "Enumerates the available public keys.")
 
+  (list-secret-keys [this]
+    "Enumerates the available secret keys.")
+
   (get-public-key
     ^PGPPublicKey
     [this id]
     "Loads a public key by id.")
-
-  (list-secret-keys [this]
-    "Enumerates the available secret keys.")
 
   (get-secret-key
     ^PGPSecretKey
@@ -55,25 +55,26 @@
   (list-public-keys [this]
     (->> this .getPublicKeys iterator-seq))
 
+  (list-secret-keys [this]
+    (->> this .getSecretKeys iterator-seq))
+
   (get-public-key [this id]
     (.getPublicKey this (key-id id)))
-
-  (list-secret-keys [this]
-    (.getSecretKeys this))
 
   (get-secret-key [this id]
     (.getSecretKey this (key-id id)))
 
   PGPSecretKeyRingCollection
 
-  (get-public-keys [this]
+  (list-public-keys [this]
     (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
 
-  (get-public-key [this id]
-    (.getPublicKey (.getSecretKey this (key-id id))))
-
-  (get-secret-keys [this]
+  (list-secret-keys [this]
     (->> this .getKeyRings iterator-seq (map list-secret-keys) flatten))
+
+  (get-public-key [this id]
+    (let [id (key-id id)]
+      (-> this (.getSecretKeyRing id) (.getPublicKey id))))
 
   (get-secret-key [this id]
     (.getSecretKey this (key-id id))))
