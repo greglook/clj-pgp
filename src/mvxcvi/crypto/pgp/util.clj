@@ -1,4 +1,4 @@
-(ns mvxcvi.crypto.util
+(ns mvxcvi.crypto.pgp.util
   (:require
     byte-streams
     [clojure.string :as str]))

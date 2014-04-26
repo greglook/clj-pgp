@@ -2,8 +2,8 @@
   (:require
     (mvxcvi.crypto.pgp
       [key :refer [key-id key-algorithm]]
-      [tags :as tags])
-    [mvxcvi.crypto.util :as util])
+      [tags :as tags]
+      [util :refer [do-bytes hex-str]]))
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -24,7 +24,7 @@
                       (tags/public-key-algorithms (key-algorithm privkey))
                       (tags/hash-algorithms hash-algo)))]
     (.init generator PGPSignature/BINARY_DOCUMENT privkey)
-    (util/do-bytes [[buf n] data]
+    (do-bytes [[buf n] data]
       (.update generator buf 0 n))
     (.generate generator)))
 
@@ -36,12 +36,12 @@
   (when-not (= (key-id signature) (key-id pubkey))
     (throw (IllegalArgumentException.
              (str "Signature key id "
-                  (util/hex-str (key-id signature))
+                  (hex-str (key-id signature))
                   " doesn't match public key id "
-                  (util/hex-str (key-id pubkey))))))
+                  (hex-str (key-id pubkey))))))
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)
-  (util/do-bytes [[buf n] data]
+  (do-bytes [[buf n] data]
     (.update signature buf 0 n))
   (.verify signature))

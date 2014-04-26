@@ -2,7 +2,7 @@
   (:require
     [clojure.string :as str]
     [mvxcvi.crypto.pgp.tags :as tags]
-    [mvxcvi.crypto.util :refer [hex-str]])
+    [mvxcvi.crypto.pgp.util :refer [hex-str]])
   (:import
     (org.bouncycastle.openpgp
       PGPKeyRing
