@@ -9,8 +9,10 @@
       PGPKeyRing
       PGPPrivateKey
       PGPPublicKey
+      PGPPublicKeyRingCollection
       PGPSecretKey
       PGPSecretKeyRing
+      PGPSecretKeyRingCollection
       PGPSignature)
     (org.bouncycastle.openpgp.operator.bc
       BcPGPDigestCalculatorProvider
@@ -35,6 +37,14 @@
   [^PGPKeyRing keyring]
   (.getPublicKey keyring))
 
+(defmethod public-key PGPPublicKeyRingCollection
+  [^PGPPublicKeyRingCollection pubring]
+  (-> pubring .getKeyRings iterator-seq first public-key))
+
+(defmethod public-key PGPSecretKeyRingCollection
+  [^PGPSecretKeyRingCollection secring]
+  (-> secring .getKeyRings iterator-seq first public-key))
+
 
 
 ;; SECRET KEY COERCION
@@ -50,6 +60,10 @@
 (defmethod secret-key PGPSecretKeyRing
   [^PGPSecretKeyRing secring]
   (.getSecretKey secring))
+
+(defmethod secret-key PGPSecretKeyRingCollection
+  [^PGPSecretKeyRingCollection secring]
+  (-> secring .getKeyRings iterator-seq first secret-key))
 
 
 
