@@ -1,4 +1,4 @@
-(in-ns mvxcvi.crypto.pgp)
+(in-ns 'mvxcvi.crypto.pgp)
 
 
 (defprotocol KeyRing
