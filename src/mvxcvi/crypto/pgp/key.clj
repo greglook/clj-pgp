@@ -1,8 +1,9 @@
 (ns mvxcvi.crypto.pgp.key
   (:require
     [clojure.string :as str]
-    [mvxcvi.crypto.pgp.tags :as tags]
-    [mvxcvi.crypto.pgp.util :refer [hex-str]])
+    (mvxcvi.crypto.pgp
+      [tags :as tags]
+      [util :refer [hex-str]]))
   (:import
     (org.bouncycastle.openpgp
       PGPKeyRing
@@ -96,7 +97,7 @@
 
 (defmethod key-algorithm Number
   [code]
-  (tags/code->name tags/public-key-algorithms code))
+  (tags/lookup tags/public-key-algorithms code))
 
 (defmethod key-algorithm PGPPublicKey
   [^PGPPublicKey pubkey]

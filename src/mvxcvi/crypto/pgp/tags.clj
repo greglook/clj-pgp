@@ -23,8 +23,8 @@
          (into {}))))
 
 
-(defn code->name
-  "Look up the keyword of an algorithm given the numeric code."
+(defn lookup
+  "Looks up the keyword of an algorithm given the numeric code."
   [codes code]
   (some #(if (= (val %) code) (key %)) codes))
 

@@ -3,7 +3,7 @@
     byte-streams
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
-      [key :as k]))
+      [key :refer [key-info public-key]]))
   (:import
     (java.io
       ByteArrayOutputStream)
@@ -23,12 +23,12 @@
 
 (defmethod print-method PGPPublicKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPPublicKey " (k/key-info k) ">")))
+  (.write w (str "#<PGPPublicKey " (key-info k) ">")))
 
 
 (defmethod print-method PGPSecretKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPSecretKey " (k/key-info k) ">")))
+  (.write w (str "#<PGPSecretKey " (key-info k) ">")))
 
 
 
@@ -80,7 +80,7 @@
   "Decodes a public key from the given data."
   ^PGPPublicKey
   [source]
-  (-> source decode first k/public-key))
+  (-> source decode first public-key))
 
 
 (defn decode-signature

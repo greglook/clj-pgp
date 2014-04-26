@@ -1,7 +1,7 @@
 (ns mvxcvi.crypto.pgp.signature
   (:require
     (mvxcvi.crypto.pgp
-      [key :refer [key-id key-algorithm]]
+      [key :refer [key-algorithm key-id]]
       [tags :as tags]
       [util :refer [do-bytes hex-str]]))
   (:import
