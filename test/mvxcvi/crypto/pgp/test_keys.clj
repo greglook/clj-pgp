@@ -5,14 +5,14 @@
 
 
 (def pubring
-  (-> "test-resources/pgp/pubring.gpg"
+  (-> "mvxcvi/crypto/pgp/test_keys/pubring.gpg"
       io/resource
       io/file
       pgp/load-public-keyring))
 
 
 (def secring
-  (-> "test-resources/pgp/secring.gpg"
+  (-> "mvxcvi/crypto/pgp/test_keys/secring.gpg"
       io/resource
       io/file
       pgp/load-secret-keyring))

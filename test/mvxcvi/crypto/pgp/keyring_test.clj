@@ -6,7 +6,7 @@
 
 
 (deftest public-keyring
-  (let [keyring (-> "test-resources/pgp/pubring.gpg"
+  (let [keyring (-> "mvxcvi/crypto/pgp/test_keys/pubring.gpg"
                     io/resource
                     io/file
                     pgp/load-public-keyring)
@@ -17,7 +17,7 @@
 
 
 (deftest secret-keyring
-  (let [keyring (-> "test-resources/pgp/secring.gpg"
+  (let [keyring (-> "mvxcvi/crypto/pgp/test_keys/secring.gpg"
                     io/resource
                     io/file
                     pgp/load-secret-keyring)
