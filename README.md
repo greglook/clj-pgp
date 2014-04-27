@@ -7,27 +7,24 @@ This is a clojure wrapper for the Bouncy Castle OpenPGP library.
 
 ## Usage
 
+The main interface to the library is in the `mvxcvi.crypto.pgp` namespace.
+
 TODO: publish on clojars
 
 ### Keys
 
 The library contains many functions for working with and inspecting PGP keys.
-Keyrings can be read using the `pgp-keyring` function. Various `key-` functions
-provide info about the key objects.
 
 ```clojure
 (require
   '[clojure.java.io :as io]
-  '[mvxcvi.crypto.pgp :as pgp]
-  '[mvxcvi.crypto.pgp.keyring :refer [pgp-keyring]]))
+  '[mvxcvi.crypto.pgp :as pgp])
 
 (def keyring
-  (pgp-keyring
-    (io/resource "test-resources/pgp/pubring.gpg")
-    (io/resource "test-resources/pgp/secring.gpg")))
-
-(satisfies? pgp/KeyStore keyring)
-; => true
+  (-> "mvxcvi/crypto/pgp/test-keys/secring.gpg"
+      io/resource
+      io/file
+      pgp/load-secret-keyring))
 
 (pgp/list-public-keys keyring)
 ; => (#<PGPPublicKey {...}> #<PGPPublicKey {...}>)
@@ -55,12 +52,12 @@ provide info about the key objects.
 
 ### Signatures
 
-The library also handles signature generation and verification.
+The library also provides support for signature generation and verification.
 
 ```clojure
 (def privkey (pgp/unlock-key seckey "test password"))
 (def content (.getBytes "non-repudiable data"))
-(def sig (pgp/sign content privkey))
+(def sig (pgp/sign content :sha1 privkey))
 
 (= (pgp/key-id sig) (pgp/key-id privkey))
 ; => true
