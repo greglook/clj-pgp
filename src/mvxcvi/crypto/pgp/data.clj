@@ -40,7 +40,7 @@
   ^PGPEncryptedDataGenerator
   [algorithm pubkey]
   (fn [^OutputStream stream]
-    (-> algorithm
+    (-> (tags/symmetric-key-algorithm algorithm)
         BcPGPDataEncryptorBuilder.
         (.setSecureRandom (SecureRandom.))
         PGPEncryptedDataGenerator.
@@ -78,7 +78,7 @@
                    PGPCompressedDataGenerator.
                    (.open %))))
           (wrap-stream
-            (encryption-wrapper (:algorithm opts :sha1) pubkey))
+            (encryption-wrapper (:algorithm opts :aes-256) pubkey))
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]
       (close []
