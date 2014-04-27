@@ -1,7 +1,12 @@
 (ns mvxcvi.crypto.pgp.util
   (:require
     byte-streams
-    [clojure.string :as str]))
+    [clojure.string :as str])
+  (:import
+    (java.io
+      InputStream)
+    (org.bouncycastle.openpgp
+      PGPObjectFactory)))
 
 
 ;; BYTE PROCESSING
@@ -62,3 +67,13 @@
                 (.toString 16)
                 str/lower-case)]
     (zero-pad width hex)))
+
+
+
+;; PGP UTILITIES
+
+(defn pgp-objects
+  "Decodes an input stream of PGP objects."
+  [^InputStream input]
+  (let [factory (PGPObjectFactory. input)]
+    (take-while identity (repeatedly #(.nextObject factory)))))

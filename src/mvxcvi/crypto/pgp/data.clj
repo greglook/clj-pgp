@@ -1,11 +1,12 @@
 (ns mvxcvi.crypto.pgp.data
   (:require
+    byte-streams
     [clojure.java.io :as io]
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
       [key :refer [public-key]]
       [tags :as tags]
-      [util :refer [hex-str]]))
+      [util :refer [hex-str pgp-objects]]))
   (:import
     (java.io
       ByteArrayOutputStream
@@ -17,25 +18,34 @@
     (org.bouncycastle.bcpg
       ArmoredOutputStream)
     (org.bouncycastle.openpgp
+      PGPCompressedData
       PGPCompressedDataGenerator
+      PGPEncryptedData
       PGPEncryptedDataGenerator
-      PGPPrivateKey)
+      PGPEncryptedDataList
+      PGPLiteralData
+      PGPObjectFactory
+      PGPPrivateKey
+      PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
       BcPGPDataEncryptorBuilder
       BcPGPDigestCalculatorProvider
+      BcPublicKeyDataDecryptorFactory
       BcPublicKeyKeyEncryptionMethodGenerator)))
 
 
 ;; DATA ENCRYPTION
 
-(defn- encrypted-data-generator
+(defn- encryption-wrapper
   ^PGPEncryptedDataGenerator
   [algorithm pubkey]
-  (-> algorithm
-      BcPGPDataEncryptorBuilder.
-      (.setSecureRandom (SecureRandom.))
-      PGPEncryptedDataGenerator.
-      (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))))
+  (fn [^OutputStream stream]
+    (-> algorithm
+        BcPGPDataEncryptorBuilder.
+        (.setSecureRandom (SecureRandom.))
+        PGPEncryptedDataGenerator.
+        (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))
+        (.open stream 1024))))
 
 
 (defn encrypt-stream
@@ -68,9 +78,7 @@
                    PGPCompressedDataGenerator.
                    (.open %))))
           (wrap-stream
-            #(-> (:algorithm opts :sha1)
-                 (encrypted-data-generator pubkey)
-                 (.open ^OutputStream % 1024)))
+            (encryption-wrapper (:algorithm opts :sha1) pubkey))
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]
       (close []
@@ -87,19 +95,60 @@
   ([data pubkey opts]
    (let [buffer (ByteArrayOutputStream.)]
      (with-open [stream (encrypt-stream buffer pubkey opts)]
-       (io/copy data stream))
+       (io/copy (byte-streams/to-input-stream data) stream))
      (.toByteArray buffer))))
 
 
 
 ;; DATA DECRYPTION
 
+(defn- read-encrypted-data
+  "Reads a raw input stream to find a PGPEncryptedDataList. Returns a sequence
+  of encrypted data objects."
+  [^InputStream input]
+  (when-let [^PGPEncryptedDataList data
+             (some->
+               input
+               PGPUtil/getDecoderStream
+               pgp-objects
+               (->> (filter (partial instance? PGPEncryptedDataList)))
+               first)]
+    (iterator-seq (.getEncryptedDataObjects data))))
+
+
 (defn decrypt-stream
+  "Wraps the given input stream with decryption layers. The get-privkey
+  function should accept a key-id and return the corresponding unlocked private
+  key, or nil if such a key is not available."
+  ^InputStream
   [^InputStream input
-   privkey]
-  nil)
+   get-privkey]
+  (let [[encrypted-data privkey]
+        (some #(when-let [privkey (get-privkey (.getKeyID ^PGPEncryptedData %))]
+                 [% privkey])
+              (read-encrypted-data input))]
+    (->
+      encrypted-data
+      (.getDataStream (BcPublicKeyDataDecryptorFactory. privkey))
+      pgp-objects
+      first
+      (as-> object
+        (if (instance? PGPCompressedData object)
+          (-> ^PGPCompressedData object .getDataStream pgp-objects first)
+          object)
+        (if (instance? PGPLiteralData object)
+          (.getInputStream ^PGPLiteralData object)
+          (throw (IllegalArgumentException.
+                   "Encrypted PGP data did not contain a literal data packet.")))))))
 
 
 (defn decrypt
-  [data privkey]
-  nil)
+  "Decrypts the given data source and returns an array of bytes with the
+  decrypted value."
+  [data get-privkey]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [stream (decrypt-stream
+                         (byte-streams/to-input-stream data)
+                         get-privkey)]
+      (io/copy stream buffer))
+    (.toByteArray buffer)))
