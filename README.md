@@ -1,15 +1,21 @@
-clj-pgp
-=======
+mvxcvi/clj-pgp
+==============
 
-[![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=develop)](https://travis-ci.org/greglook/clj-pgp)
+[![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=master)](https://travis-ci.org/greglook/clj-pgp)
 
 This is a clojure wrapper for the Bouncy Castle OpenPGP library.
 
 ## Usage
 
-The main interface to the library is in the `mvxcvi.crypto.pgp` namespace.
+The library is available as [mvxcvi/clj-pgp](https://clojars.org/mvxcvi/clj-pgp)
+on Clojars. To use this version with Leiningen, add the following dependency to
+your project definition:
 
-TODO: publish on clojars
+```clojure
+[mvxcvi/clj-pgp "0.4.0"]
+```
+
+The main interface to the library is the `mvxcvi.crypto.pgp` namespace.
 
 ### Keys
 
