@@ -3,7 +3,7 @@
   (:require
     [potemkin :refer [import-vars]]
     (mvxcvi.crypto.pgp
-      codec key keyring signature)))
+      codec data key keyring signature)))
 
 
 (import-vars
@@ -21,6 +21,11 @@
     get-secret-key
     load-public-keyring
     load-secret-keyring)
+  (mvxcvi.crypto.pgp.data
+    encrypt-stream
+    encrypt
+    decrypt-stream
+    decrypt)
   (mvxcvi.crypto.pgp.signature
     sign
     verify)
