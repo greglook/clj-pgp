@@ -89,7 +89,7 @@ the key is encrypted using the given public key.
   [id]
   (some->
     keyring
-    (pgp/get-secret-key %)
+    (pgp/get-secret-key id)
     (pgp/unlock-key "test password")))
 
 (def cleartext (pgp/decrypt ciphertext get-privkey))
