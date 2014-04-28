@@ -15,6 +15,8 @@
       OutputStream)
     (java.security
       SecureRandom)
+    (java.util
+      Date)
     (org.bouncycastle.bcpg
       ArmoredOutputStream)
     (org.bouncycastle.openpgp
@@ -24,6 +26,7 @@
       PGPEncryptedDataGenerator
       PGPEncryptedDataList
       PGPLiteralData
+      PGPLiteralDataGenerator
       PGPObjectFactory
       PGPPrivateKey
       PGPUtil)
@@ -36,16 +39,36 @@
 
 ;; DATA ENCRYPTION
 
-(defn- encryption-wrapper
-  ^PGPEncryptedDataGenerator
-  [algorithm pubkey]
-  (fn [^OutputStream stream]
-    (-> (tags/symmetric-key-algorithm algorithm)
-        BcPGPDataEncryptorBuilder.
-        (.setSecureRandom (SecureRandom.))
-        PGPEncryptedDataGenerator.
-        (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))
-        (.open stream 1024))))
+(defn- literal-data-generator
+  ^OutputStream
+  [^OutputStream stream filename]
+  (.open (PGPLiteralDataGenerator.)
+    stream
+    PGPLiteralData/BINARY
+    filename
+    PGPLiteralData/NOW
+    (byte-array 1024)))
+
+
+(defn- compressed-data-generator
+  ^OutputStream
+  [^OutputStream stream algorithm]
+  (-> algorithm
+      tags/compression-algorithm
+      PGPCompressedDataGenerator.
+      (.open stream)))
+
+
+(defn- encrypted-data-generator
+  ^OutputStream
+  [^OutputStream stream algorithm pubkey]
+  (-> algorithm
+      tags/symmetric-key-algorithm
+      BcPGPDataEncryptorBuilder.
+      (.setSecureRandom (SecureRandom.))
+      PGPEncryptedDataGenerator.
+      (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))
+      (.open stream (byte-array 1024))))
 
 
 (defn encrypt-stream
@@ -56,14 +79,15 @@
   Opts may contain:
   - :algorithm    symmetric key algorithm to use
   - :compress     if specified, compress the cleartext with the given algorithm
-  - :armor        whether to ascii-encode the output"
+  - :armor        whether to ascii-encode the output
+  - :filename     optional name to give to the literal data packet"
   ^OutputStream
   [^OutputStream output
    pubkey
    opts]
   (let [wrap-stream
-        (fn [streams wrapper]
-          (conj streams (wrapper (last streams))))
+        (fn [streams wrapper & args]
+          (conj streams (apply wrapper (last streams) args)))
 
         streams
         (->
@@ -71,19 +95,23 @@
           (cond->
             (:armor opts)
             (wrap-stream
-              #(ArmoredOutputStream. %))
+              #(ArmoredOutputStream. %)))
+          (wrap-stream
+            encrypted-data-generator
+            (:algorithm opts :aes-256)
+            pubkey)
+          (cond->
             (:compress opts)
             (wrap-stream
-              #(-> (:compress opts)
-                   tags/compression-algorithm
-                   PGPCompressedDataGenerator.
-                   (.open %))))
+              compressed-data-generator
+              (:compress opts)))
           (wrap-stream
-            (encryption-wrapper (:algorithm opts :aes-256) pubkey))
+            literal-data-generator
+            (:filename opts ""))
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]
       (close []
-        (->> streams (map #(.close ^OutputStream %)) dorun)))))
+        (dorun (map #(.close ^OutputStream %) streams))))))
 
 
 (defn encrypt
@@ -106,23 +134,22 @@
 ;; DATA DECRYPTION
 
 (defn- read-encrypted-data
-  "Reads a raw input stream to find a PGPEncryptedDataList. Returns a sequence
+  "Reads a raw input stream to decode a PGPEncryptedDataList. Returns a sequence
   of encrypted data objects."
   [^InputStream input]
-  (some->
-    input
-    read-pgp-objects
-    (->> (filter (partial instance? PGPEncryptedDataList)))
-    first
-    .getEncryptedDataObjects
-    iterator-seq))
+  (when-let [object (-> input PGPUtil/getDecoderStream read-pgp-objects first)]
+    (when-not (instance? PGPEncryptedDataList object)
+      (throw (IllegalStateException.
+               (str "PGP object stream did not contain an encrypted data list:"
+                    object))))
+    (iterator-seq (.getEncryptedDataObjects ^PGPEncryptedDataList object))))
 
 
 (defn- find-data
   "Finds which of the encrypted data objects in the given list is decryptable
   by a local private key. Returns a vector of the encrypted data and the
   corresponding private key."
-  [get-privkey data-list]
+  [data-list get-privkey]
   (some #(when-let [privkey (get-privkey (.getKeyID ^PGPEncryptedData %))]
            [% privkey])
         data-list))
@@ -135,12 +162,10 @@
   ^InputStream
   [^InputStream input
    get-privkey]
-  (let [[encrypted-data privkey]
-        (->>
-          input
-          PGPUtil/getDecoderStream
-          read-encrypted-data
-          (find-data get-privkey))]
+  (when-let [[encrypted-data privkey]
+             (-> input
+                 read-encrypted-data
+                 (find-data get-privkey))]
     (->
       encrypted-data
       (.getDataStream (BcPublicKeyDataDecryptorFactory. privkey))

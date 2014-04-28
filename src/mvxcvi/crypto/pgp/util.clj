@@ -73,7 +73,7 @@
 ;; PGP UTILITIES
 
 (defn read-pgp-objects
-  "Decodes a sequence of PGP objects from an input stream."
+  "Decodes a lazy sequence of PGP objects from an input stream."
   [^InputStream input]
   (let [factory (PGPObjectFactory. input)]
     (take-while identity (repeatedly #(.nextObject factory)))))

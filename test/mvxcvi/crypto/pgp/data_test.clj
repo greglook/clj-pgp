@@ -7,11 +7,32 @@
     [mvxcvi.crypto.pgp.test-keys :as keys])
   (:import
     (org.bouncycastle.openpgp
-      PGPPublicKey)))
+      PGPPrivateKey
+      PGPSecretKey)))
 
 
 (deftest data-encryption
-  (let [data "Mary had a little lamb, whose fleece was white as snow."
-        pubkey (pgp/get-public-key keys/pubring "923b1c1c4392318a")
-        ciphertext (pgp/encrypt (.getBytes data) pubkey :armor true)]
-    (println (String. ciphertext))))
+  (let [pubkey (pgp/get-public-key keys/pubring "923b1c1c4392318a")]
+    (doseq [message ["Foo Bar Baz"
+                     "Mary had a little lamb, whose fleece was white as snow."
+                     "TODO: a string with UTF-8 characters"]
+            algorithm [:aes-256]
+            compress [nil :zip]
+            armor [false true]]
+      (testing (str "Message \"" message \"
+                    (when compress (str " compressed with " compress))
+                    " encrypted with " algorithm
+                    " encoded in " (if armor "ascii" "binary"))
+        (let [data (.getBytes message)
+              ciphertext (pgp/encrypt
+                           data pubkey
+                           :algorithm algorithm
+                           :compress compress
+                           :armor armor)]
+          (is (not (bytes= data ciphertext)))
+          (let [get-privkey
+                #(some-> keys/secring
+                         (pgp/get-secret-key %)
+                         (pgp/unlock-key "test password"))
+                cleartext (pgp/decrypt ciphertext get-privkey)]
+            (is (bytes= data cleartext))))))))
