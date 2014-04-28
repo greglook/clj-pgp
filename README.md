@@ -12,7 +12,7 @@ on Clojars. To use this version with Leiningen, add the following dependency to
 your project definition:
 
 ```clojure
-[mvxcvi/clj-pgp "0.4.0"]
+[mvxcvi/clj-pgp "0.5.0"]
 ```
 
 The main interface to the library is the `mvxcvi.crypto.pgp` namespace.
