@@ -6,7 +6,7 @@
     (mvxcvi.crypto.pgp
       [key :refer [public-key]]
       [tags :as tags]
-      [util :refer [hex-str pgp-objects]]))
+      [util :refer [hex-str read-pgp-objects]]))
   (:import
     (java.io
       ByteArrayOutputStream
@@ -75,6 +75,7 @@
             (:compress opts)
             (wrap-stream
               #(-> (:compress opts)
+                   tags/compression-algorithm
                    PGPCompressedDataGenerator.
                    (.open %))))
           (wrap-stream
@@ -91,7 +92,9 @@
   ([data pubkey]
    (encrypt data pubkey nil))
   ([data pubkey opt-key opt-val & opts]
-   (encrypt data pubkey (assoc opts opt-key opt-val)))
+   (encrypt data pubkey
+            (assoc (apply hash-map opts)
+                   opt-key opt-val)))
   ([data pubkey opts]
    (let [buffer (ByteArrayOutputStream.)]
      (with-open [stream (encrypt-stream buffer pubkey opts)]
@@ -106,14 +109,23 @@
   "Reads a raw input stream to find a PGPEncryptedDataList. Returns a sequence
   of encrypted data objects."
   [^InputStream input]
-  (when-let [^PGPEncryptedDataList data
-             (some->
-               input
-               PGPUtil/getDecoderStream
-               pgp-objects
-               (->> (filter (partial instance? PGPEncryptedDataList)))
-               first)]
-    (iterator-seq (.getEncryptedDataObjects data))))
+  (some->
+    input
+    read-pgp-objects
+    (->> (filter (partial instance? PGPEncryptedDataList)))
+    first
+    .getEncryptedDataObjects
+    iterator-seq))
+
+
+(defn- find-data
+  "Finds which of the encrypted data objects in the given list is decryptable
+  by a local private key. Returns a vector of the encrypted data and the
+  corresponding private key."
+  [get-privkey data-list]
+  (some #(when-let [privkey (get-privkey (.getKeyID ^PGPEncryptedData %))]
+           [% privkey])
+        data-list))
 
 
 (defn decrypt-stream
@@ -124,17 +136,19 @@
   [^InputStream input
    get-privkey]
   (let [[encrypted-data privkey]
-        (some #(when-let [privkey (get-privkey (.getKeyID ^PGPEncryptedData %))]
-                 [% privkey])
-              (read-encrypted-data input))]
+        (->>
+          input
+          PGPUtil/getDecoderStream
+          read-encrypted-data
+          (find-data get-privkey))]
     (->
       encrypted-data
       (.getDataStream (BcPublicKeyDataDecryptorFactory. privkey))
-      pgp-objects
+      read-pgp-objects
       first
       (as-> object
         (if (instance? PGPCompressedData object)
-          (-> ^PGPCompressedData object .getDataStream pgp-objects first)
+          (-> ^PGPCompressedData object .getDataStream read-pgp-objects first)
           object)
         (if (instance? PGPLiteralData object)
           (.getInputStream ^PGPLiteralData object)
