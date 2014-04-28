@@ -56,13 +56,57 @@ The library contains many functions for working with and inspecting PGP keys.
 ; => true
 ```
 
+### Data Encryption
+
+Encryption and decryption of arbitrary data is supported using PGP's literal
+data packets. The content is encrypted using a symmetric key algorithm, then
+the key is encrypted using the given public key.
+
+```clojure
+(def content (.getBytes "my sensitive data"))
+
+(def ciphertext
+  (pgp/encrypt
+    content pubkey
+    :algorithm :aes-256
+    :compress :zip
+    :armor true))
+
+(println (String. ciphertext))
+;; -----BEGIN PGP MESSAGE-----
+;; Version: BCPG v1.49
+;;
+;; hIwDkjscHEOSMYoBBADGcRtjKmBSAh6L2fVe/1BCZtEbME4zp6GqilETzOYyi5HL
+;; Vee++PI03KluhW32i359ycvOre92yHaApcDBRXGwdYBT/hx8ryXov3I1wvZMS/iK
+;; Iex91VxkquJnvZvi6/qy3f6WFgLBHT2GCKy+Um4YU2OstykHZP7Gsbr5MZ04K8ks
+;; 71TaictIOx2qukbpwnIVNzOl5GeaPy5FiVbntl0Wc3lESD2A9l2pDENyicg=
+;; =cvks
+;; -----END PGP MESSAGE-----
+
+(defn get-privkey
+  "Define a function to get an unlocked private key by id. This is used to
+  check for a key matching the one the data packet is encrypted for."
+  [id]
+  (some->
+    keyring
+    (pgp/get-secret-key %)
+    (pgp/unlock-key "test password")))
+
+(def cleartext (pgp/decrypt ciphertext get-privkey))
+
+(println (String. cleartext))
+;; my sensitive data
+```
+
+There are also more primitive `encrypt-stream` and `decrypt-stream` functions
+which will wrap output and input streams, respectively.
+
 ### Signatures
 
 The library also provides support for signature generation and verification.
 
 ```clojure
 (def privkey (pgp/unlock-key seckey "test password"))
-(def content (.getBytes "non-repudiable data"))
 (def sig (pgp/sign content :sha1 privkey))
 
 (= (pgp/key-id sig) (pgp/key-id privkey))
