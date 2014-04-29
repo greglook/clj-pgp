@@ -139,6 +139,16 @@ The library provides functions for encoding in both binary and ASCII formats.
 ; => true
 ```
 
+## Work in Progress
+
+There's a number of additional features that this library should support:
+- Keypair generation is a big one.
+- Better keyring functionality, including writing keyrings.
+- Key signing and verification, web-of-trust stuff.
+- Encrypting data packets for multiple public key recipients.
+- Encrypting very large streams which get chunked into multiple literal data packets.
+- More formalization and/or some example private key provider functions.
+
 ## License
 
 This is free and unencumbered software released into the public domain.
