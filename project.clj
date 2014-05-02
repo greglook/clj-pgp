@@ -7,7 +7,7 @@
   :dependencies
   [[byte-streams "0.1.6"]
    [potemkin "0.3.4"]
-   [org.bouncycastle/bcpg-jdk15on "1.49"]
+   [org.bouncycastle/bcpg-jdk15on "1.50"]
    [org.clojure/clojure "1.5.1"]]
 
   :hiera
