@@ -11,4 +11,9 @@
    [org.clojure/clojure "1.5.1"]]
 
   :hiera
-  {:cluster-depth 3})
+  {:cluster-depth 3}
+
+  :profiles
+  {:coverage
+   {:plugins
+    [[lein-cloverage "1.0.2"]]}})
