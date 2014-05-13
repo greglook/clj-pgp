@@ -2,6 +2,8 @@ mvxcvi/clj-pgp
 ==============
 
 [![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=master)](https://travis-ci.org/greglook/clj-pgp)
+[![Coverage Status](https://coveralls.io/repos/greglook/clj-pgp/badge.png?branch=master)](https://coveralls.io/r/greglook/clj-pgp?branch=master)
+[![Dependency Status](https://www.versioneye.com/user/projects/53718e2314c1589a89000149/badge.png)](https://www.versioneye.com/user/projects/53718e2314c1589a89000149)
 
 This is a clojure wrapper for the Bouncy Castle OpenPGP library.
 
