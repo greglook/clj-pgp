@@ -5,10 +5,10 @@
             :url "http://unlicense.org/"}
 
   :dependencies
-  [[byte-streams "0.1.6"]
+  [[byte-streams "0.1.10"]
    [potemkin "0.3.4"]
    [org.bouncycastle/bcpg-jdk15on "1.50"]
-   [org.clojure/clojure "1.5.1"]]
+   [org.clojure/clojure "1.6.0"]]
 
   :hiera
   {:cluster-depth 3}
