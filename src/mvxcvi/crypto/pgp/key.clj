@@ -6,6 +6,7 @@
       [util :refer [hex-str]]))
   (:import
     (org.bouncycastle.openpgp
+      PGPEncryptedData
       PGPKeyRing
       PGPPrivateKey
       PGPPublicKey
@@ -96,6 +97,10 @@
 (defmethod key-id PGPSignature
   [^PGPSignature sig]
   (.getKeyID sig))
+
+(defmethod key-id PGPEncryptedData
+  [^PGPEncryptedData data]
+  (.getKeyID data))
 
 
 

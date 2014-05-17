@@ -73,13 +73,11 @@
 
 (defn decode-public-key
   "Decodes a public key from the given data."
-  ^PGPPublicKey
   [source]
   (-> source decode first public-key))
 
 
 (defn decode-signature
-  ^PGPSignature
   [source]
   (let [^PGPSignatureList sigs (first (decode source))]
     (when-not (instance? PGPSignatureList sigs)

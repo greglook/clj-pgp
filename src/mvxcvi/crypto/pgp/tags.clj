@@ -57,7 +57,7 @@
 
 ;; TAG DEFINITIONS
 
-(defmacro deftags
+(defmacro ^:private deftags
   [cls]
   (let [tag-name (-> (name cls)
                      (as-> s (subs s 0 (- (count s) 4)))

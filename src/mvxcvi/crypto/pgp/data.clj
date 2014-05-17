@@ -4,7 +4,7 @@
     [clojure.java.io :as io]
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
-      [key :refer [public-key]]
+      [key :as k]
       [tags :as tags]
       [util :refer [hex-str read-pgp-objects]]))
   (:import
@@ -67,7 +67,7 @@
       BcPGPDataEncryptorBuilder.
       (.setSecureRandom (SecureRandom.))
       PGPEncryptedDataGenerator.
-      (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))
+      (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (k/public-key pubkey))))
       (.open stream (byte-array 1024))))
 
 
@@ -150,7 +150,7 @@
   by a local private key. Returns a vector of the encrypted data and the
   corresponding private key."
   [data-list get-privkey]
-  (some #(when-let [privkey (get-privkey (.getKeyID ^PGPEncryptedData %))]
+  (some #(when-let [privkey (get-privkey (k/key-id %))]
            [% privkey])
         data-list))
 
