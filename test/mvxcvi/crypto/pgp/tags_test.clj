@@ -4,16 +4,32 @@
     [mvxcvi.crypto.pgp.tags :as tags]))
 
 
-(deftest public-key-algorithm-tags
-  (is (not (empty? tags/public-key-algorithms)))
-  (is (every? keyword? (keys tags/public-key-algorithms)))
-  (is (every? number? (vals tags/public-key-algorithms))))
+(defn check-tags
+  [tag-map]
+  (is (not (empty? tag-map)))
+  (is (every? keyword? (keys tag-map)))
+  (is (every? number?  (vals tag-map))))
 
+
+(deftest compression-algorithm-tags
+  (check-tags tags/compression-algorithms))
 
 (deftest hash-algorithm-tags
-  (is (not (empty? tags/hash-algorithms)))
-  (is (every? keyword? (keys tags/hash-algorithms)))
-  (is (every? number? (vals tags/hash-algorithms))))
+  (check-tags tags/hash-algorithms))
+
+(deftest public-key-algorithm-tags
+  (check-tags tags/public-key-algorithms))
+
+(deftest symmetric-key-algorithm-tags
+  (check-tags tags/symmetric-key-algorithms))
+
+
+(deftest tag-coercion
+  (is (= 3 (tags/compression-algorithm :bzip2)))
+  (is (thrown? IllegalArgumentException (tags/compression-algorithm :foo)))
+  (is (= 1 (tags/compression-algorithm 1)))
+  (is (thrown? IllegalArgumentException (tags/compression-algorithm 82)))
+  (is (thrown? IllegalArgumentException (tags/compression-algorithm "abcd"))))
 
 
 (deftest lookup-tag
