@@ -22,7 +22,7 @@
 
 ;; PUBLIC KEY COERCION
 
-(defmulti ^PGPPublicKey public-key
+(defmulti public-key
   "Determines the public PGP key associated with the argument."
   class)
 
@@ -50,7 +50,7 @@
 
 ;; SECRET KEY COERCION
 
-(defmulti ^PGPSecretKey secret-key
+(defmulti secret-key
   "Determines the secret PGP key associated with the argument."
   class)
 
