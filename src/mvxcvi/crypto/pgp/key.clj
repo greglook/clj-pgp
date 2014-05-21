@@ -136,7 +136,6 @@
 
 (defn unlock-key
   "Decodes a secret key with a passphrase to obtain the private key."
-  ^PGPPrivateKey
   [^PGPSecretKey seckey
    ^String passphrase]
   (.extractPrivateKey seckey
