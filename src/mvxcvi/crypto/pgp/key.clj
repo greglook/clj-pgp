@@ -6,6 +6,7 @@
       [util :refer [hex-str]]))
   (:import
     (org.bouncycastle.openpgp
+      PGPEncryptedData
       PGPKeyRing
       PGPPrivateKey
       PGPPublicKey
@@ -97,6 +98,10 @@
   [^PGPSignature sig]
   (.getKeyID sig))
 
+(defmethod key-id PGPEncryptedData
+  [^PGPEncryptedData data]
+  (.getKeyID data))
+
 
 
 ;; KEY ALGORITHM COERCION
@@ -131,7 +136,6 @@
 
 (defn unlock-key
   "Decodes a secret key with a passphrase to obtain the private key."
-  ^PGPPrivateKey
   [^PGPSecretKey seckey
    ^String passphrase]
   (.extractPrivateKey seckey

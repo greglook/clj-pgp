@@ -16,8 +16,7 @@
 
 
 (defn sign
-  "Generates a PGPSignature from the given data and private key."
-  ^PGPSignature
+  "Generates a PGP signature from the given data and private key."
   [data hash-algo ^PGPPrivateKey privkey]
   (let [generator (PGPSignatureGenerator.
                     (BcPGPContentSignerBuilder.
@@ -30,6 +29,7 @@
 
 
 (defn verify
+  "Verifies a PGP signature. Returns true if the signature is correct."
   [data
    ^PGPSignature signature
    ^PGPPublicKey pubkey]

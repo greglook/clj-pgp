@@ -40,12 +40,7 @@
 
 (defmethod encode PGPPublicKey
   [^PGPPublicKey pubkey]
-  (.getEncoded pubkey)
-  #_
-  (let [buffer (ByteArrayOutputStream.)]
-    (with-open [writer (BCPGOutputStream. buffer)]
-      (.writePacket writer (.getPublicKeyPacket pubkey)))
-    (.toByteArray buffer)))
+  (.getEncoded pubkey))
 
 (defmethod encode PGPSignature
   [^PGPSignature sig]
@@ -78,13 +73,11 @@
 
 (defn decode-public-key
   "Decodes a public key from the given data."
-  ^PGPPublicKey
   [source]
   (-> source decode first public-key))
 
 
 (defn decode-signature
-  ^PGPSignature
   [source]
   (let [^PGPSignatureList sigs (first (decode source))]
     (when-not (instance? PGPSignatureList sigs)

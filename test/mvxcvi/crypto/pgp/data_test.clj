@@ -4,6 +4,7 @@
     [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
+    [mvxcvi.crypto.pgp.tags :as tags]
     [mvxcvi.crypto.pgp.test-keys :as keys])
   (:import
     (org.bouncycastle.openpgp
@@ -16,8 +17,8 @@
     (doseq [message ["Foo Bar Baz"
                      "Mary had a little lamb, whose fleece was white as snow."
                      "TODO: a string with UTF-8 characters"]
-            algorithm [:aes-256]
-            compress [nil :zip]
+            algorithm [:aes-128 :aes-256 :blowfish :cast5 :des :twofish]
+            compress (cons nil (keys tags/compression-algorithms))
             armor [false true]]
       (testing (str "Message \"" message \"
                     (when compress (str " compressed with " compress))
