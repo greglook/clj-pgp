@@ -1,15 +1,13 @@
 (ns mvxcvi.crypto.pgp.codec
   (:require
-    byte-streams
+    [byte-streams :refer [to-input-stream]]
     [clojure.java.io :as io]
-    (mvxcvi.crypto.pgp
-      [key :refer [key-info public-key]]))
+    [mvxcvi.crypto.pgp.key :refer [key-info public-key]])
   (:import
     (java.io
       ByteArrayOutputStream)
     (org.bouncycastle.bcpg
-      ArmoredOutputStream
-      BCPGOutputStream)
+      ArmoredOutputStream)
     (org.bouncycastle.openpgp
       PGPObjectFactory
       PGPPublicKey
@@ -64,7 +62,7 @@
   objects."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream source))]
+                       (to-input-stream source))]
     (let [factory (PGPObjectFactory. stream)]
       (->> (repeatedly #(.nextObject factory))
            (take-while identity)

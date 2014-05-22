@@ -1,6 +1,5 @@
 (ns mvxcvi.crypto.pgp.key-test
   (:require
-    [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
     [mvxcvi.crypto.pgp.test-keys :as keys])

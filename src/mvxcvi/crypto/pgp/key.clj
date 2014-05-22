@@ -16,8 +16,8 @@
       PGPSecretKeyRingCollection
       PGPSignature)
     (org.bouncycastle.openpgp.operator.bc
-      BcPGPDigestCalculatorProvider
-      BcPBESecretKeyDecryptorBuilder)))
+      BcPBESecretKeyDecryptorBuilder
+      BcPGPDigestCalculatorProvider)))
 
 
 ;; PUBLIC KEY COERCION

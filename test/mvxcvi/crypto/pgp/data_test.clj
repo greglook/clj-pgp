@@ -1,15 +1,10 @@
 (ns mvxcvi.crypto.pgp.data-test
   (:require
     [byte-streams :refer [bytes=]]
-    [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
     [mvxcvi.crypto.pgp.tags :as tags]
-    [mvxcvi.crypto.pgp.test-keys :as keys])
-  (:import
-    (org.bouncycastle.openpgp
-      PGPPrivateKey
-      PGPSecretKey)))
+    [mvxcvi.crypto.pgp.test-keys :as keys]))
 
 
 (deftest data-encryption
