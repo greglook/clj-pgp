@@ -143,9 +143,11 @@
   by a local private key. Returns a vector of the encrypted data and the
   corresponding private key."
   [data-list get-privkey]
-  (some #(when-let [privkey (get-privkey (key-id %))]
-           [% privkey])
-        data-list))
+  (->>
+    data-list
+    (map (juxt identity (comp get-privkey key-id)))
+    (filter second)
+    first))
 
 
 (defn decrypt-stream

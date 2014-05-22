@@ -1,6 +1,6 @@
 (ns mvxcvi.crypto.pgp.util
   (:require
-    byte-streams
+    [byte-streams :refer [to-input-stream]]
     [clojure.string :as str])
   (:import
     (java.io
@@ -21,7 +21,7 @@
   data source. The function should accept a byte array and a number of bytes to
   use from it."
   [source f]
-  (with-open [stream (byte-streams/to-input-stream source)]
+  (with-open [stream (to-input-stream source)]
     (let [buffer (byte-array *buffer-size*)]
       (loop [n (.read stream buffer)]
         (when (pos? n)
@@ -29,44 +29,10 @@
           (recur (.read stream buffer)))))))
 
 
-(defmacro do-bytes
-  "Wraps the given statements in a function to pass to apply-bytes."
-  [[[buff n] source] & body]
-  `(let [f# (fn [~(vary-meta buff assoc :tag 'bytes)
-                 ~(vary-meta n assoc :tag 'long)]
-              ~@body)]
-     (apply-bytes ~source f#)))
-
-
-
-;; HEX CONVERSION
-
-(defn- zero-pad
-  "Pads a string"
-  [width value]
-  (let [string (str value)]
-    (-> width
-        (- (count string))
-        (repeat "0")
-        str/join
-        (str string))))
-
-
-(defmulti hex-str
-  "Format the argument as a hexadecimal string."
-  class)
-
-(defmethod hex-str Long
+(defn hex-str
+  "Formats an 8-byte long value as a hexadecimal string."
   [^long value]
   (format "%016x" value))
-
-(defmethod hex-str (class (byte-array 0))
-  [^bytes value]
-  (let [width (* 2 (count value))
-        hex (-> (BigInteger. 1 value)
-                (.toString 16)
-                str/lower-case)]
-    (zero-pad width hex)))
 
 
 
