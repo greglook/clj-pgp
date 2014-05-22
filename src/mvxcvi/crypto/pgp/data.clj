@@ -23,6 +23,7 @@
       PGPEncryptedDataList
       PGPLiteralData
       PGPLiteralDataGenerator
+      PGPPublicKeyEncryptedData
       PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
       BcPGPDataEncryptorBuilder
@@ -38,7 +39,7 @@
   (.open (PGPLiteralDataGenerator.)
     stream
     PGPLiteralData/BINARY
-    filename
+    (str filename)
     PGPLiteralData/NOW
     (byte-array 1024)))
 
@@ -157,7 +158,7 @@
   ^InputStream
   [^InputStream input
    get-privkey]
-  (when-let [[encrypted-data privkey]
+  (when-let [[^PGPPublicKeyEncryptedData encrypted-data privkey]
              (-> input
                  read-encrypted-data
                  (find-data get-privkey))]
