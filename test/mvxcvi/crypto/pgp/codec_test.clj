@@ -1,7 +1,6 @@
 (ns mvxcvi.crypto.pgp.codec-test
   (:require
     [byte-streams :refer [bytes=]]
-    [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
     [mvxcvi.crypto.pgp.test-keys :as keys])

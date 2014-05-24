@@ -6,23 +6,23 @@
       [util :refer [hex-str]]))
   (:import
     (org.bouncycastle.openpgp
-      PGPEncryptedData
       PGPKeyRing
       PGPPrivateKey
       PGPPublicKey
+      PGPPublicKeyEncryptedData
       PGPPublicKeyRingCollection
       PGPSecretKey
       PGPSecretKeyRing
       PGPSecretKeyRingCollection
       PGPSignature)
     (org.bouncycastle.openpgp.operator.bc
-      BcPGPDigestCalculatorProvider
-      BcPBESecretKeyDecryptorBuilder)))
+      BcPBESecretKeyDecryptorBuilder
+      BcPGPDigestCalculatorProvider)))
 
 
 ;; PUBLIC KEY COERCION
 
-(defmulti ^PGPPublicKey public-key
+(defmulti public-key
   "Determines the public PGP key associated with the argument."
   class)
 
@@ -50,7 +50,7 @@
 
 ;; SECRET KEY COERCION
 
-(defmulti ^PGPSecretKey secret-key
+(defmulti secret-key
   "Determines the secret PGP key associated with the argument."
   class)
 
@@ -98,8 +98,8 @@
   [^PGPSignature sig]
   (.getKeyID sig))
 
-(defmethod key-id PGPEncryptedData
-  [^PGPEncryptedData data]
+(defmethod key-id PGPPublicKeyEncryptedData
+  [^PGPPublicKeyEncryptedData data]
   (.getKeyID data))
 
 
@@ -147,7 +147,7 @@
 (defn key-info
   "Returns a map of information about the given key."
   [k]
-  (when-let [pubkey (public-key k)]
+  (when-let [^PGPPublicKey pubkey (public-key k)]
     (cond->
       {:master-key? (.isMasterKey pubkey)
        :key-id (hex-str (key-id pubkey))

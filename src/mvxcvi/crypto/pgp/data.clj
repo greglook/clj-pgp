@@ -1,12 +1,11 @@
 (ns mvxcvi.crypto.pgp.data
   (:require
-    byte-streams
+    [byte-streams :refer [to-input-stream]]
     [clojure.java.io :as io]
-    [clojure.string :as str]
     (mvxcvi.crypto.pgp
-      [key :as k]
+      [key :refer [key-id public-key]]
       [tags :as tags]
-      [util :refer [hex-str read-pgp-objects]]))
+      [util :refer [read-pgp-objects]]))
   (:import
     (java.io
       ByteArrayOutputStream
@@ -15,24 +14,19 @@
       OutputStream)
     (java.security
       SecureRandom)
-    (java.util
-      Date)
     (org.bouncycastle.bcpg
       ArmoredOutputStream)
     (org.bouncycastle.openpgp
       PGPCompressedData
       PGPCompressedDataGenerator
-      PGPEncryptedData
       PGPEncryptedDataGenerator
       PGPEncryptedDataList
       PGPLiteralData
       PGPLiteralDataGenerator
-      PGPObjectFactory
-      PGPPrivateKey
+      PGPPublicKeyEncryptedData
       PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
       BcPGPDataEncryptorBuilder
-      BcPGPDigestCalculatorProvider
       BcPublicKeyDataDecryptorFactory
       BcPublicKeyKeyEncryptionMethodGenerator)))
 
@@ -45,7 +39,7 @@
   (.open (PGPLiteralDataGenerator.)
     stream
     PGPLiteralData/BINARY
-    filename
+    (str filename)
     PGPLiteralData/NOW
     (byte-array 1024)))
 
@@ -67,7 +61,7 @@
       BcPGPDataEncryptorBuilder.
       (.setSecureRandom (SecureRandom.))
       PGPEncryptedDataGenerator.
-      (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (k/public-key pubkey))))
+      (doto (.addMethod (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))
       (.open stream (byte-array 1024))))
 
 
@@ -126,7 +120,7 @@
   ([data pubkey opts]
    (let [buffer (ByteArrayOutputStream.)]
      (with-open [stream (encrypt-stream buffer pubkey opts)]
-       (io/copy (byte-streams/to-input-stream data) stream))
+       (io/copy (to-input-stream data) stream))
      (.toByteArray buffer))))
 
 
@@ -150,9 +144,11 @@
   by a local private key. Returns a vector of the encrypted data and the
   corresponding private key."
   [data-list get-privkey]
-  (some #(when-let [privkey (get-privkey (k/key-id %))]
-           [% privkey])
-        data-list))
+  (->>
+    data-list
+    (map (juxt identity (comp get-privkey key-id)))
+    (filter second)
+    first))
 
 
 (defn decrypt-stream
@@ -162,7 +158,7 @@
   ^InputStream
   [^InputStream input
    get-privkey]
-  (when-let [[encrypted-data privkey]
+  (when-let [[^PGPPublicKeyEncryptedData encrypted-data privkey]
              (-> input
                  read-encrypted-data
                  (find-data get-privkey))]
@@ -187,7 +183,7 @@
   [data get-privkey]
   (let [buffer (ByteArrayOutputStream.)]
     (with-open [stream (decrypt-stream
-                         (byte-streams/to-input-stream data)
+                         (to-input-stream data)
                          get-privkey)]
       (io/copy stream buffer))
     (.toByteArray buffer)))

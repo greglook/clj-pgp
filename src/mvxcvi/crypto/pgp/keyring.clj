@@ -1,13 +1,11 @@
 (ns mvxcvi.crypto.pgp.keyring
   (:require
-    byte-streams
+    [byte-streams :refer [to-input-stream]]
     [mvxcvi.crypto.pgp.key :refer [key-id]])
   (:import
     (org.bouncycastle.openpgp
-      PGPPublicKey
       PGPPublicKeyRing
       PGPPublicKeyRingCollection
-      PGPSecretKey
       PGPSecretKeyRing
       PGPSecretKeyRingCollection
       PGPUtil)))
@@ -80,7 +78,7 @@
   "Loads a public keyring collection from a file."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream source))]
+                       (to-input-stream source))]
     (PGPPublicKeyRingCollection. stream)))
 
 
@@ -88,5 +86,5 @@
   "Loads a secret keyring collection from a file."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream source))]
+                       (to-input-stream source))]
     (PGPSecretKeyRingCollection. stream)))

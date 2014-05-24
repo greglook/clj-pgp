@@ -3,7 +3,7 @@
     (mvxcvi.crypto.pgp
       [key :refer [key-algorithm key-id]]
       [tags :as tags]
-      [util :refer [do-bytes hex-str]]))
+      [util :refer [apply-bytes hex-str]]))
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -23,8 +23,9 @@
                       (tags/public-key-algorithms (key-algorithm privkey))
                       (tags/hash-algorithms hash-algo)))]
     (.init generator PGPSignature/BINARY_DOCUMENT privkey)
-    (do-bytes [[buf n] data]
-      (.update generator buf 0 n))
+    (apply-bytes data
+      (fn [^bytes buff ^long n]
+        (.update generator buff 0 n)))
     (.generate generator)))
 
 
@@ -42,6 +43,7 @@
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)
-  (do-bytes [[buf n] data]
-    (.update signature buf 0 n))
+  (apply-bytes data
+    (fn [^bytes buff ^long n]
+      (.update signature buff 0 n)))
   (.verify signature))

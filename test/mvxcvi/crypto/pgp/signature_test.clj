@@ -1,13 +1,9 @@
 (ns mvxcvi.crypto.pgp.signature-test
   (:require
     [byte-streams :refer [bytes=]]
-    [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.test-keys :as keys])
-  (:import
-    (org.bouncycastle.openpgp
-      PGPSignature)))
+    [mvxcvi.crypto.pgp.test-keys :as keys]))
 
 
 (deftest signature-functions
