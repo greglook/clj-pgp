@@ -6,7 +6,7 @@
   :deploy-branches ["master"]
 
   :dependencies
-  [[byte-streams "0.1.10"]
+  [[byte-streams "0.1.11"]
    [potemkin "0.3.4"]
    [org.bouncycastle/bcpg-jdk15on "1.50"]
    [org.clojure/clojure "1.6.0"]]
