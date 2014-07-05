@@ -3,6 +3,7 @@
   :url "https://github.com/greglook/clj-pgp"
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
+
   :deploy-branches ["master"]
 
   :dependencies
