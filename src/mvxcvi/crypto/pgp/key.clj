@@ -150,7 +150,7 @@
   (when-let [^PGPPublicKey pubkey (public-key k)]
     (cond->
       {:master-key? (.isMasterKey pubkey)
-       :key-id (hex-str (key-id pubkey))
+       :key-id (key-id pubkey)
        :strength (.getBitStrength pubkey)
        :algorithm (key-algorithm pubkey)
        :fingerprint (->> (.getFingerprint pubkey)
