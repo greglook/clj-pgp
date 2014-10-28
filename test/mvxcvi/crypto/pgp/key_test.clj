@@ -2,20 +2,12 @@
   (:require
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.test-keys :as test-keys])
+    [mvxcvi.crypto.pgp.test-keys :as test-keys :refer [pubkey seckey privkey]])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
       PGPPublicKey
       PGPSecretKey)))
-
-
-(def pubkey-id (pgp/key-id "923b1c1c4392318a"))
-(def pubkey (pgp/get-public-key test-keys/secring pubkey-id))
-
-(def seckey-id (pgp/key-id "3f40edec41c6cb7d"))
-(def seckey (pgp/get-secret-key test-keys/secring seckey-id))
-(def privkey (pgp/unlock-key seckey "test password"))
 
 
 (facts "key-id coercion"
@@ -27,9 +19,9 @@
     (pgp/key-id "923b1c1c4392318a") => -7909697412827827830
     (pgp/key-id "3f40edec41c6cb7d") =>  4557904421870553981)
   (fact "key ids match"
-    (pgp/key-id pubkey)  => pubkey-id
-    (pgp/key-id seckey)  => seckey-id
-    (pgp/key-id privkey) => seckey-id))
+    (pgp/key-id pubkey)  => 4557904421870553981
+    (pgp/key-id seckey)  => 4557904421870553981
+    (pgp/key-id privkey) => 4557904421870553981))
 
 
 (facts "key-algorithm coercion"
@@ -66,8 +58,8 @@
 
 (facts "key-info"
   (fact
-    (pgp/key-info pubkey)
-    => (contains {:key-id pubkey-id
+    (pgp/key-info test-keys/master-pubkey)
+    => (contains {:key-id -7909697412827827830
                   :fingerprint "4C0F256D432975418FAB3D7B923B1C1C4392318A"
                   :algorithm :rsa-general
                   :strength 1024
@@ -76,7 +68,7 @@
                   :user-ids ["Test User <test@vault.mvxcvi.com>"]}))
   (fact
     (pgp/key-info seckey)
-    => (contains {:key-id seckey-id
+    => (contains {:key-id 4557904421870553981
                   :fingerprint "798A598943062D6C0D1D40F73F40EDEC41C6CB7D"
                   :algorithm :rsa-general
                   :strength 1024

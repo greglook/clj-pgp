@@ -3,14 +3,10 @@
     [byte-streams :refer [bytes=]]
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.test-keys :as keys])
+    [mvxcvi.crypto.pgp.test-keys :refer [pubkey]])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKey)))
-
-
-(def pubkey
-  (pgp/get-public-key keys/pubring "923b1c1c4392318a"))
 
 
 (facts "public-key binary encoding"
@@ -31,9 +27,3 @@
       decoded-key => (partial instance? PGPPublicKey))
     (fact "encoded key is canonical"
       (pgp/encode-ascii decoded-key) => encoded-key)))
-
-
-(facts "signature encoding"
-  (fact "decoding non-signature value throws an exception"
-    (pgp/decode-signature (pgp/encode pubkey))
-    => (throws IllegalArgumentException)))
