@@ -1,37 +1,36 @@
 (ns mvxcvi.crypto.pgp.tags-test
   (:require
-    [clojure.test :refer :all]
+    [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp.tags :as tags]))
 
 
-(defn check-tags
+(defmacro check-tags
   [tag-map]
-  (is (not (empty? tag-map)))
-  (is (every? keyword? (keys tag-map)))
-  (is (every? number?  (vals tag-map))))
+  `(fact ~(str "tag map " (name tag-map) " is well-formed")
+     ~tag-map =not=> empty?
+     (keys ~tag-map) => (has every? keyword?)
+     (vals ~tag-map) => (has every? number?)))
 
 
-(deftest compression-algorithm-tags
-  (check-tags tags/compression-algorithms))
-
-(deftest hash-algorithm-tags
-  (check-tags tags/hash-algorithms))
-
-(deftest public-key-algorithm-tags
-  (check-tags tags/public-key-algorithms))
-
-(deftest symmetric-key-algorithm-tags
+(facts "tag maps"
+  (check-tags tags/compression-algorithms)
+  (check-tags tags/hash-algorithms)
+  (check-tags tags/public-key-algorithms)
   (check-tags tags/symmetric-key-algorithms))
 
 
-(deftest tag-coercion
-  (is (= 3 (tags/compression-algorithm :bzip2)))
-  (is (thrown? IllegalArgumentException (tags/compression-algorithm :foo)))
-  (is (= 1 (tags/compression-algorithm 1)))
-  (is (thrown? IllegalArgumentException (tags/compression-algorithm 82)))
-  (is (thrown? IllegalArgumentException (tags/compression-algorithm "abcd"))))
+(facts "tag coercion"
+  (fact "keyword lookup returns numeric code"
+    (tags/compression-algorithm :bzip2) => 3)
+  (fact "numeric lookup returns numeric value"
+    (tags/compression-algorithm 1) => 1)
+  (fact "unknown tag throws exception"
+    (tags/compression-algorithm :foo)   => (throws IllegalArgumentException)
+    (tags/compression-algorithm 82)     => (throws IllegalArgumentException)
+    (tags/compression-algorithm "abcd") => (throws IllegalArgumentException)))
 
 
-(deftest lookup-tag
+(facts "tag lookup"
   (let [tag (first tags/public-key-algorithms)]
-    (is (= (key tag) (tags/lookup tags/public-key-algorithms (val tag))))))
+    (fact "tag lookup by value returns key"
+      (tags/lookup tags/public-key-algorithms (val tag)) => (key tag))))
