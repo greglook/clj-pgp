@@ -1,13 +1,23 @@
 (ns mvxcvi.crypto.pgp.key-test
   (:require
+    [byte-streams :refer [bytes=]]
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.test-keys :as test-keys :refer [pubkey seckey privkey]])
+    [mvxcvi.crypto.pgp.test-keys :as test-keys
+     :refer [privkey pubkey pubring seckey secring]])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
       PGPPublicKey
       PGPSecretKey)))
+
+
+(facts "keyrings"
+  (fact "public keyring contains two public keys"
+    (pgp/list-public-keys pubring) => (two-of (partial instance? PGPPublicKey)))
+  (fact "secret keyring contains two keypairs"
+    (pgp/list-public-keys secring) => (two-of (partial instance? PGPPublicKey))
+    (pgp/list-secret-keys secring) => (two-of (partial instance? PGPSecretKey))))
 
 
 (facts "key-id coercion"
@@ -57,7 +67,7 @@
 
 
 (facts "key-info"
-  (fact
+  (fact "keys return a map of attributes"
     (pgp/key-info test-keys/master-pubkey)
     => (contains {:key-id -7909697412827827830
                   :fingerprint "4C0F256D432975418FAB3D7B923B1C1C4392318A"
@@ -65,8 +75,7 @@
                   :strength 1024
                   :master-key? true
                   :encryption-key? true
-                  :user-ids ["Test User <test@vault.mvxcvi.com>"]}))
-  (fact
+                  :user-ids ["Test User <test@vault.mvxcvi.com>"]})
     (pgp/key-info seckey)
     => (contains {:key-id 4557904421870553981
                   :fingerprint "798A598943062D6C0D1D40F73F40EDEC41C6CB7D"
@@ -76,3 +85,23 @@
                   :secret-key? true
                   :encryption-key? true
                   :signing-key? true})))
+
+
+(facts "public-key binary encoding"
+  (let [encoded-key (pgp/encode pubkey)
+        decoded-key (pgp/decode-public-key encoded-key)]
+    (fact "key is decoded as a PGP public key"
+      decoded-key => (partial instance? PGPPublicKey))
+    (fact "encoded key is canonical"
+      (pgp/encode decoded-key) => (partial bytes= encoded-key))))
+
+
+(facts "public-key ascii encoding"
+  (let [encoded-key (pgp/encode-ascii pubkey)
+        decoded-key (pgp/decode-public-key encoded-key)]
+    (fact "key is encoded as a string"
+      encoded-key => string?)
+    (fact "key is decoded as a PGP public key"
+      decoded-key => (partial instance? PGPPublicKey))
+    (fact "encoded key is canonical"
+      (pgp/encode-ascii decoded-key) => encoded-key)))
