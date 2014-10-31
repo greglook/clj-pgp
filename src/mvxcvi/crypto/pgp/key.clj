@@ -20,6 +20,9 @@
       BcPGPDigestCalculatorProvider)))
 
 
+; TODO: extend functions to PGPKeyPair
+
+
 ;; PUBLIC KEY COERCION
 
 (defmulti public-key
