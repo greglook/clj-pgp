@@ -6,7 +6,7 @@
 
   :deploy-branches ["master"]
 
-  :aliases {"docs" ["do" ["doc"] ["marg" "--multi" "--dir" "target/doc/marginalia"] ["hiera"]]
+  :aliases {"docs" ["do" ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"] ["hiera"]]
             "tests" ["do" ["check"] ["test"] ["cloverage"]]}
 
   :plugins [[codox "0.8.10"]
@@ -17,11 +17,11 @@
                  [potemkin "0.3.11"]
                  [org.bouncycastle/bcpg-jdk15on "1.51"]]
 
-  :hiera {:path "target/doc/ns-hiera.png"
+  :hiera {:path "doc/ns-hiera.png"
           :cluster-depth 3}
 
   :codox {:defaults {:doc/format :markdown}
-          :output-dir "target/doc/api"
+          :output-dir "doc/api"
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}
 
