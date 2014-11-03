@@ -20,7 +20,10 @@
   :hiera {:path "doc/ns-hiera.png"
           :cluster-depth 3}
 
-  :codox {:defaults {:doc/format :markdown}
+  :codox {:include [mvxcvi.crypto.pgp
+                    mvxcvi.crypto.pgp.tags
+                    mvxcvi.crypto.pgp.util]
+          :defaults {:doc/format :markdown}
           :output-dir "doc/api"
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}
