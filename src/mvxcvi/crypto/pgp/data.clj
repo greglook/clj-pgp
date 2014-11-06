@@ -1,6 +1,7 @@
 (ns mvxcvi.crypto.pgp.data
+  "Data encryption and decryption functions."
   (:require
-    [byte-streams :refer [to-input-stream]]
+    [byte-streams :as bytes]
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
       [key :refer [key-id public-key]]
@@ -31,7 +32,7 @@
       BcPublicKeyKeyEncryptionMethodGenerator)))
 
 
-;; DATA ENCRYPTION
+;; ## Data Encryption
 
 (defn- literal-data-generator
   ^OutputStream
@@ -120,12 +121,12 @@
   ([data pubkey opts]
    (let [buffer (ByteArrayOutputStream.)]
      (with-open [stream (encrypt-stream buffer pubkey opts)]
-       (io/copy (to-input-stream data) stream))
+       (io/copy (bytes/to-input-stream data) stream))
      (.toByteArray buffer))))
 
 
 
-;; DATA DECRYPTION
+;; ## Data Decryption
 
 (defn- read-encrypted-data
   "Reads a raw input stream to decode a PGPEncryptedDataList. Returns a sequence
@@ -183,7 +184,7 @@
   [data get-privkey]
   (let [buffer (ByteArrayOutputStream.)]
     (with-open [stream (decrypt-stream
-                         (to-input-stream data)
+                         (bytes/to-input-stream data)
                          get-privkey)]
       (io/copy stream buffer))
     (.toByteArray buffer)))

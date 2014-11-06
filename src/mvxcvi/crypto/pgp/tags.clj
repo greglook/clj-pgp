@@ -1,4 +1,5 @@
 (ns mvxcvi.crypto.pgp.tags
+  "Vars which map Cloure keywords to numeric BouncyCastle tag codes."
   (:require
     [clojure.string :as str])
   (:import
@@ -9,10 +10,10 @@
       SymmetricKeyAlgorithmTags)))
 
 
-;; TAG FUNCTIONS
+;; ## Tag Functions
 
 (defn- map-tags
-  "Converts static 'tag' fields on the given class into a map of keywords to
+  "Convert static 'tag' fields on the given class into a map of keywords to
   numeric codes."
   [^Class tags]
   (let [field->entry
@@ -28,7 +29,8 @@
 
 
 (defn- tag-code
-  "Coerces the argument into a numeric tag code."
+  "Coerce a value into a numeric tag code. The argument may be a keyword or a
+  number. If the tag map does not contain the value, an exception is thrown."
   [tag-name tags value]
   (cond
     (keyword? value)
@@ -38,7 +40,7 @@
                (str "Invalid " tag-name " name " value))))
 
     (number? value)
-    (if (contains? (set (vals tags)) value)
+    (if (some #{value} (vals tags))
       value
       (throw (IllegalArgumentException.
                (str "Invalid " tag-name " code " value))))
@@ -49,15 +51,16 @@
 
 
 (defn lookup
-  "Looks up the keyword of an algorithm given the numeric code."
-  [codes code]
-  (some #(if (= (val %) code) (key %)) codes))
+  "Look up the keyword for a tag from the numeric code."
+  [tags code]
+  (some #(if (= (val %) code) (key %)) tags))
 
 
 
-;; TAG DEFINITIONS
+;; ## Tag Definitions
 
 (defmacro ^:private deftags
+  "Defines a tag map and coersion function from fields on the given class."
   [cls]
   (let [tag-name (-> (name cls)
                      (as-> s (subs s 0 (- (count s) 4)))
@@ -67,8 +70,10 @@
         tag-map (symbol (str tag-name \s))]
     `(do
        (def ~tag-map
+         ~(str "Map of " tag-name " tags.")
          (map-tags ~cls))
        (defn ~tag-name
+         ~(str "Validate and coerce the argument into a " tag-name " tag code.")
          [value#]
          (tag-code ~(str tag-name) ~tag-map value#)))))
 

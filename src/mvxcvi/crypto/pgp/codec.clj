@@ -1,6 +1,7 @@
 (ns mvxcvi.crypto.pgp.codec
+  "Functions for encoding and decoding PGP objects."
   (:require
-    [byte-streams :refer [to-input-stream]]
+    [byte-streams :as bytes]
     [clojure.java.io :as io]
     [mvxcvi.crypto.pgp.key :refer [key-info public-key]])
   (:import
@@ -17,7 +18,7 @@
       PGPUtil)))
 
 
-;; PRINT METHODS
+;; ## Print Methods
 
 (defmethod print-method PGPPublicKey
   [k ^java.io.Writer w]
@@ -30,7 +31,7 @@
 
 
 
-;; ENCODING
+;; ## Encodin
 
 (defmulti encode
   "Encodes a PGP object into a byte sequence."
@@ -55,14 +56,14 @@
 
 
 
-;; DECODING
+;; ## Decoding
 
 (defn decode
   "Decodes PGP objects from an encoded data source. Returns a sequence of PGP
   objects."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
-                       (to-input-stream source))]
+                       (bytes/to-input-stream source))]
     (let [factory (PGPObjectFactory. stream)]
       (->> (repeatedly #(.nextObject factory))
            (take-while identity)
