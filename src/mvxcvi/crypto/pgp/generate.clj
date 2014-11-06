@@ -54,6 +54,39 @@
               80)))))
 
 
+(defn- signature-subpacket-generator
+  "Constructs a new generator for key signature subpackets. The given flags
+  will be applied to the key."
+  ^PGPSignatureSubpacketGenerator
+  [& flags]
+  (let [generator (PGPSignatureSubpacketGenerator.)]
+    (when (seq flags)
+      (.setKeyFlags generator false (apply bit-or flags)))
+    generator))
+
+
+(defn- prefer-algorithms
+  "Sets preferences on a signature generator for secondary cryptographic
+  algorithms to use when messages are sent to a keypair."
+  [^PGPSignatureSubpacketGenerator generator
+   & {:as algorithms}]
+  (when-let [algos (:symmetric algorithms)]
+    (.setPreferredSymmetricAlgorithms
+      generator
+      false
+      (int-array (map tags/symmetric-key-algorithm algos))))
+  (when-let [algos (:hash algorithms)]
+    (.setPreferredHashAlgorithms
+      generator
+      false
+      (int-array (map tags/hash-algorithm algos))))
+  (when-let [algos (:compression algorithms)]
+    (.setPreferredCompressionAlgorithms
+      generator
+      false
+      (int-array (map tags/compression-algorithm algos)))))
+
+
 (defn- keyring-generator
   ^PGPKeyRingGenerator
   [^String user-id
@@ -73,29 +106,23 @@
                    (Date.))
 
         ; Add a self-signature on the user-id.
-        ; Add signed metadata on the signature.
         master-sig-gen
-        (doto (PGPSignatureSubpacketGenerator.)
-          ; 1) Declare its purpose.
-          (.setKeyFlags false (bit-or KeyFlags/SIGN_DATA
-                                      KeyFlags/CERTIFY_OTHER))
-          ; 2) Set preferences for secondary crypto algorithms to use when
-          ;    sending messages to this key.
-          (.setPreferredSymmetricAlgorithms
-            false
-            (int-array (map tags/symmetric-key-algorithm [:aes-256 :aes-192 :aes-128])))
-          (.setPreferredHashAlgorithms
-            false
-            (int-array (map tags/hash-algorithm [:sha256 :sha1 :sha384 :sha512 :sha224])))
-          ; 3) Request senders add additional checksums to the message (useful
-          ;    when verifying unsigned messages).
+        (doto (signature-subpacket-generator
+                KeyFlags/SIGN_DATA
+                KeyFlags/CERTIFY_OTHER)
+          (prefer-algorithms
+            :symmetric [:aes-256 :aes-192 :aes-128]
+            :hash [:sha512 :sha384 :sha256 :sha224 :sha1]
+            :compression [:zlib :bzip2 :zip :uncompressed])
+          ; Request senders add additional checksums to the message (useful
+          ; when verifying unsigned messages).
           (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
 
         ; Create a signature on the encryption subkey.
         enc-sig-gen
-        (doto (PGPSignatureSubpacketGenerator.)
-          (.setKeyFlags false (bit-or KeyFlags/ENCRYPT_COMMS
-                                      KeyFlags/ENCRYPT_STORAGE)))
+        (signature-subpacket-generator
+          KeyFlags/ENCRYPT_COMMS
+          KeyFlags/ENCRYPT_STORAGE)
 
         sha1-calc   (.get (BcPGPDigestCalculatorProvider.) (tags/hash-algorithm :sha1))
         sha256-calc (.get (BcPGPDigestCalculatorProvider.) (tags/hash-algorithm :sha256))
