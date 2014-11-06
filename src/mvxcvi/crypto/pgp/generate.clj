@@ -55,6 +55,7 @@
 
 
 (defn- keyring-generator
+  ^PGPKeyRingGenerator
   [^String user-id
    ^String passphrase]
   (let [kpg (rsa-keypair-generator 1024)
@@ -120,3 +121,10 @@
         (doto keyring-gen
           ; Add our encryption subkey, together with its signature.
           (.addSubKey enc-keys (.generate enc-sig-gen) nil))))
+
+
+(defn generate-keyrings
+  [user-id passphrase]
+  (let [krg (keyring-generator user-id passphrase)]
+    {:public (.generatePublicKeyRing krg)
+     :secret (.generateSecretKeyRing krg)}))
