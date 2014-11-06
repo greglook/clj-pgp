@@ -12,6 +12,8 @@
     (org.bouncycastle.bcpg.sig
       Features
       KeyFlags)
+    (org.bouncycastle.crypto
+      AsymmetricCipherKeyPairGenerator)
     (org.bouncycastle.crypto.generators
       RSAKeyPairGenerator)
     (org.bouncycastle.crypto.params
@@ -38,6 +40,14 @@
 
 ;; ## Key Generation
 
+(defn- digest-calculator
+  "Constructs a new digest calculator for the given hash algorithm."
+  ^PGPDigestCalculator
+  [algorithm]
+  (.get (BcPGPDigestCalculatorProvider.)
+        (tags/hash-algorithm algorithm)))
+
+
 (defn- rsa-keypair-generator
   "Constructs a new generator for RSA keypairs with the given bit strength.
   A custom random number generator may be given as an optional argument."
@@ -52,6 +62,16 @@
               random
               strength
               80)))))
+
+
+(defn- generate-keypair
+  "Builds a new PGP keypair from a generator."
+  [^AsymmetricCipherKeyPairGenerator generator
+   algorithm]
+  (BcPGPKeyPair.
+    (tags/public-key-algorithm algorithm)
+    (.generateKeyPair generator)
+    (Date.)))
 
 
 (defn- signature-subpacket-generator
@@ -89,24 +109,10 @@
 
 (defn- keyring-generator
   ^PGPKeyRingGenerator
-  [^String user-id
+  [^PGPKeyPair master-key
+   ^String user-id
    ^String passphrase]
-  (let [kpg (rsa-keypair-generator 1024)
-
-        ; Generate a master signing key.
-        master-keys (BcPGPKeyPair.
-                      PGPPublicKey/RSA_SIGN
-                      (.generateKeyPair kpg)
-                      (Date.))
-
-        ; Generate an encryption subkey.
-        enc-keys (BcPGPKeyPair.
-                   PGPPublicKey/RSA_ENCRYPT
-                   (.generateKeyPair kpg)
-                   (Date.))
-
-        ; Add a self-signature on the user-id.
-        master-sig-gen
+  (let [master-sig-gen  ; Add a self-signature on the user-id.
         (doto (signature-subpacket-generator
                 KeyFlags/SIGN_DATA
                 KeyFlags/CERTIFY_OTHER)
@@ -118,40 +124,40 @@
           ; when verifying unsigned messages).
           (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
 
-        ; Create a signature on the encryption subkey.
-        enc-sig-gen
-        (signature-subpacket-generator
-          KeyFlags/ENCRYPT_COMMS
-          KeyFlags/ENCRYPT_STORAGE)
-
-        sha1-calc   (.get (BcPGPDigestCalculatorProvider.) (tags/hash-algorithm :sha1))
-        sha256-calc (.get (BcPGPDigestCalculatorProvider.) (tags/hash-algorithm :sha256))
-
         secret-encryptor (.build (BcPBESecretKeyEncryptorBuilder.
-                                   PGPEncryptedData/AES_256
-                                   sha256-calc)
-                                 (.toCharArray passphrase))
+                                   (int (tags/symmetric-key-algorithm :aes-256))
+                                   (digest-calculator :sha256))
+                                 (.toCharArray passphrase))]
 
-        ; Finally, create the keyring itself.
-        keyring-gen (PGPKeyRingGenerator.
-                      PGPSignature/POSITIVE_CERTIFICATION
-                      master-keys
-                      user-id
-                      sha1-calc
-                      (.generate master-sig-gen)
-                      nil
-                      (BcPGPContentSignerBuilder.
-                        (.getAlgorithm (.getPublicKey master-keys))  ; TODO: use coercion multimethods
-                        (tags/hash-algorithm :sha1))
-                      secret-encryptor)
-        ]
-        (doto keyring-gen
-          ; Add our encryption subkey, together with its signature.
-          (.addSubKey enc-keys (.generate enc-sig-gen) nil))))
+    (PGPKeyRingGenerator.
+      PGPSignature/POSITIVE_CERTIFICATION
+      master-key
+      user-id
+      (digest-calculator :sha1)
+      (.generate master-sig-gen)
+      nil
+      (BcPGPContentSignerBuilder.
+        (.getAlgorithm (.getPublicKey master-key))  ; TODO: use coercion multimethods
+        (tags/hash-algorithm :sha1))
+      secret-encryptor)))
+
+
+(defn- add-encryption-subkey
+  [^PGPKeyRingGenerator generator
+   ^PGPKeyPair subkey]
+  (.addSubKey generator
+    subkey
+    (.generate (signature-subpacket-generator
+                 KeyFlags/ENCRYPT_COMMS
+                 KeyFlags/ENCRYPT_STORAGE))
+    nil))
 
 
 (defn generate-keyrings
   [user-id passphrase]
-  (let [krg (keyring-generator user-id passphrase)]
+  (let [kpg (rsa-keypair-generator 1024)
+        master-key (generate-keypair kpg :rsa-sign)
+        krg (keyring-generator master-key user-id passphrase)]
+    (add-encryption-subkey krg (generate-keypair kpg :rsa-encrypt))
     {:public (.generatePublicKeyRing krg)
      :secret (.generateSecretKeyRing krg)}))
