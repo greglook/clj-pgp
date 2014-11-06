@@ -1,4 +1,5 @@
 (ns mvxcvi.crypto.pgp.signature
+  "Signature generation and verification."
   (:require
     (mvxcvi.crypto.pgp
       [key :refer [key-algorithm key-id]]
