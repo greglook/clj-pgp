@@ -1,6 +1,7 @@
 (ns mvxcvi.crypto.pgp.util
+  "Utility functions for dealing with byte content."
   (:require
-    [byte-streams :refer [to-input-stream]]
+    [byte-streams :as bytes]
     [clojure.string :as str])
   (:import
     (java.io
@@ -8,8 +9,9 @@
     (org.bouncycastle.openpgp
       PGPObjectFactory)))
 
+; TODO: move to 'io'?
 
-;; BYTE PROCESSING
+;; ## Byte Processing
 
 (def ^:dynamic *buffer-size*
   "Size of buffer to use in data functions."
@@ -21,7 +23,7 @@
   data source. The function should accept a byte array and a number of bytes to
   use from it."
   [source f]
-  (with-open [stream (to-input-stream source)]
+  (with-open [stream (bytes/to-input-stream source)]
     (let [buffer (byte-array *buffer-size*)]
       (loop [n (.read stream buffer)]
         (when (pos? n)
@@ -36,7 +38,7 @@
 
 
 
-;; PGP UTILITIES
+;; ## PGP Utilities
 
 (defn read-pgp-objects
   "Decodes a lazy sequence of PGP objects from an input stream."

@@ -1,4 +1,5 @@
 (ns mvxcvi.crypto.pgp.key
+  "Key-related functions."
   (:require
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
@@ -22,8 +23,7 @@
 
 ; TODO: extend functions to PGPKeyPair
 
-
-;; PUBLIC KEY COERCION
+;; ## Public Key Coercion
 
 (defmulti public-key
   "Determines the public PGP key associated with the argument."
@@ -51,7 +51,7 @@
 
 
 
-;; SECRET KEY COERCION
+;; ## Secret Key Coercion
 
 (defmulti secret-key
   "Determines the secret PGP key associated with the argument."
@@ -71,7 +71,7 @@
 
 
 
-;; KEY IDENTITY COERCION
+;; ## Key Identity Coercion
 
 (defmulti ^Long key-id
   "Returns the numeric PGP key identifier for the given value."
@@ -107,7 +107,7 @@
 
 
 
-;; KEY ALGORITHM COERCION
+;; ## Key Algorithm Coercion
 
 (defmulti key-algorithm
   "Returns a keyword identifying the PGP key algorithm used by the given value."
@@ -135,7 +135,7 @@
 
 
 
-;; KEY UTILITIES
+;; ## Key Utilities
 
 (defn unlock-key
   "Decodes a secret key with a passphrase to obtain the private key."
