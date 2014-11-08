@@ -125,10 +125,9 @@
           (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
 
         secret-encryptor (.build (BcPBESecretKeyEncryptorBuilder.
-                                   (int (tags/symmetric-key-algorithm :aes-256))
+                                   (tags/symmetric-key-algorithm :aes-256)
                                    (digest-calculator :sha256))
                                  (.toCharArray passphrase))]
-
     (PGPKeyRingGenerator.
       PGPSignature/POSITIVE_CERTIFICATION
       master-key

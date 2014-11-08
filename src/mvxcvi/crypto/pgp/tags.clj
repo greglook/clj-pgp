@@ -31,6 +31,7 @@
 (defn- tag-code
   "Coerce a value into a numeric tag code. The argument may be a keyword or a
   number. If the tag map does not contain the value, an exception is thrown."
+  ^Integer
   [tag-name tags value]
   (cond
     (keyword? value)
@@ -74,6 +75,7 @@
          (map-tags ~cls))
        (defn ~tag-name
          ~(str "Validate and coerce the argument into a " tag-name " tag code.")
+         ^Integer
          [value#]
          (tag-code ~(str tag-name) ~tag-map value#)))))
 
