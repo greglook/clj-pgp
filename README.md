@@ -11,7 +11,7 @@ clj-pgp
 [![Dependency Status](https://www.versioneye.com/user/projects/53718e1914c1581079000056/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.6.0-SNAPSHOT)
 **develop**
 
-This is a clojure wrapper for the Bouncy Castle OpenPGP library.
+This is a Clojure library which wraps the Bouncy Castle OpenPGP implementation.
 
 ## Usage
 
@@ -20,11 +20,16 @@ Leiningen, add the following dependency to your project definition:
 
 [![Clojars Project](http://clojars.org/mvxcvi/clj-pgp/latest-version.svg)](http://clojars.org/mvxcvi/clj-pgp)
 
-The main interface to the library is the `mvxcvi.crypto.pgp` namespace.
+The main interface to the library is the `mvxcvi.crypto.pgp` namespace, which
+provides a high-level API for working with PGP keys and data.
 
-### Keys
+### PGP Keys
 
-The library contains many functions for working with and inspecting PGP keys.
+PGP stores keys in _keyrings_, which are collections of related asymmetric keys.
+Public keyrings store just the public key from each keypair, and may store keys
+for other people as well as keys controlled by the user. Secret keyrings store
+both the public and private parts of a keypair, encrypted with a secret
+passphrase.
 
 ```clojure
 (require
@@ -143,16 +148,6 @@ The library provides functions for encoding in both binary and ASCII formats.
   (= ascii (pgp/encode-ascii (pgp/decode-public-key ascii))))
 ; => true
 ```
-
-## Work in Progress
-
-There's a number of additional features that this library should support:
-- Keypair generation is a big one.
-- Better keyring functionality, including writing keyrings.
-- Key signing and verification, web-of-trust stuff.
-- Encrypting data packets for multiple public key recipients.
-- Encrypting very large streams which get chunked into multiple literal data packets.
-- More formalization and/or some example private key provider functions.
 
 ## License
 
