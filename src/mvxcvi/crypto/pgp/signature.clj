@@ -32,11 +32,11 @@
 (defn sign
   "Creates a PGP signature by the given key. The data is first hashed with the
   given algorithm, then the digest is signed by the private key."
-  [data hash-algo ^PGPPrivateKey privkey]
+  [data ^PGPPrivateKey privkey & [hash-algo]]
   (let [generator (PGPSignatureGenerator.
                     (BcPGPContentSignerBuilder.
                       (tags/public-key-algorithm (key-algorithm privkey))
-                      (tags/hash-algorithm hash-algo)))]
+                      (tags/hash-algorithm (or hash-algo :sha1))))]
     (.init generator PGPSignature/BINARY_DOCUMENT privkey)
     (apply-bytes data
       (.update generator buffer 0 n))
