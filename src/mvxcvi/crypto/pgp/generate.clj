@@ -3,8 +3,7 @@
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
       [key :refer [key-algorithm]]
-      [tags :as tags]
-      [util :refer [hex-str]]))
+      [tags :as tags]))
   (:import
     java.security.SecureRandom
     java.util.Date

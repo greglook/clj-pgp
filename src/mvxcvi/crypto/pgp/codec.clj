@@ -3,7 +3,7 @@
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]
-    [mvxcvi.crypto.pgp.key :refer [key-info public-key]])
+    [mvxcvi.crypto.pgp.key :refer [key-id public-key]])
   (:import
     (java.io
       ByteArrayOutputStream)
@@ -22,12 +22,12 @@
 
 (defmethod print-method PGPPublicKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPPublicKey " (key-info k) ">")))
+  (.write w (str "#<PGPPublicKey " (key-id k) ">")))
 
 
 (defmethod print-method PGPSecretKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPSecretKey " (key-info k) ">")))
+  (.write w (str "#<PGPSecretKey " (key-id k) ">")))
 
 
 

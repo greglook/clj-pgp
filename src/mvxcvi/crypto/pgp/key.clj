@@ -3,8 +3,7 @@
   (:require
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
-      [tags :as tags]
-      [util :refer [hex-str]]))
+      [tags :as tags]))
   (:import
     (org.bouncycastle.openpgp
       PGPKeyPair
