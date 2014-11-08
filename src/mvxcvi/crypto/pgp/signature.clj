@@ -1,8 +1,8 @@
 (ns mvxcvi.crypto.pgp.signature
   "Signature generation and verification."
   (:require
+    [byte-streams :as bytes]
     (mvxcvi.crypto.pgp
-      [io :refer [apply-bytes]]
       [tags :as tags]
       [util :refer [hex-id key-algorithm key-id]]))
   (:import
@@ -16,6 +16,19 @@
       BcPGPContentVerifierBuilderProvider)))
 
 
+(defmacro ^:private apply-bytes
+  "Executes the body on chunks of the byte sequence read from the given data
+  source. This is an anaphoric macro which exposes a byte array `buffer` and a
+  number of bytes read into it as `n`."
+  [source & body]
+  `(with-open [stream# (bytes/to-input-stream ~source)]
+     (let [~'buffer (byte-array 512)]
+       (loop [~'n (.read stream# ~'buffer)]
+         (when (pos? ~'n)
+           ~@body
+           (recur (.read stream# ~'buffer)))))))
+
+
 (defn sign
   "Creates a PGP signature by the given key. The data is first hashed with the
   given algorithm, then the digest is signed by the private key."
@@ -26,8 +39,7 @@
                       (tags/hash-algorithm hash-algo)))]
     (.init generator PGPSignature/BINARY_DOCUMENT privkey)
     (apply-bytes data
-      (fn [^bytes buff ^long n]
-        (.update generator buff 0 n)))
+      (.update generator buffer 0 n))
     (.generate generator)))
 
 
@@ -47,6 +59,5 @@
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)
   (apply-bytes data
-    (fn [^bytes buff ^long n]
-      (.update signature buff 0 n)))
+    (.update signature buffer 0 n))
   (.verify signature))

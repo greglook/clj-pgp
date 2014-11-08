@@ -4,7 +4,6 @@
     [byte-streams :as bytes]
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
-      [io :refer [read-pgp-objects]]
       [tags :as tags]
       [util :refer [key-id public-key]]))
   (:import
@@ -24,12 +23,23 @@
       PGPEncryptedDataList
       PGPLiteralData
       PGPLiteralDataGenerator
+      PGPObjectFactory
       PGPPublicKeyEncryptedData
       PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
       BcPGPDataEncryptorBuilder
       BcPublicKeyDataDecryptorFactory
       BcPublicKeyKeyEncryptionMethodGenerator)))
+
+
+;; ## IO Utilities
+
+(defn- read-pgp-objects
+  "Decodes a lazy sequence of PGP objects from an input stream."
+  [^InputStream input]
+  (let [factory (PGPObjectFactory. input)]
+    (take-while some? (repeatedly #(.nextObject factory)))))
+
 
 
 ;; ## Data Encryption
