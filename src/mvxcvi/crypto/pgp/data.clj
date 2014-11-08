@@ -4,9 +4,9 @@
     [byte-streams :as bytes]
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
-      [key :refer [key-id public-key]]
+      [io :refer [read-pgp-objects]]
       [tags :as tags]
-      [util :refer [read-pgp-objects]]))
+      [util :refer [key-id public-key]]))
   (:import
     (java.io
       ByteArrayOutputStream

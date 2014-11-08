@@ -2,9 +2,9 @@
   "Signature generation and verification."
   (:require
     (mvxcvi.crypto.pgp
-      [key :refer [key-algorithm key-id]]
+      [io :refer [apply-bytes]]
       [tags :as tags]
-      [util :refer [apply-bytes hex-str]]))
+      [util :refer [hex-id key-algorithm key-id]]))
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -38,9 +38,9 @@
   (when-not (= (key-id signature) (key-id pubkey))
     (throw (IllegalArgumentException.
              (str "Signature key id "
-                  (hex-str (key-id signature))
+                  (hex-id signature)
                   " doesn't match public key id "
-                  (hex-str (key-id pubkey))))))
+                  (hex-id pubkey)))))
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)

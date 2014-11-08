@@ -2,8 +2,8 @@
   (:require
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
-      [key :refer [key-algorithm]]
-      [tags :as tags]))
+      [tags :as tags]
+      [util :refer [key-algorithm]]))
   (:import
     java.security.SecureRandom
     java.util.Date

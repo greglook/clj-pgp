@@ -3,7 +3,7 @@
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]
-    [mvxcvi.crypto.pgp.key :refer [key-id public-key]])
+    [mvxcvi.crypto.pgp.util :refer [key-id public-key]])
   (:import
     (java.io
       ByteArrayOutputStream)
