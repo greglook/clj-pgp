@@ -17,12 +17,13 @@
 
 
 (defn sign
-  "Generates a PGP signature from the given data and private key."
+  "Creates a PGP signature by the given key. The data is first hashed with the
+  given algorithm, then the digest is signed by the private key."
   [data hash-algo ^PGPPrivateKey privkey]
   (let [generator (PGPSignatureGenerator.
                     (BcPGPContentSignerBuilder.
-                      (tags/public-key-algorithms (key-algorithm privkey))
-                      (tags/hash-algorithms hash-algo)))]
+                      (tags/public-key-algorithm (key-algorithm privkey))
+                      (tags/hash-algorithm hash-algo)))]
     (.init generator PGPSignature/BINARY_DOCUMENT privkey)
     (apply-bytes data
       (fn [^bytes buff ^long n]
@@ -31,7 +32,8 @@
 
 
 (defn verify
-  "Verifies a PGP signature. Returns true if the signature is correct."
+  "Verifies a PGP signature. Returns true if the data was signed by the private
+  key matching the given public key."
   [data
    ^PGPSignature signature
    ^PGPPublicKey pubkey]
