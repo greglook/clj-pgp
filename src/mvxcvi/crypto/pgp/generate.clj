@@ -2,13 +2,12 @@
   (:require
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
+      [key :refer [key-algorithm]]
       [tags :as tags]
       [util :refer [hex-str]]))
   (:import
-    (java.security
-      SecureRandom)
-    (java.util
-      Date)
+    java.security.SecureRandom
+    java.util.Date
     (org.bouncycastle.bcpg.sig
       Features
       KeyFlags)
@@ -19,13 +18,8 @@
     (org.bouncycastle.crypto.params
       RSAKeyGenerationParameters)
     (org.bouncycastle.openpgp
-      PGPEncryptedData
       PGPKeyPair
-      PGPPublicKeyRing
       PGPKeyRingGenerator
-      PGPPublicKey
-      PGPSecretKey
-      PGPSecretKeyRing
       PGPSignature
       PGPSignatureSubpacketGenerator)
     (org.bouncycastle.openpgp.operator
@@ -48,20 +42,30 @@
         (tags/hash-algorithm algorithm)))
 
 
+(defn- secret-key-encryptor
+  "Constructs a new encryptor which will lock secret keys with the given
+  passphrase. The encryption algorithm and passphrase hash algorithm may be
+  specified as optional keyword arguments."
+  [^String passphrase
+   & {:keys [enc-algorithm pass-algorithm]
+      :or {enc-algorithm :aes-256
+           pass-algorithm :sha256}}]
+  (.build (BcPBESecretKeyEncryptorBuilder.
+             (tags/symmetric-key-algorithm :aes-256)
+             (digest-calculator :sha256))
+           (.toCharArray passphrase)))
+
+
 (defn- rsa-keypair-generator
   "Constructs a new generator for RSA keypairs with the given bit strength.
-  A custom random number generator may be given as an optional argument."
-  (^RSAKeyPairGenerator
-   [strength]
-   (rsa-keypair-generator strength (SecureRandom/getInstance "SHA1PRNG")))
-  (^RSAKeyPairGenerator
-   [strength random]
-   (doto (RSAKeyPairGenerator.)
-     (.init (RSAKeyGenerationParameters.
-              (BigInteger/valueOf 0x10001)
-              random
-              strength
-              80)))))
+  Other parameters may be customized with keyword options."
+  ^RSAKeyPairGenerator
+  [strength & {:keys [exponent random certainty]
+               :or {exponent (BigInteger/valueOf 0x10001)
+                    random (SecureRandom.)
+                    certainty 80}}]
+  (doto (RSAKeyPairGenerator.)
+    (.init (RSAKeyGenerationParameters. exponent random strength certainty))))
 
 
 (defn- generate-keypair
@@ -86,7 +90,7 @@
     generator))
 
 
-(defn- prefer-algorithms
+(defn- prefer-algorithms!
   "Sets preferences on a signature generator for secondary cryptographic
   algorithms to use when messages are sent to a keypair."
   [^PGPSignatureSubpacketGenerator generator
@@ -108,7 +112,7 @@
       (int-array (map tags/compression-algorithm algos)))))
 
 
-(defn- keyring-generator
+(defn keyring-generator
   ^PGPKeyRingGenerator
   [^PGPKeyPair master-key
    ^String user-id
@@ -117,18 +121,13 @@
         (doto (signature-subpacket-generator
                 KeyFlags/SIGN_DATA
                 KeyFlags/CERTIFY_OTHER)
-          (prefer-algorithms
+          (prefer-algorithms!
             :symmetric [:aes-256 :aes-192 :aes-128]
             :hash [:sha512 :sha384 :sha256 :sha224 :sha1]
             :compression [:zlib :bzip2 :zip :uncompressed])
           ; Request senders add additional checksums to the message (useful
           ; when verifying unsigned messages).
-          (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
-
-        secret-encryptor (.build (BcPBESecretKeyEncryptorBuilder.
-                                   (tags/symmetric-key-algorithm :aes-256)
-                                   (digest-calculator :sha256))
-                                 (.toCharArray passphrase))]
+          (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))]
     (PGPKeyRingGenerator.
       PGPSignature/POSITIVE_CERTIFICATION
       master-key
@@ -137,12 +136,12 @@
       (.generate master-sig-gen)
       nil
       (BcPGPContentSignerBuilder.
-        (.getAlgorithm (.getPublicKey master-key))  ; TODO: use coercion multimethods
+        (key-algorithm master-key)
         (tags/hash-algorithm :sha1))
-      secret-encryptor)))
+      (secret-key-encryptor passphrase))))
 
 
-(defn- add-encryption-subkey
+(defn add-encryption-subkey!
   [^PGPKeyRingGenerator generator
    ^PGPKeyPair subkey]
   (.addSubKey generator
@@ -153,11 +152,22 @@
     nil))
 
 
+(defn add-signing-subkey!
+  [^PGPKeyRingGenerator generator
+   ^PGPKeyPair subkey]
+  (.addSubKey generator
+    subkey
+    (.generate (signature-subpacket-generator
+                 KeyFlags/SIGN_DATA))
+    nil))
+
+
 (defn generate-keyrings
   [user-id passphrase]
   (let [kpg (rsa-keypair-generator 1024)
         master-key (generate-keypair kpg :rsa-sign)
         krg (keyring-generator master-key user-id passphrase)]
-    (add-encryption-subkey krg (generate-keypair kpg :rsa-encrypt))
+    (add-encryption-subkey! krg (generate-keypair kpg :rsa-encrypt))
+    (add-signing-subkey! krg (generate-keypair kpg :rsa-sign))
     {:public (.generatePublicKeyRing krg)
      :secret (.generateSecretKeyRing krg)}))
