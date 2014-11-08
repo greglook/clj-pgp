@@ -22,58 +22,6 @@
       BcPGPDigestCalculatorProvider)))
 
 
-;; ## Public Key Coercion
-
-(defmulti public-key
-  "Determines the public PGP key associated with the argument."
-  class)
-
-(defmethod public-key PGPPublicKey
-  [^PGPPublicKey pubkey]
-  pubkey)
-
-(defmethod public-key PGPSecretKey
-  [^PGPSecretKey seckey]
-  (.getPublicKey seckey))
-
-(defmethod public-key PGPKeyPair
-  [^PGPKeyPair keypair]
-  (.getPublicKey keypair))
-
-(defmethod public-key PGPKeyRing
-  [^PGPKeyRing keyring]
-  (.getPublicKey keyring))
-
-(defmethod public-key PGPPublicKeyRingCollection
-  [^PGPPublicKeyRingCollection pubring]
-  (-> pubring .getKeyRings iterator-seq first public-key))
-
-(defmethod public-key PGPSecretKeyRingCollection
-  [^PGPSecretKeyRingCollection secring]
-  (-> secring .getKeyRings iterator-seq first public-key))
-
-
-
-;; ## Secret Key Coercion
-
-(defmulti secret-key
-  "Determines the secret PGP key associated with the argument."
-  class)
-
-(defmethod secret-key PGPSecretKey
-  [^PGPSecretKey seckey]
-  seckey)
-
-(defmethod secret-key PGPSecretKeyRing
-  [^PGPSecretKeyRing secring]
-  (.getSecretKey secring))
-
-(defmethod secret-key PGPSecretKeyRingCollection
-  [^PGPSecretKeyRingCollection secring]
-  (-> secring .getKeyRings iterator-seq first secret-key))
-
-
-
 ;; ## Key Identity Coercion
 
 (defmulti ^Long key-id
@@ -122,6 +70,7 @@
 
 (defmethod key-algorithm nil [_] nil)
 
+; TODO: this should validate the keyword.
 (defmethod key-algorithm clojure.lang.Keyword [kw] kw)
 
 (defmethod key-algorithm Number
@@ -134,7 +83,7 @@
 
 (defmethod key-algorithm PGPSecretKey
   [^PGPSecretKey seckey]
-  (key-algorithm (public-key seckey)))
+  (key-algorithm (.getPublicKey seckey)))
 
 (defmethod key-algorithm PGPPrivateKey
   [^PGPPrivateKey privkey]
@@ -142,7 +91,27 @@
 
 (defmethod key-algorithm PGPKeyPair
   [^PGPKeyPair keypair]
-  (key-algorithm (public-key keypair)))
+  (key-algorithm (.getPublicKey keypair)))
+
+
+
+;; ## Public Key Coercion
+
+(defmulti public-key
+  "Determines the public PGP key associated with the argument."
+  class)
+
+(defmethod public-key PGPPublicKey
+  [^PGPPublicKey pubkey]
+  pubkey)
+
+(defmethod public-key PGPSecretKey
+  [^PGPSecretKey seckey]
+  (.getPublicKey seckey))
+
+(defmethod public-key PGPKeyPair
+  [^PGPKeyPair keypair]
+  (.getPublicKey keypair))
 
 
 

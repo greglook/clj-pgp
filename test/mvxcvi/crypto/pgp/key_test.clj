@@ -46,17 +46,8 @@
 
 
 (facts "public-key coercion"
-  (fact "secret keyrings give first public key"
-    (pgp/public-key test-keys/secring) => (partial instance? PGPPublicKey))
   (fact "public keys return themselves"
     (pgp/public-key pubkey) => pubkey))
-
-
-(facts "secret-key coercion"
-    (fact "secret keyrings give first secret key"
-      (pgp/secret-key test-keys/secring) => (partial instance? PGPSecretKey))
-    (fact "secret keys return themselves"
-      (pgp/secret-key seckey) => seckey))
 
 
 (facts "secret-key unlocking"

@@ -8,10 +8,9 @@
 
 (import-vars
   (mvxcvi.crypto.pgp.key
-    public-key
-    secret-key
     key-id
     key-algorithm
+    public-key
     unlock-key
     key-info)
   (mvxcvi.crypto.pgp.keyring

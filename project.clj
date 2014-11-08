@@ -29,5 +29,5 @@
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}
 
-  :profiles {:dev {:dependencies [[org.clojure/clojure "1.6.0"]]}
-             :test {:dependencies [[midje "1.6.3"]]}})
+  :profiles {:dev {:dependencies [[midje "1.6.3"]
+                                  [org.clojure/clojure "1.6.0"]]}})
