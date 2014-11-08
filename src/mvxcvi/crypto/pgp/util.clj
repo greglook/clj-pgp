@@ -21,7 +21,27 @@
       BcPGPDigestCalculatorProvider)))
 
 
-;; ## Key Identity Coercion
+;; ## Public Key Coercion
+
+(defmulti public-key
+  "Returns the PGP public key associated with the argument."
+  class)
+
+(defmethod public-key PGPPublicKey
+  [^PGPPublicKey pubkey]
+  pubkey)
+
+(defmethod public-key PGPSecretKey
+  [^PGPSecretKey seckey]
+  (.getPublicKey seckey))
+
+(defmethod public-key PGPKeyPair
+  [^PGPKeyPair keypair]
+  (.getPublicKey keypair))
+
+
+
+;; ## Key Identity
 
 (defmulti ^Long key-id
   "Returns the numeric PGP key identifier for the given value."
@@ -61,25 +81,36 @@
 
 
 (defn hex-id
-  "Returns a PGP key id as a hexadecimal string."
+  "Returns the PGP key identifier for the given value as a hexadecimal string."
   [value]
   (format "%016x" (key-id value)))
 
 
-; TODO: hex-fingerprint
+(defn hex-fingerprint
+  "Returns the PGP key fingerprint as a hexadecimal string."
+  [value]
+  (let [^PGPPublicKey pubkey (public-key value)]
+    (->> (.getFingerprint pubkey)
+         (map (partial format "%02X"))
+         str/join)))
 
 
 
-;; ## Key Algorithm Coercion
+;; ## Key Algorithms
 
 (defmulti key-algorithm
-  "Returns a keyword identifying the PGP key algorithm used by the given value."
+  "Returns a keyword identifying the public-key algorithm used by the given
+  value."
   class)
 
 (defmethod key-algorithm nil [_] nil)
 
-; TODO: this should validate the keyword.
-(defmethod key-algorithm clojure.lang.Keyword [kw] kw)
+(defmethod key-algorithm clojure.lang.Keyword
+  [algorithm]
+  (when-not (contains? tags/public-key-algorithms algorithm)
+    (throw (IllegalArgumentException.
+             (str "Invalid public-key-algorithm name " algorithm))))
+  algorithm)
 
 (defmethod key-algorithm Number
   [code]
@@ -103,28 +134,9 @@
 
 
 
-;; ## Public Key Coercion
-
-(defmulti public-key
-  "Determines the public PGP key associated with the argument."
-  class)
-
-(defmethod public-key PGPPublicKey
-  [^PGPPublicKey pubkey]
-  pubkey)
-
-(defmethod public-key PGPSecretKey
-  [^PGPSecretKey seckey]
-  (.getPublicKey seckey))
-
-(defmethod public-key PGPKeyPair
-  [^PGPKeyPair keypair]
-  (.getPublicKey keypair))
-
-
-
 ;; ## Key Utilities
 
+; TODO: relocate this?
 (defn unlock-key
   "Decodes a secret key with a passphrase to obtain the private key."
   [^PGPSecretKey seckey
@@ -144,9 +156,7 @@
        :key-id (key-id pubkey)
        :strength (.getBitStrength pubkey)
        :algorithm (key-algorithm pubkey)
-       :fingerprint (->> (.getFingerprint pubkey)
-                         (map (partial format "%02X"))
-                         str/join)
+       :fingerprint (hex-fingerprint pubkey)
        :encryption-key? (.isEncryptionKey pubkey)
        :user-ids (-> pubkey .getUserIDs iterator-seq vec)}
 
