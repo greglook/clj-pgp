@@ -7,6 +7,7 @@
       [util :refer [hex-str]]))
   (:import
     (org.bouncycastle.openpgp
+      PGPKeyPair
       PGPKeyRing
       PGPPrivateKey
       PGPPublicKey
@@ -21,8 +22,6 @@
       BcPGPDigestCalculatorProvider)))
 
 
-; TODO: extend functions to PGPKeyPair
-
 ;; ## Public Key Coercion
 
 (defmulti public-key
@@ -36,6 +35,10 @@
 (defmethod public-key PGPSecretKey
   [^PGPSecretKey seckey]
   (.getPublicKey seckey))
+
+(defmethod public-key PGPKeyPair
+  [^PGPKeyPair keypair]
+  (.getPublicKey keypair))
 
 (defmethod public-key PGPKeyRing
   [^PGPKeyRing keyring]
@@ -93,6 +96,10 @@
   [^PGPSecretKey seckey]
   (.getKeyID seckey))
 
+(defmethod key-id PGPKeyPair
+  [^PGPKeyPair keypair]
+  (.getKeyID keypair))
+
 (defmethod key-id PGPPrivateKey
   [^PGPPrivateKey privkey]
   (.getKeyID privkey))
@@ -132,6 +139,10 @@
 (defmethod key-algorithm PGPPrivateKey
   [^PGPPrivateKey privkey]
   (key-algorithm (.getAlgorithm (.getPublicKeyPacket privkey))))
+
+(defmethod key-algorithm PGPKeyPair
+  [^PGPKeyPair keypair]
+  (key-algorithm (public-key keypair)))
 
 
 

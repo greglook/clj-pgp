@@ -66,6 +66,7 @@
 
 (defn- generate-keypair
   "Builds a new PGP keypair from a generator."
+  ^PGPKeyPair
   [^AsymmetricCipherKeyPairGenerator generator
    algorithm]
   (BcPGPKeyPair.
