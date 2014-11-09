@@ -34,6 +34,20 @@
     (pgp/key-id privkey) => 4557904421870553981))
 
 
+(facts "hex key-id"
+  (fact "nil returns nil"
+    (pgp/hex-id nil) => nil)
+  (fact "longs returns hex"
+    (pgp/hex-id 4557904421870553981) => "3f40edec41c6cb7d"))
+
+
+(facts "hex fingerprints"
+  (fact "nil returns nil"
+    (pgp/hex-fingerprint nil) => nil)
+  (fact "keys return hex strings"
+    (pgp/hex-fingerprint seckey) => "798A598943062D6C0D1D40F73F40EDEC41C6CB7D"))
+
+
 (facts "key-algorithm coercion"
   (fact "nil returns nil"
     (pgp/key-algorithm nil) => nil)
@@ -46,6 +60,8 @@
 
 
 (facts "public-key coercion"
+  (fact "nil returns nil"
+    (pgp/public-key nil) => nil)
   (fact "public keys return themselves"
     (pgp/public-key pubkey) => pubkey))
 
@@ -58,9 +74,11 @@
 
 
 (facts "key-info"
+  (fact "nil returns nil"
+    (pgp/key-info nil) => nil)
   (fact "keys return a map of attributes"
     (pgp/key-info test-keys/master-pubkey)
-    => (contains {:key-id -7909697412827827830
+    => (contains {:key-id "923b1c1c4392318a"
                   :fingerprint "4C0F256D432975418FAB3D7B923B1C1C4392318A"
                   :algorithm :rsa-general
                   :strength 1024
@@ -68,7 +86,7 @@
                   :encryption-key? true
                   :user-ids ["Test User <test@vault.mvxcvi.com>"]})
     (pgp/key-info seckey)
-    => (contains {:key-id 4557904421870553981
+    => (contains {:key-id "3f40edec41c6cb7d"
                   :fingerprint "798A598943062D6C0D1D40F73F40EDEC41C6CB7D"
                   :algorithm :rsa-general
                   :strength 1024

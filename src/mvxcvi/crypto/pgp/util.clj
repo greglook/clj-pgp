@@ -27,6 +27,8 @@
   "Returns the PGP public key associated with the argument."
   class)
 
+(defmethod public-key nil [_] nil)
+
 (defmethod public-key PGPPublicKey
   [^PGPPublicKey pubkey]
   pubkey)
@@ -83,13 +85,14 @@
 (defn hex-id
   "Returns the PGP key identifier for the given value as a hexadecimal string."
   [value]
-  (format "%016x" (key-id value)))
+  (when value
+    (format "%016x" (key-id value))))
 
 
 (defn hex-fingerprint
   "Returns the PGP key fingerprint as a hexadecimal string."
   [value]
-  (let [^PGPPublicKey pubkey (public-key value)]
+  (when-let [^PGPPublicKey pubkey (public-key value)]
     (->> (.getFingerprint pubkey)
          (map (partial format "%02X"))
          str/join)))
@@ -153,7 +156,7 @@
   (when-let [^PGPPublicKey pubkey (public-key k)]
     (cond->
       {:master-key? (.isMasterKey pubkey)
-       :key-id (key-id pubkey)
+       :key-id (hex-id pubkey)
        :strength (.getBitStrength pubkey)
        :algorithm (key-algorithm pubkey)
        :fingerprint (hex-fingerprint pubkey)

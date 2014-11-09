@@ -8,12 +8,13 @@
 
 (import-vars
   (mvxcvi.crypto.pgp.util
-    hex-id
-    key-id
     key-algorithm
+    key-id
+    hex-id
+    hex-fingerprint
+    key-info
     public-key
-    unlock-key
-    key-info)
+    unlock-key)
   (mvxcvi.crypto.pgp.keyring
     list-public-keys
     list-secret-keys
