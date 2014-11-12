@@ -69,7 +69,9 @@
   [& flags]
   (let [generator (PGPSignatureSubpacketGenerator.)]
     (when (seq flags)
-      (.setKeyFlags generator false (apply bit-or flags)))
+      (.setKeyFlags generator false (if (< 1 (count flags))
+                                      (apply bit-or flags)
+                                      (first flags))))
     generator))
 
 
@@ -169,7 +171,7 @@
     (.generate master-sig-gen)
     nil
     (BcPGPContentSignerBuilder.
-      (key-algorithm master-key)
+      (tags/public-key-algorithm (key-algorithm master-key))
       (tags/hash-algorithm :sha1))
     (secret-key-encryptor passphrase)))
 
