@@ -122,17 +122,11 @@
 (defn encrypt
   "Encrypts the given data source and returns an array of bytes with the
   encrypted value. Opts are as in encrypt-stream."
-  ([data pubkey]
-   (encrypt data pubkey nil))
-  ([data pubkey opt-key opt-val & opts]
-   (encrypt data pubkey
-            (assoc (apply hash-map opts)
-                   opt-key opt-val)))
-  ([data pubkey opts]
-   (let [buffer (ByteArrayOutputStream.)]
-     (with-open [stream (encrypt-stream buffer pubkey opts)]
-       (io/copy (bytes/to-input-stream data) stream))
-     (.toByteArray buffer))))
+  [data pubkey opts]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [stream (encrypt-stream buffer pubkey opts)]
+      (io/copy (bytes/to-input-stream data) stream))
+    (.toByteArray buffer)))
 
 
 
