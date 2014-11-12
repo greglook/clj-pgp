@@ -31,7 +31,104 @@
       BcPGPKeyPair)))
 
 
-;; ## Key Generation
+;; ## KeyPair Generation
+
+(defn generate-keypair
+  "Builds a new PGP keypair from a generator."
+  ^PGPKeyPair
+  [^AsymmetricCipherKeyPairGenerator generator
+   algorithm]
+  (BcPGPKeyPair.
+    (tags/public-key-algorithm algorithm)
+    (.generateKeyPair generator)
+    (Date.)))
+
+
+(defn rsa-keypair-generator
+  "Constructs a new generator for RSA keypairs with the given bit strength.
+  Other parameters may be customized with keyword options."
+  ^RSAKeyPairGenerator
+  [strength & {:keys [exponent random certainty]
+               :or {exponent (BigInteger/valueOf 0x10001)
+                    random (SecureRandom.)
+                    certainty 80}}]
+  (doto (RSAKeyPairGenerator.)
+    (.init (RSAKeyGenerationParameters. exponent random strength certainty))))
+
+
+; TODO: elliptic curve keypairs
+
+
+
+;; ## Key Signatures
+
+(defn signature-subpacket-generator
+  "Constructs a new generator for key signature subpackets. The given flags
+  will be applied to the key."
+  ^PGPSignatureSubpacketGenerator
+  [& flags]
+  (let [generator (PGPSignatureSubpacketGenerator.)]
+    (when (seq flags)
+      (.setKeyFlags generator false (apply bit-or flags)))
+    generator))
+
+
+(defn master-signature-generator
+  "Constructs a signature subpacket generator for master keys."
+  []
+  (doto (signature-subpacket-generator
+          KeyFlags/SIGN_DATA
+          KeyFlags/CERTIFY_OTHER)
+    ; Request senders add additional checksums to the message (useful
+    ; when verifying unsigned messages).
+    (.setFeature false Features/FEATURE_MODIFICATION_DETECTION)))
+
+
+(defn signing-subkey-signature-generator
+  "Constructs a signature subpacket generator for signing subkeys."
+  []
+  (signature-subpacket-generator
+    KeyFlags/ENCRYPT_COMMS
+    KeyFlags/ENCRYPT_STORAGE))
+
+
+(defn encryption-subkey-signature-generator
+  "Constructs a signature subpacket generator for encryption subkeys."
+  []
+  (signature-subpacket-generator
+    KeyFlags/SIGN_DATA))
+
+
+(defmacro ^:private defpreference
+  "Builds a function which sets preferences on a signature generator for
+  secondary cryptographic algorithms to prefer."
+  [pref-type tag->code]
+  `(defn ~(symbol (str "prefer-" (str/lower-case pref-type) "-algorithms!"))
+     "Sets the list of preferred algorithms on a signature generator for
+     use when sending messages to the key."
+     [generator# & algorithms#]
+     (when (seq algorithms#)
+       (~(symbol (str ".setPreferred" pref-type "Algorithms"))
+         ; ^PGPSignatureSubpacketGenerator
+         generator#
+         false
+         (int-array (map ~tag->code algorithms#))))))
+
+(defpreference Symmetric   tags/symmetric-key-algorithm)
+(defpreference Hash        tags/hash-algorithm)
+(defpreference Compression tags/compression-algorithm)
+
+
+(defn set-key-expiration!
+  "Sets a key expiration time on a signature generator. The lifetime is
+  expressed as a number of seconds since the key creation time."
+  [^PGPSignatureSubpacketGenerator generator
+   ^long lifetime]
+  (.setKeyExpirationTime generator true lifetime))
+
+
+
+;; ## Keyring Construction
 
 (defn- digest-calculator
   "Constructs a new digest calculator for the given hash algorithm."
@@ -55,118 +152,125 @@
            (.toCharArray passphrase)))
 
 
-(defn- rsa-keypair-generator
-  "Constructs a new generator for RSA keypairs with the given bit strength.
-  Other parameters may be customized with keyword options."
-  ^RSAKeyPairGenerator
-  [strength & {:keys [exponent random certainty]
-               :or {exponent (BigInteger/valueOf 0x10001)
-                    random (SecureRandom.)
-                    certainty 80}}]
-  (doto (RSAKeyPairGenerator.)
-    (.init (RSAKeyGenerationParameters. exponent random strength certainty))))
-
-
-(defn- generate-keypair
-  "Builds a new PGP keypair from a generator."
-  ^PGPKeyPair
-  [^AsymmetricCipherKeyPairGenerator generator
-   algorithm]
-  (BcPGPKeyPair.
-    (tags/public-key-algorithm algorithm)
-    (.generateKeyPair generator)
-    (Date.)))
-
-
-(defn- signature-subpacket-generator
-  "Constructs a new generator for key signature subpackets. The given flags
-  will be applied to the key."
-  ^PGPSignatureSubpacketGenerator
-  [& flags]
-  (let [generator (PGPSignatureSubpacketGenerator.)]
-    (when (seq flags)
-      (.setKeyFlags generator false (apply bit-or flags)))
-    generator))
-
-
-(defn- prefer-algorithms!
-  "Sets preferences on a signature generator for secondary cryptographic
-  algorithms to use when messages are sent to a keypair."
-  [^PGPSignatureSubpacketGenerator generator
-   & {:as algorithms}]
-  (when-let [algos (:symmetric algorithms)]
-    (.setPreferredSymmetricAlgorithms
-      generator
-      false
-      (int-array (map tags/symmetric-key-algorithm algos))))
-  (when-let [algos (:hash algorithms)]
-    (.setPreferredHashAlgorithms
-      generator
-      false
-      (int-array (map tags/hash-algorithm algos))))
-  (when-let [algos (:compression algorithms)]
-    (.setPreferredCompressionAlgorithms
-      generator
-      false
-      (int-array (map tags/compression-algorithm algos)))))
-
-
 (defn keyring-generator
+  "Constructs a new generator for a keyring for a user-id, encrypted with the
+  given passphrase. The provided keypair will become the master key with any
+  options specified in the signature subpacket."
   ^PGPKeyRingGenerator
-  [^PGPKeyPair master-key
-   ^String user-id
-   ^String passphrase]
-  (let [master-sig-gen  ; Add a self-signature on the user-id.
-        (doto (signature-subpacket-generator
-                KeyFlags/SIGN_DATA
-                KeyFlags/CERTIFY_OTHER)
-          (prefer-algorithms!
-            :symmetric [:aes-256 :aes-192 :aes-128]
-            :hash [:sha512 :sha384 :sha256 :sha224 :sha1]
-            :compression [:zlib :bzip2 :zip :uncompressed])
-          ; Request senders add additional checksums to the message (useful
-          ; when verifying unsigned messages).
-          (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))]
-    (PGPKeyRingGenerator.
-      PGPSignature/POSITIVE_CERTIFICATION
-      master-key
-      user-id
-      (digest-calculator :sha1)
-      (.generate master-sig-gen)
-      nil
-      (BcPGPContentSignerBuilder.
-        (key-algorithm master-key)
-        (tags/hash-algorithm :sha1))
-      (secret-key-encryptor passphrase))))
+  [^String user-id
+   ^String passphrase
+   ^PGPKeyPair master-key
+   ^PGPSignatureSubpacketGenerator master-sig-gen]
+  (PGPKeyRingGenerator.
+    PGPSignature/POSITIVE_CERTIFICATION
+    master-key
+    user-id
+    (digest-calculator :sha1)
+    (.generate master-sig-gen)
+    nil
+    (BcPGPContentSignerBuilder.
+      (key-algorithm master-key)
+      (tags/hash-algorithm :sha1))
+    (secret-key-encryptor passphrase)))
 
 
-(defn add-encryption-subkey!
+(defn add-subkey!
+  "Adds a subkey and signature packet to a keyring genrator."
   [^PGPKeyRingGenerator generator
-   ^PGPKeyPair subkey]
-  (.addSubKey generator
-    subkey
-    (.generate (signature-subpacket-generator
-                 KeyFlags/ENCRYPT_COMMS
-                 KeyFlags/ENCRYPT_STORAGE))
-    nil))
-
-
-(defn add-signing-subkey!
-  [^PGPKeyRingGenerator generator
-   ^PGPKeyPair subkey]
-  (.addSubKey generator
-    subkey
-    (.generate (signature-subpacket-generator
-                 KeyFlags/SIGN_DATA))
-    nil))
+   ^PGPKeyPair subkey
+   ^PGPSignatureSubpacketGenerator sig-gen]
+  (.addSubKey generator subkey (.generate sig-gen) nil))
 
 
 (defn generate-keyrings
-  [user-id passphrase]
-  (let [kpg (rsa-keypair-generator 1024)
-        master-key (generate-keypair kpg :rsa-sign)
-        krg (keyring-generator master-key user-id passphrase)]
-    (add-encryption-subkey! krg (generate-keypair kpg :rsa-encrypt))
-    (add-signing-subkey! krg (generate-keypair kpg :rsa-sign))
-    {:public (.generatePublicKeyRing krg)
-     :secret (.generateSecretKeyRing krg)}))
+  "Generates both the public and secret keyrings from the given generator."
+  [^PGPKeyRingGenerator keyring-gen]
+  {:public (.generatePublicKeyRing keyring-gen)
+   :secret (.generateSecretKeyRing keyring-gen)})
+
+
+
+;; ## Keyring Specification
+
+(defn- group-key-spec
+  "Checks a single key specification, updating the map with either a master-key
+  or subkey entry."
+  [spec-map spec]
+  (when-not (list? spec)
+    (throw (IllegalArgumentException.
+             (str "Key specifications must be lists: " spec))))
+  (if (= 'master-key (first spec))
+    (if (:master spec-map)
+      (throw (IllegalArgumentException.
+               (str "Cannot specify multiple master-key specs: " spec)))
+      (assoc spec-map :master spec))
+    (update-in spec-map [:subkeys] conj spec)))
+
+
+(defn- subpacket->fn
+  [packet]
+  (when-not (list? packet)
+    (throw (IllegalArgumentException.
+             (str "Signature subpacket forms must be lists: " packet))))
+  (let [fns {'prefer-symmetric   `prefer-symmetric-algorithms!
+             'prefer-hash        `prefer-hash-algorithms!
+             'prefer-compression `prefer-compression-algorithms!
+             'expires            `set-key-expiration!}
+        [packet-type & args] packet]
+    (when-not (contains? fns packet-type)
+      (throw (IllegalArgumentException.
+               (str "Unknown signature subpacket type: " packet-type))))
+    (cons (fns packet-type) args)))
+
+
+(defn- keypair-with-signature-subpackets
+  "Standard form to create a list of keypair with a doto block around the
+  signature generator to apply the subpackets."
+  [sig-generator keypair sig-subpackets]
+  [(if (and (list? keypair) (= 'keypair (first keypair)))
+     (cons `generate-keypair (rest keypair))
+     keypair)
+   (if (seq sig-subpackets)
+     `(doto ~sig-generator
+        ~@(map subpacket->fn sig-subpackets))
+     sig-generator)])
+
+
+(defn- master-keyring-generator
+  "..."
+  [user-id passphrase key-spec]
+  (let [[keypair & sig-subpackets] (rest key-spec)]
+    `(keyring-generator
+       ~user-id ~passphrase
+       ~@(keypair-with-signature-subpackets
+           `(master-signature-generator)
+           keypair
+           sig-subpackets))))
+
+
+(defn- add-keyring-subkey
+  [[key-type keypair & sig-subpackets]]
+  (cons
+    `add-subkey!
+    (keypair-with-signature-subpackets
+      (case key-type
+        encryption-key `(encryption-subkey-signature-generator)
+        signing-key    `(signing-subkey-signature-generator)
+        (throw (IllegalArgumentException.
+                 (str "Unknown subkey type: " key-type))))
+      keypair
+      sig-subpackets)))
+
+
+(defmacro generate-keys
+  "Macro to generate keys with a mini-language to specify preferences and
+  subkeys."
+  [user-id passphrase & key-specs]
+  (let [spec-map (reduce group-key-spec {:subkeys []} key-specs)]
+    (when-not (:master spec-map)
+      (throw (IllegalArgumentException.
+               (str "No master-key specification provided in key-specs: " key-specs))))
+    `(generate-keyrings
+       (doto
+         ~(master-keyring-generator user-id passphrase (:master spec-map))
+         ~@(map add-keyring-subkey (:subkeys spec-map))))))
