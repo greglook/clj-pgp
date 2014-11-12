@@ -76,8 +76,8 @@
        (defn ~tag-name
          ~(str "Validate and coerce the argument into a " tag-name " tag code.")
          ^Integer
-         [value#]
-         (tag-code ~(str tag-name) ~tag-map value#)))))
+         [~'value]
+         (tag-code ~(str tag-name) ~tag-map ~'value)))))
 
 
 (deftags CompressionAlgorithmTags)
