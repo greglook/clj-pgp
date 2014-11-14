@@ -30,4 +30,5 @@
           :src-linenum-anchor-prefix "L"}
 
   :profiles {:dev {:dependencies [[midje "1.6.3"]
-                                  [org.clojure/clojure "1.6.0"]]}})
+                                  [org.clojure/clojure "1.6.0"]
+                                  [org.clojure/test.check "0.5.9"]]}})
