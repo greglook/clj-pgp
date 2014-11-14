@@ -101,8 +101,13 @@
             (keypair rsa :rsa-sign)
             (expires 3600))
           (encryption-key
-            (keypair rsa :rsa-encrypt)))]
-    keyrings => (contains {:public (partial instance? PGPPublicKeyRing)
-                           :secret (partial instance? PGPSecretKeyRing)})
+            (keypair rsa :rsa-encrypt)))
+        pubring (:public keyrings)
+        secring (:secret keyrings)]
+    pubring => (partial instance? PGPPublicKeyRing)
+    ;(pgp/list-public-keys pubring) => (three-of (partial instance? PGPPublicKey))
+
+    secring => (partial instance? PGPSecretKeyRing)
+    ;(pgp/list-secret-keys secring) => (three-of (partial instance? PGPSecretKey))
     ; TODO: more tests
     ))
