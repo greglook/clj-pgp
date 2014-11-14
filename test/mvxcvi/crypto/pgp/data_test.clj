@@ -21,9 +21,9 @@
       (let [data (.getBytes message)
             ciphertext (pgp/encrypt
                          data pubkey
-                         :algorithm algorithm
-                         :compress compress
-                         :armor armor)]
+                         {:algorithm algorithm
+                          :compress compress
+                          :armor armor})]
         (fact "ciphertext bytes differ from data"
           ciphertext =not=> (partial bytes= data))
         (fact "decrypting the ciphertext returns plaintext"

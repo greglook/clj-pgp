@@ -2,7 +2,7 @@
   "Keyring functions."
   (:require
     [byte-streams :as bytes]
-    [mvxcvi.crypto.pgp.key :refer [key-id]])
+    [mvxcvi.crypto.pgp.util :refer [key-id]])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing

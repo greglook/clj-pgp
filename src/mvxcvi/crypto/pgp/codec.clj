@@ -3,7 +3,7 @@
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]
-    [mvxcvi.crypto.pgp.key :refer [key-info public-key]])
+    [mvxcvi.crypto.pgp.util :refer [hex-id public-key]])
   (:import
     (java.io
       ByteArrayOutputStream)
@@ -22,16 +22,16 @@
 
 (defmethod print-method PGPPublicKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPPublicKey " (key-info k) ">")))
+  (.write w (str "#<PGPPublicKey " (hex-id k) ">")))
 
 
 (defmethod print-method PGPSecretKey
   [k ^java.io.Writer w]
-  (.write w (str "#<PGPSecretKey " (key-info k) ">")))
+  (.write w (str "#<PGPSecretKey " (hex-id k) ">")))
 
 
 
-;; ## Encodin
+;; ## Encoding
 
 (defmulti encode
   "Encodes a PGP object into a byte sequence."
@@ -59,8 +59,8 @@
 ;; ## Decoding
 
 (defn decode
-  "Decodes PGP objects from an encoded data source. Returns a sequence of PGP
-  objects."
+  "Decodes PGP objects from an encoded data source. Returns a sequence of
+  decoded values."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream source))]

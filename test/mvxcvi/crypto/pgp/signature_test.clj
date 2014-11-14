@@ -8,7 +8,7 @@
 
 (facts "signature verification"
   (let [data "cryptography is neat"
-        sig (pgp/sign data :sha1 privkey)]
+        sig (pgp/sign data privkey)]
     (fact "signature key-id matches key"
       (pgp/key-id sig) => (pgp/key-id privkey))
     (fact "verification with the wrong public key throws error"
@@ -20,7 +20,7 @@
 
 (facts "signature encoding"
   (let [data "very important data to trust"
-        sig (pgp/sign data :sha1 privkey)
+        sig (pgp/sign data privkey)
         binary (pgp/encode sig)
         sig' (pgp/decode-signature binary)]
     (fact "binary representation is canonical"

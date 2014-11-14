@@ -4,9 +4,8 @@
     [byte-streams :as bytes]
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
-      [key :refer [key-id public-key]]
       [tags :as tags]
-      [util :refer [read-pgp-objects]]))
+      [util :refer [key-id public-key]]))
   (:import
     (java.io
       ByteArrayOutputStream
@@ -24,12 +23,23 @@
       PGPEncryptedDataList
       PGPLiteralData
       PGPLiteralDataGenerator
+      PGPObjectFactory
       PGPPublicKeyEncryptedData
       PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
       BcPGPDataEncryptorBuilder
       BcPublicKeyDataDecryptorFactory
       BcPublicKeyKeyEncryptionMethodGenerator)))
+
+
+;; ## IO Utilities
+
+(defn- read-pgp-objects
+  "Decodes a lazy sequence of PGP objects from an input stream."
+  [^InputStream input]
+  (let [factory (PGPObjectFactory. input)]
+    (take-while some? (repeatedly #(.nextObject factory)))))
+
 
 
 ;; ## Data Encryption
@@ -112,17 +122,11 @@
 (defn encrypt
   "Encrypts the given data source and returns an array of bytes with the
   encrypted value. Opts are as in encrypt-stream."
-  ([data pubkey]
-   (encrypt data pubkey nil))
-  ([data pubkey opt-key opt-val & opts]
-   (encrypt data pubkey
-            (assoc (apply hash-map opts)
-                   opt-key opt-val)))
-  ([data pubkey opts]
-   (let [buffer (ByteArrayOutputStream.)]
-     (with-open [stream (encrypt-stream buffer pubkey opts)]
-       (io/copy (bytes/to-input-stream data) stream))
-     (.toByteArray buffer))))
+  [data pubkey opts]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [stream (encrypt-stream buffer pubkey opts)]
+      (io/copy (bytes/to-input-stream data) stream))
+    (.toByteArray buffer)))
 
 
 

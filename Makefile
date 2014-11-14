@@ -1,10 +1,11 @@
 # Documentation building.
 
-.PHONY: clean docs
+.PHONY: clean coverage docs
 
 
 clean:
 	rm -rf doc
+	lein clean
 
 
 doc:
@@ -15,6 +16,10 @@ doc:
 	cd $@ && git clean -fdx
 
 
-docs: doc
+coverage:
+	lein cloverage
+
+
+docs: | doc
 	rm -rf doc/api doc/marginalia
 	lein docs

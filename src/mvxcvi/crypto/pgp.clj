@@ -3,17 +3,18 @@
   (:require
     [potemkin :refer [import-vars]]
     (mvxcvi.crypto.pgp
-      codec data key keyring signature)))
+      codec data keyring signature util)))
 
 
 (import-vars
-  (mvxcvi.crypto.pgp.key
-    public-key
-    secret-key
-    key-id
+  (mvxcvi.crypto.pgp.util
     key-algorithm
-    unlock-key
-    key-info)
+    key-id
+    hex-id
+    hex-fingerprint
+    key-info
+    public-key
+    unlock-key)
   (mvxcvi.crypto.pgp.keyring
     list-public-keys
     list-secret-keys

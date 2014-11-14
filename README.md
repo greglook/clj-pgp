@@ -11,7 +11,10 @@ clj-pgp
 [![Dependency Status](https://www.versioneye.com/user/projects/53718e1914c1581079000056/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.6.0-SNAPSHOT)
 **develop**
 
-This is a clojure wrapper for the Bouncy Castle OpenPGP library.
+This is a Clojure library which wraps the Bouncy Castle OpenPGP implementation.
+API documentation can be found [here](https://greglook.github.io/clj-pgp/api/),
+along with a [literate view](https://greglook.github.io/clj-pgp/marginalia/toc.html)
+of the code.
 
 ## Usage
 
@@ -20,11 +23,16 @@ Leiningen, add the following dependency to your project definition:
 
 [![Clojars Project](http://clojars.org/mvxcvi/clj-pgp/latest-version.svg)](http://clojars.org/mvxcvi/clj-pgp)
 
-The main interface to the library is the `mvxcvi.crypto.pgp` namespace.
+The main interface to the library is the `mvxcvi.crypto.pgp` namespace, which
+provides a high-level API for working with PGP keys and data.
 
-### Keys
+### PGP Keys
 
-The library contains many functions for working with and inspecting PGP keys.
+PGP stores keys in _keyrings_, which are collections of related asymmetric keys.
+Public keyrings store just the public key from each keypair, and may store keys
+for other people as well as keys controlled by the user. Secret keyrings store
+both the public and private parts of a keypair, encrypted with a secret
+passphrase.
 
 ```clojure
 (require
@@ -32,33 +40,29 @@ The library contains many functions for working with and inspecting PGP keys.
   '[mvxcvi.crypto.pgp :as pgp])
 
 (def keyring
-  (-> "mvxcvi/crypto/pgp/test-keys/secring.gpg"
-      io/resource
-      io/file
-      pgp/load-secret-keyring))
+  (pgp/load-secret-keyring (io/file "~/.gpg/secring.gpg")))
 
 (pgp/list-public-keys keyring)
-; => (#<PGPPublicKey {...}> #<PGPPublicKey {...}>)
+=> (#<PGPPublicKey {...}> #<PGPPublicKey {...}>)
 
 (def pubkey (first *1))
 
 (pgp/key-id pubkey)
-; => -7909697412827827830
+=> -7909697412827827830
 
 (def seckey (pgp/get-secret-key keyring *1))
 
 (pgp/key-algorithm seckey)
-; => :rsa-general
+=> :rsa-general
 
-(= (pgp/key-info pubkey)
-   {:master-key? true,
+(pgp/key-info pubkey)
+=> {:master-key? true,
     :key-id "923b1c1c4392318a",
     :strength 1024,
     :algorithm :rsa-general,
     :fingerprint "4C0F256D432975418FAB3D7B923B1C1C4392318A",
     :encryption-key? true,
-    :user-ids ["Test User <test@vault.mvxcvi.com>"]})
-; => true
+    :user-ids ["Test User <test@mvxcvi.com>"]}
 ```
 
 ### Data Encryption
@@ -108,26 +112,30 @@ which will wrap output and input streams, respectively.
 
 ### Signatures
 
-The library also provides support for signature generation and verification.
+PGP keys can be used to sign data by hashing it and encrypting the hash with the
+_private_ key. Later, the signature can be verified by decrypting it with the
+public key and comparing it with the hash of the data.
 
 ```clojure
 (def privkey (pgp/unlock-key seckey "test password"))
-(def sig (pgp/sign content :sha1 privkey))
+(def sig (pgp/sign content privkey))
 
 (= (pgp/key-id sig) (pgp/key-id privkey))
-; => true
+=> true
 
 (pgp/verify content sig pubkey)
-; => true
+=> true
 ```
 
 ### Serialization
 
-The library provides functions for encoding in both binary and ASCII formats.
+The library provides functions for encoding PGP objects in both binary and ASCII
+formats. The ASCII format is sometimes referred to as an "armored" encoding
+because it is intended to be transmissible through email.
 
 ```clojure
 (pgp/encode sig)
-; => #<byte[] [B@51e4232>
+=> #<byte[] [B@51e4232>
 
 (print (pgp/encode-ascii pubkey))
 ;; -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -141,18 +149,8 @@ The library provides functions for encoding in both binary and ASCII formats.
 
 (let [ascii (pgp/encode-ascii pubkey)]
   (= ascii (pgp/encode-ascii (pgp/decode-public-key ascii))))
-; => true
+=> true
 ```
-
-## Work in Progress
-
-There's a number of additional features that this library should support:
-- Keypair generation is a big one.
-- Better keyring functionality, including writing keyrings.
-- Key signing and verification, web-of-trust stuff.
-- Encrypting data packets for multiple public key recipients.
-- Encrypting very large streams which get chunked into multiple literal data packets.
-- More formalization and/or some example private key provider functions.
 
 ## License
 

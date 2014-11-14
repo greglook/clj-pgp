@@ -14,8 +14,9 @@
             [lein-marginalia "0.8.0"]]
 
   :dependencies [[byte-streams "0.1.13"]
-                 [potemkin "0.3.11"]
-                 [org.bouncycastle/bcpg-jdk15on "1.51"]]
+                 [org.bouncycastle/bcpg-jdk15on "1.51"]
+                 [org.bouncycastle/bcprov-jdk15on "1.51"]
+                 [potemkin "0.3.11"]]
 
   :hiera {:path "doc/ns-hiera.png"
           :cluster-depth 3}
@@ -28,5 +29,5 @@
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}
 
-  :profiles {:dev {:dependencies [[org.clojure/clojure "1.6.0"]]}
-             :test {:dependencies [[midje "1.6.3"]]}})
+  :profiles {:dev {:dependencies [[midje "1.6.3"]
+                                  [org.clojure/clojure "1.6.0"]]}})
