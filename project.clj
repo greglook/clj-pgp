@@ -7,7 +7,8 @@
   :deploy-branches ["master"]
 
   :aliases {"docs" ["do" ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"] ["hiera"]]
-            "tests" ["do" ["check"] ["test"] ["cloverage"]]}
+            "tests" ["do" ["check"] ["test"] ["cloverage"]]
+            "test-check" ["run" "-m" "mvxcvi.crypto.pgp.generate-test"]}
 
   :plugins [[codox "0.8.10"]
             [lein-cloverage "1.0.2"]
