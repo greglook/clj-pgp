@@ -3,7 +3,7 @@
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
       [tags :as tags]
-      [util :refer [key-algorithm]]))
+      [util :refer [arg-seq key-algorithm]]))
   (:import
     java.security.SecureRandom
     java.util.Date
@@ -109,12 +109,11 @@
      "Sets the list of preferred algorithms on a signature generator for
      use when sending messages to the key."
      [generator# & algorithms#]
-     (when (seq algorithms#)
+     (when-let [prefs# (arg-seq algorithms#)]
        (~(symbol (str ".setPreferred" pref-type "Algorithms"))
-         ; ^PGPSignatureSubpacketGenerator
-         generator#
+         ^PGPSignatureSubpacketGenerator generator#
          false
-         (int-array (map ~tag->code algorithms#))))))
+         (int-array (map ~tag->code prefs#))))))
 
 (defpreference Symmetric   tags/symmetric-key-algorithm)
 (defpreference Hash        tags/hash-algorithm)
@@ -158,7 +157,6 @@
   "Constructs a new generator for a keyring for a user-id, encrypted with the
   given passphrase. The provided keypair will become the master key with any
   options specified in the signature subpacket."
-  ^PGPKeyRingGenerator
   [^String user-id
    ^String passphrase
    ^PGPKeyPair master-key
