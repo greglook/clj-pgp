@@ -75,30 +75,27 @@
     generator))
 
 
-(defn master-signature-generator
-  "Constructs a signature subpacket generator for master keys."
-  []
-  (doto (signature-subpacket-generator
-          KeyFlags/SIGN_DATA
-          KeyFlags/CERTIFY_OTHER)
-    ; Request senders add additional checksums to the message (useful
-    ; when verifying unsigned messages).
-    (.setFeature false Features/FEATURE_MODIFICATION_DETECTION)))
+(defn signature-generator
+  "Constructs a signature subpacket generator with a preset mode. This can be
+  one of `:master`, `:signing`, or `:encryption`."
+  [mode]
+  (case mode
+    :master
+    (doto (signature-subpacket-generator
+            KeyFlags/SIGN_DATA
+            KeyFlags/CERTIFY_OTHER)
+      ; Request senders add additional checksums to the message (useful
+      ; when verifying unsigned messages).
+      (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
 
+    :signing
+    (signature-subpacket-generator
+      KeyFlags/ENCRYPT_COMMS
+      KeyFlags/ENCRYPT_STORAGE)
 
-(defn signing-subkey-signature-generator
-  "Constructs a signature subpacket generator for signing subkeys."
-  []
-  (signature-subpacket-generator
-    KeyFlags/ENCRYPT_COMMS
-    KeyFlags/ENCRYPT_STORAGE))
-
-
-(defn encryption-subkey-signature-generator
-  "Constructs a signature subpacket generator for encryption subkeys."
-  []
-  (signature-subpacket-generator
-    KeyFlags/SIGN_DATA))
+    :encryption
+    (signature-subpacket-generator
+      KeyFlags/SIGN_DATA)))
 
 
 (defmacro ^:private defpreference
@@ -237,13 +234,12 @@
 
 
 (defn- master-keyring-generator
-  "..."
   [user-id passphrase key-spec]
   (let [[keypair & sig-subpackets] (rest key-spec)]
     `(keyring-generator
        ~user-id ~passphrase
        ~@(keypair-with-signature-subpackets
-           `(master-signature-generator)
+           `(signature-generator :master)
            keypair
            sig-subpackets))))
 
@@ -254,10 +250,8 @@
     `add-subkey!
     (keypair-with-signature-subpackets
       (case key-type
-        encryption-key `(encryption-subkey-signature-generator)
-        signing-key    `(signing-subkey-signature-generator)
-        (throw (IllegalArgumentException.
-                 (str "Unknown subkey type: " key-type))))
+        encryption-key `(signature-generator :encryption)
+        signing-key    `(signature-generator :signing))
       keypair
       sig-subpackets)))
 
