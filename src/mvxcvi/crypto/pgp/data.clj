@@ -5,7 +5,7 @@
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
       [tags :as tags]
-      [util :refer [key-id public-key]]))
+      [util :refer [key-id public-key private-key]]))
   (:import
     (java.io
       ByteArrayOutputStream
@@ -169,7 +169,7 @@
                  (find-data get-privkey))]
     (->
       encrypted-data
-      (.getDataStream (BcPublicKeyDataDecryptorFactory. privkey))
+      (.getDataStream (BcPublicKeyDataDecryptorFactory. (private-key privkey)))
       read-pgp-objects
       first
       (as-> object

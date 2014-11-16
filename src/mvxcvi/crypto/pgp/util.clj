@@ -68,6 +68,38 @@
 
 
 
+;; ## Private Key Coercion
+
+(defmulti private-key
+  "Returns the PGP private key associated with the argument."
+  class)
+
+(defmethod private-key nil [_] nil)
+
+(defmethod private-key PGPPrivateKey
+  [^PGPPrivateKey privkey]
+  privkey)
+
+(defmethod private-key PGPKeyPair
+  [^PGPKeyPair keypair]
+  (.getPrivateKey keypair))
+
+
+
+;; ## Secret Key Coercion
+
+(defmulti secret-key
+  "Returns the PGP secret key associated with the argument."
+  class)
+
+(defmethod secret-key nil [_] nil)
+
+(defmethod secret-key PGPSecretKey
+  [^PGPSecretKey seckey]
+  seckey)
+
+
+
 ;; ## Key Identity
 
 (defmulti ^Long key-id
