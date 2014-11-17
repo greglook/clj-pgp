@@ -86,20 +86,6 @@
 
 
 
-;; ## Secret Key Coercion
-
-(defmulti secret-key
-  "Returns the PGP secret key associated with the argument."
-  class)
-
-(defmethod secret-key nil [_] nil)
-
-(defmethod secret-key PGPSecretKey
-  [^PGPSecretKey seckey]
-  seckey)
-
-
-
 ;; ## Key Identity
 
 (defmulti ^Long key-id
@@ -196,7 +182,6 @@
 
 ;; ## Key Utilities
 
-; TODO: relocate this?
 (defn unlock-key
   "Decodes a secret key with a passphrase to obtain the private key."
   [^PGPSecretKey seckey

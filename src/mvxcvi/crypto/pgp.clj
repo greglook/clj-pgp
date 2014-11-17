@@ -15,7 +15,6 @@
     key-info
     public-key
     private-key
-    secret-key
     unlock-key)
   (mvxcvi.crypto.pgp.keyring
     list-public-keys
