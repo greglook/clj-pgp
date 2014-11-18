@@ -1,9 +1,10 @@
-(ns mvxcvi.crypto.pgp.signature-test
+(ns mvxcvi.crypto.pgp.test.signing
   (:require
     [byte-streams :refer [bytes=]]
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.test-keys :refer [master-pubkey pubkey privkey]]))
+    [mvxcvi.crypto.pgp.test.keys :as test-keys
+     :refer [master-pubkey pubkey privkey]]))
 
 
 (facts "signature verification"

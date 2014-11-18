@@ -1,12 +1,13 @@
-(ns mvxcvi.crypto.pgp.key-test
+(ns mvxcvi.crypto.pgp.test.key-utils
   (:require
     [byte-streams :refer [bytes=]]
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
     (mvxcvi.crypto.pgp
       [generate :as pgp-gen]
-      [tags :as tags]
-      [test-keys :as test-keys :refer [privkey pubkey pubring seckey secring]]))
+      [tags :as tags])
+    [mvxcvi.crypto.pgp.test.keys :as test-keys
+     :refer [privkey pubkey pubring seckey secring]])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
