@@ -70,7 +70,7 @@
 
 (def keypair-encryption-property
   (prop/for-all
-    [key-algo (gen/elements [:rsa-encrypt])
+    [key-algo (gen/elements [:rsa-encrypt :rsa-general])
      strength (gen/elements [512 1024 2048])
      data     gen/bytes
      zip-algo (gen/elements (cons nil (keys tags/compression-algorithms)))
