@@ -9,8 +9,8 @@
     (mvxcvi.crypto.pgp
       [generate :as pgp-gen]
       [tags :as tags])
-    [mvxcvi.crypto.pgp.test.keys :as test-keys
-     :refer [master-pubkey pubkey privkey]]))
+    [mvxcvi.crypto.pgp.test.keys :refer
+     [master-pubkey pubkey privkey spec->keypair gen-rsa-keyspec]]))
 
 
 (facts "signature verification"
@@ -42,31 +42,14 @@
 
 ;; ## Generative Checks
 
-(defn gen-rsa-keyspec
-  "Returns a generator for RSA keys with the given algorithms."
-  [algos & [strengths]]
-  (gen/tuple
-    (gen/return :rsa)
-    (gen/elements algos)
-    (gen/elements (or strengths [1024 2048 4096]))))
-
-
-(defn spec->keypair
-  "Generates a keypair from a keyspec."
-  [[key-type & spec]]
-  (case key-type
-    :rsa (let [[algo strength] spec
-               rsa (pgp-gen/rsa-keypair-generator strength)]
-           (pgp-gen/generate-keypair rsa algo))))
-
-
 (defn test-signing-keypair
   "Tests that signing data with the given keypair results in a verifiable
   signature."
-  [keypair data hash-algo]
-  (facts (str (pgp/key-algorithm keypair) " keypair signing "
+  [keyspec data hash-algo]
+  (facts (str "Keypair " (pr-str keyspec) " signing "
               (count data) " bytes with " hash-algo)
-    (let [sig (pgp/sign data keypair hash-algo)]
+    (let [keypair (spec->keypair keyspec)
+          sig (pgp/sign data keypair hash-algo)]
       (fact "signature key-id matches key"
         (pgp/key-id sig) => (pgp/key-id keypair))
       (fact "verification with the wrong public key throws error"
@@ -83,17 +66,15 @@
 
 
 (def keypair-signing-property
-  (prop/for-all
-    [key-spec  (gen-rsa-keyspec [:rsa-sign :rsa-general] [1024 2048 4096])
-     data      gen/bytes
-     hash-algo (gen/elements [:md5 :sha1 :sha256 :sha512])]
-    (test-signing-keypair
-      (spec->keypair key-spec)
-      data hash-algo)))
+  (prop/for-all*
+    [(gen-rsa-keyspec [:rsa-sign :rsa-general] [1024 2048 4096])
+     gen/bytes
+     (gen/elements [:md5 :sha1 :sha256 :sha512])]
+    test-signing-keypair))
 
 
 (facts "Generative signature testing"
   (test-signing-keypair
-    (spec->keypair [:rsa :rsa-sign 1024])
+    [:rsa :rsa-sign 1024]
     "Important message!"
     :sha1))
