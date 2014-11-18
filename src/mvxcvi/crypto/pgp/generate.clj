@@ -50,7 +50,7 @@
   ^RSAKeyPairGenerator
   [strength & {:keys [exponent random certainty]
                :or {exponent (BigInteger/valueOf 0x10001)
-                    random (SecureRandom.)
+                    random (SecureRandom/getInstance "SHA1PRNG")
                     certainty 80}}]
   (doto (RSAKeyPairGenerator.)
     (.init (RSAKeyGenerationParameters. exponent random strength certainty))))
