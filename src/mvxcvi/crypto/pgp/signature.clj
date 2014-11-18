@@ -4,7 +4,7 @@
     [byte-streams :as bytes]
     (mvxcvi.crypto.pgp
       [tags :as tags]
-      [util :refer [hex-id key-algorithm key-id]]))
+      [util :as k]))
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -32,12 +32,12 @@
 (defn sign
   "Creates a PGP signature by the given key. The data is first hashed with the
   given algorithm, then the digest is signed by the private key."
-  [data ^PGPPrivateKey privkey & [hash-algo]]
+  [data privkey & [hash-algo]]
   (let [generator (PGPSignatureGenerator.
                     (BcPGPContentSignerBuilder.
-                      (tags/public-key-algorithm (key-algorithm privkey))
+                      (tags/public-key-algorithm (k/key-algorithm privkey))
                       (tags/hash-algorithm (or hash-algo :sha1))))]
-    (.init generator PGPSignature/BINARY_DOCUMENT privkey)
+    (.init generator PGPSignature/BINARY_DOCUMENT ^PGPPrivateKey (k/private-key privkey))
     (apply-bytes data
       (.update generator buffer 0 n))
     (.generate generator)))
@@ -46,18 +46,16 @@
 (defn verify
   "Verifies a PGP signature. Returns true if the data was signed by the private
   key matching the given public key."
-  [data
-   ^PGPSignature signature
-   ^PGPPublicKey pubkey]
-  (when-not (= (key-id signature) (key-id pubkey))
+  [data ^PGPSignature signature pubkey]
+  (when-not (= (k/key-id signature) (k/key-id pubkey))
     (throw (IllegalArgumentException.
              (str "Signature key id "
-                  (hex-id signature)
+                  (k/hex-id signature)
                   " doesn't match public key id "
-                  (hex-id pubkey)))))
+                  (k/hex-id pubkey)))))
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
-         pubkey)
+         ^PGPPublicKey (k/public-key pubkey))
   (apply-bytes data
     (.update signature buffer 0 n))
   (.verify signature))
