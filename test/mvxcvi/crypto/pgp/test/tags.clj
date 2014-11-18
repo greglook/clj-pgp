@@ -1,4 +1,4 @@
-(ns mvxcvi.crypto.pgp.tags-test
+(ns mvxcvi.crypto.pgp.test.tags
   (:require
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp.tags :as tags]))

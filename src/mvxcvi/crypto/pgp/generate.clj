@@ -3,7 +3,7 @@
     [clojure.string :as str]
     (mvxcvi.crypto.pgp
       [tags :as tags]
-      [util :refer [key-algorithm]]))
+      [util :refer [arg-seq key-algorithm]]))
   (:import
     java.security.SecureRandom
     java.util.Date
@@ -50,7 +50,7 @@
   ^RSAKeyPairGenerator
   [strength & {:keys [exponent random certainty]
                :or {exponent (BigInteger/valueOf 0x10001)
-                    random (SecureRandom.)
+                    random (SecureRandom/getInstance "SHA1PRNG")
                     certainty 80}}]
   (doto (RSAKeyPairGenerator.)
     (.init (RSAKeyGenerationParameters. exponent random strength certainty))))
@@ -75,30 +75,27 @@
     generator))
 
 
-(defn master-signature-generator
-  "Constructs a signature subpacket generator for master keys."
-  []
-  (doto (signature-subpacket-generator
-          KeyFlags/SIGN_DATA
-          KeyFlags/CERTIFY_OTHER)
-    ; Request senders add additional checksums to the message (useful
-    ; when verifying unsigned messages).
-    (.setFeature false Features/FEATURE_MODIFICATION_DETECTION)))
+(defn signature-generator
+  "Constructs a signature subpacket generator with a preset mode. This can be
+  one of `:master`, `:signing`, or `:encryption`."
+  [mode]
+  (case mode
+    :master
+    (doto (signature-subpacket-generator
+            KeyFlags/SIGN_DATA
+            KeyFlags/CERTIFY_OTHER)
+      ; Request senders add additional checksums to the message (useful
+      ; when verifying unsigned messages).
+      (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
 
+    :signing
+    (signature-subpacket-generator
+      KeyFlags/ENCRYPT_COMMS
+      KeyFlags/ENCRYPT_STORAGE)
 
-(defn signing-subkey-signature-generator
-  "Constructs a signature subpacket generator for signing subkeys."
-  []
-  (signature-subpacket-generator
-    KeyFlags/ENCRYPT_COMMS
-    KeyFlags/ENCRYPT_STORAGE))
-
-
-(defn encryption-subkey-signature-generator
-  "Constructs a signature subpacket generator for encryption subkeys."
-  []
-  (signature-subpacket-generator
-    KeyFlags/SIGN_DATA))
+    :encryption
+    (signature-subpacket-generator
+      KeyFlags/SIGN_DATA)))
 
 
 (defmacro ^:private defpreference
@@ -109,12 +106,11 @@
      "Sets the list of preferred algorithms on a signature generator for
      use when sending messages to the key."
      [generator# & algorithms#]
-     (when (seq algorithms#)
+     (when-let [prefs# (arg-seq algorithms#)]
        (~(symbol (str ".setPreferred" pref-type "Algorithms"))
-         ; ^PGPSignatureSubpacketGenerator
-         generator#
+         ^PGPSignatureSubpacketGenerator generator#
          false
-         (int-array (map ~tag->code algorithms#))))))
+         (int-array (map ~tag->code prefs#))))))
 
 (defpreference Symmetric   tags/symmetric-key-algorithm)
 (defpreference Hash        tags/hash-algorithm)
@@ -158,7 +154,6 @@
   "Constructs a new generator for a keyring for a user-id, encrypted with the
   given passphrase. The provided keypair will become the master key with any
   options specified in the signature subpacket."
-  ^PGPKeyRingGenerator
   [^String user-id
    ^String passphrase
    ^PGPKeyPair master-key
@@ -239,13 +234,12 @@
 
 
 (defn- master-keyring-generator
-  "..."
   [user-id passphrase key-spec]
   (let [[keypair & sig-subpackets] (rest key-spec)]
     `(keyring-generator
        ~user-id ~passphrase
        ~@(keypair-with-signature-subpackets
-           `(master-signature-generator)
+           `(signature-generator :master)
            keypair
            sig-subpackets))))
 
@@ -256,10 +250,8 @@
     `add-subkey!
     (keypair-with-signature-subpackets
       (case key-type
-        encryption-key `(encryption-subkey-signature-generator)
-        signing-key    `(signing-subkey-signature-generator)
-        (throw (IllegalArgumentException.
-                 (str "Unknown subkey type: " key-type))))
+        encryption-key `(signature-generator :encryption)
+        signing-key    `(signature-generator :signing))
       keypair
       sig-subpackets)))
 

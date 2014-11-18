@@ -14,6 +14,7 @@
     hex-fingerprint
     key-info
     public-key
+    private-key
     unlock-key)
   (mvxcvi.crypto.pgp.keyring
     list-public-keys

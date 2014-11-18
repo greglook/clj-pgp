@@ -5,7 +5,7 @@
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
       [tags :as tags]
-      [util :refer [key-id public-key]]))
+      [util :refer [key-id public-key private-key arg-map]]))
   (:import
     (java.io
       ByteArrayOutputStream
@@ -89,8 +89,10 @@
   ^OutputStream
   [^OutputStream output
    pubkey
-   opts]
-  (let [wrap-stream
+   & opts]
+  ; TODO: clean this up with a macro?
+  (let [opts (arg-map opts)
+        wrap-stream
         (fn [streams wrapper & args]
           (conj streams (apply wrapper (last streams) args)))
 
@@ -122,9 +124,9 @@
 (defn encrypt
   "Encrypts the given data source and returns an array of bytes with the
   encrypted value. Opts are as in encrypt-stream."
-  [data pubkey opts]
+  [data pubkey & opts]
   (let [buffer (ByteArrayOutputStream.)]
-    (with-open [stream (encrypt-stream buffer pubkey opts)]
+    (with-open [stream (encrypt-stream buffer pubkey (arg-map opts))]
       (io/copy (bytes/to-input-stream data) stream))
     (.toByteArray buffer)))
 
@@ -169,7 +171,7 @@
                  (find-data get-privkey))]
     (->
       encrypted-data
-      (.getDataStream (BcPublicKeyDataDecryptorFactory. privkey))
+      (.getDataStream (BcPublicKeyDataDecryptorFactory. (private-key privkey)))
       read-pgp-objects
       first
       (as-> object

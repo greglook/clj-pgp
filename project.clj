@@ -7,7 +7,8 @@
   :deploy-branches ["master"]
 
   :aliases {"docs" ["do" ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"] ["hiera"]]
-            "tests" ["do" ["check"] ["test"] ["cloverage"]]}
+            "tests" ["do" ["check"] ["test"] ["cloverage"]]
+            "fuzz" ["run" "-m" "mvxcvi.crypto.pgp.test.fuzz"]}
 
   :plugins [[codox "0.8.10"]
             [lein-cloverage "1.0.2"]
@@ -30,4 +31,5 @@
           :src-linenum-anchor-prefix "L"}
 
   :profiles {:dev {:dependencies [[midje "1.6.3"]
-                                  [org.clojure/clojure "1.6.0"]]}})
+                                  [org.clojure/clojure "1.6.0"]
+                                  [org.clojure/test.check "0.5.9"]]}})
