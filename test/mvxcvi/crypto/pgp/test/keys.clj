@@ -65,11 +65,11 @@
 
 (defn gen-rsa-keyspec
   "Returns a generator for RSA keys with the given algorithms."
-  [algos & [strengths]]
+  [algos strengths]
   (gen/tuple
     (gen/return :rsa)
     (gen/elements algos)
-    (gen/elements (or strengths [1024 2048 4096]))))
+    (gen/elements strengths)))
 
 
 (defn spec->keypair

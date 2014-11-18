@@ -36,7 +36,7 @@
 
 (def keypair-encryption-property
   (prop/for-all*
-    [(gen-rsa-keyspec [:rsa-encrypt :rsa-general] [512 1024 2048 4096])
+    [(gen-rsa-keyspec [:rsa-encrypt :rsa-general] [512 1024 2048])
      gen/bytes
      (gen/elements (cons nil (keys tags/compression-algorithms)))
      (gen/elements (remove #{:null :safer} (keys tags/symmetric-key-algorithms)))
@@ -48,4 +48,8 @@
   (test-encryption-keypair
     [:rsa :rsa-encrypt 1024]
     "Secret stuff to hide from prying eyes"
-    nil :aes-256 false))
+    nil :aes-128 false)
+  (test-encryption-keypair
+    [:rsa :rsa-general 4096]
+    "My hidden data files"
+    :zip :aes-256 true))

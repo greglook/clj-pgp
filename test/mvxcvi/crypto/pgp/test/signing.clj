@@ -67,7 +67,7 @@
 
 (def keypair-signing-property
   (prop/for-all*
-    [(gen-rsa-keyspec [:rsa-sign :rsa-general] [1024 2048 4096])
+    [(gen-rsa-keyspec [:rsa-sign :rsa-general] [1024 2048])
      gen/bytes
      (gen/elements [:md5 :sha1 :sha256 :sha512])]
     test-signing-keypair))
@@ -77,4 +77,12 @@
   (test-signing-keypair
     [:rsa :rsa-sign 1024]
     "Important message!"
-    :sha1))
+    :sha1)
+  (test-signing-keypair
+    [:rsa :rsa-sign 2048]
+    "Hello, world!"
+    :sha256)
+  (test-signing-keypair
+    [:rsa :rsa-general 4096]
+    "This needs protection"
+    :sha512))
