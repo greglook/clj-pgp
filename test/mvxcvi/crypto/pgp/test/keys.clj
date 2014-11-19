@@ -50,6 +50,7 @@
     (gen/choose 0 (count m))))
 
 
+#_
 (def gen-mastersig
   "Generator for master key signature generators."
   (gen/fmap
@@ -65,10 +66,9 @@
 
 (defn gen-rsa-keyspec
   "Returns a generator for RSA keys with the given algorithms."
-  [algos strengths]
-  (gen/tuple
-    (gen/return :rsa)
-    (gen/elements algos)
+  [strengths]
+  (gen/fmap
+    (partial vector :rsa :rsa-general)
     (gen/elements strengths)))
 
 

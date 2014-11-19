@@ -6,9 +6,7 @@
     [clojure.test.check.properties :as prop]
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    (mvxcvi.crypto.pgp
-      [generate :as pgp-gen]
-      [tags :as tags])
+    [mvxcvi.crypto.pgp.tags :as tags]
     [mvxcvi.crypto.pgp.test.keys :refer
      [spec->keypair gen-rsa-keyspec]]))
 
@@ -36,7 +34,7 @@
 
 (def keypair-encryption-property
   (prop/for-all*
-    [(gen-rsa-keyspec [:rsa-encrypt :rsa-general] [512 1024 2048])
+    [(gen-rsa-keyspec [1024 2048])
      gen/bytes
      (gen/elements (cons nil (keys tags/compression-algorithms)))
      (gen/elements (remove #{:null :safer} (keys tags/symmetric-key-algorithms)))

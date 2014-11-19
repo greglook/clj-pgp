@@ -6,9 +6,6 @@
     [byte-streams :refer [bytes=]]
     [midje.sweet :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    (mvxcvi.crypto.pgp
-      [generate :as pgp-gen]
-      [tags :as tags])
     [mvxcvi.crypto.pgp.test.keys :refer
      [master-pubkey pubkey privkey spec->keypair gen-rsa-keyspec]]))
 
@@ -67,7 +64,7 @@
 
 (def keypair-signing-property
   (prop/for-all*
-    [(gen-rsa-keyspec [:rsa-sign :rsa-general] [1024 2048])
+    [(gen-rsa-keyspec [1024 2048])
      gen/bytes
      (gen/elements [:md5 :sha1 :sha256 :sha512])]
     test-signing-keypair))
@@ -79,7 +76,7 @@
     "Important message!"
     :sha1)
   (test-signing-keypair
-    [:rsa :rsa-sign 2048]
+    [:rsa :rsa-general 2048]
     "Hello, world!"
     :sha256)
   (test-signing-keypair
