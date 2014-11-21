@@ -65,7 +65,7 @@
 (def keypair-signing-property
   (prop/for-all*
     [(gen-rsa-keyspec [1024 2048])
-     gen/bytes
+     (gen/not-empty gen/bytes)
      (gen/elements [:md5 :sha1 :sha256 :sha512])]
     test-signing-keypair))
 
