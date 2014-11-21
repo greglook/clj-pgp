@@ -141,13 +141,13 @@
   passphrase. The encryption algorithm and passphrase hash algorithm may be
   specified as optional keyword arguments."
   [^String passphrase
-   & {:keys [enc-algorithm pass-algorithm]
-      :or {enc-algorithm :aes-256
-           pass-algorithm :sha256}}]
+   & {:keys [enc-algo pass-algo]
+      :or {enc-algo :aes-256
+           pass-algo :sha256}}]
   (.build (BcPBESecretKeyEncryptorBuilder.
-             (tags/symmetric-key-algorithm :aes-256)
-             (digest-calculator :sha256))
-           (.toCharArray passphrase)))
+            (tags/symmetric-key-algorithm enc-algo)
+            (digest-calculator pass-algo))
+          (.toCharArray passphrase)))
 
 
 (defn keyring-generator
