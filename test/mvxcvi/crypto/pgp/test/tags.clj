@@ -1,36 +1,38 @@
 (ns mvxcvi.crypto.pgp.test.tags
   (:require
-    [midje.sweet :refer :all]
+    [clojure.test :refer :all]
     [mvxcvi.crypto.pgp.tags :as tags]))
 
 
-(defmacro check-tags
+(defmacro ^:private check-tags
   [tag-map]
-  `(fact ~(str "tag map " (name tag-map) " is well-formed")
-     ~tag-map =not=> empty?
-     (keys ~tag-map) => (has every? keyword?)
-     (vals ~tag-map) => (has every? number?)))
+  `(deftest ~(symbol (str "well-formed-" (name tag-map)))
+     (is (not (empty? ~tag-map))
+         "tag map is not empty")
+     (is (every? keyword? (keys ~tag-map))
+         "tag map keys are all keywords")
+     (is (every? integer? (vals ~tag-map))
+         "tag map values are integers")))
 
 
-(facts "tag maps"
-  (check-tags tags/compression-algorithms)
-  (check-tags tags/hash-algorithms)
-  (check-tags tags/public-key-algorithms)
-  (check-tags tags/symmetric-key-algorithms))
+(check-tags tags/compression-algorithms)
+(check-tags tags/hash-algorithms)
+(check-tags tags/public-key-algorithms)
+(check-tags tags/symmetric-key-algorithms)
 
 
-(facts "tag coercion"
-  (fact "keyword lookup returns numeric code"
-    (tags/compression-algorithm :bzip2) => 3)
-  (fact "numeric lookup returns numeric value"
-    (tags/compression-algorithm 1) => 1)
-  (fact "unknown tag throws exception"
-    (tags/compression-algorithm :foo)   => (throws IllegalArgumentException)
-    (tags/compression-algorithm 82)     => (throws IllegalArgumentException)
-    (tags/compression-algorithm "abcd") => (throws IllegalArgumentException)))
+(deftest tag-coercion
+  (is (= 3 (tags/compression-algorithm :bzip2))
+    "keyword lookup returns numeric code")
+  (is (= 1 (tags/compression-algorithm 1))
+      "numeric lookup returns numeric value")
+  (testing "unknown tag throws exception"
+    (are [v] (thrown? IllegalArgumentException
+                      (tags/compression-algorithm v))
+         :foo 82 "abcd")))
 
 
-(facts "tag lookup"
+(deftest tag-lookup
   (let [tag (first tags/public-key-algorithms)]
-    (fact "tag lookup by value returns key"
-      (tags/lookup tags/public-key-algorithms (val tag)) => (key tag))))
+    (is (= (key tag) (tags/lookup tags/public-key-algorithms (val tag)))
+        "tag lookup by value returns key")))

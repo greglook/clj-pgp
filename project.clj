@@ -30,8 +30,7 @@
           :src-linenum-anchor-prefix "L"}
 
   :profiles {:dev {:source-paths ["dev"]
-                   :dependencies [[midje "1.6.3"]
-                                  [org.clojure/clojure "1.6.0"]
+                   :dependencies [[org.clojure/clojure "1.6.0"]
                                   [org.clojure/test.check "0.5.9"]
                                   [org.clojure/tools.namespace "0.2.7"]]}
 
