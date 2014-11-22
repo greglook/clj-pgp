@@ -42,30 +42,31 @@
 (defn test-signing-keypair
   "Tests that signing data with the given keypair results in a verifiable
   signature."
-  [keyspec data hash-algo]
+  [keyspec test-data hash-algo]
   (facts (str "Keypair " (pr-str keyspec) " signing "
-              (count data) " bytes with " hash-algo)
-    (let [keypair (spec->keypair keyspec)
-          sig (pgp/sign data keypair hash-algo)]
-      (fact "signature key-id matches key"
-        (pgp/key-id sig) => (pgp/key-id keypair))
-      (fact "verification with the wrong public key throws error"
-        (pgp/verify data sig pubkey)
-        => (throws IllegalArgumentException))
-      (fact "verification with public key succeeds"
-        (pgp/verify data sig keypair) => true)
-      (let [binary (pgp/encode sig)
-            sig' (pgp/decode-signature binary)]
-        (fact "binary representation is canonical"
-          (pgp/encode sig') => (partial bytes= binary))
-        (fact "decoded signature can be verified"
-          (pgp/verify data sig' keypair) => true)))))
+         (count test-data) " blobs with " hash-algo)
+    (let [keypair (spec->keypair keyspec)]
+      (doseq [data test-data]
+        (let [sig (pgp/sign data keypair hash-algo)]
+          (fact "signature key-id matches key"
+            (pgp/key-id sig) => (pgp/key-id keypair))
+          (fact "verification with the wrong public key throws error"
+            (pgp/verify data sig pubkey)
+            => (throws IllegalArgumentException))
+          (fact "verification with public key succeeds"
+            (pgp/verify data sig keypair) => true)
+          (let [binary (pgp/encode sig)
+                sig' (pgp/decode-signature binary)]
+            (fact "binary representation is canonical"
+              (pgp/encode sig') => (partial bytes= binary))
+            (fact "decoded signature can be verified"
+              (pgp/verify data sig' keypair) => true)))))))
 
 
 (def keypair-signing-property
   (prop/for-all*
     [(gen-rsa-keyspec [1024 2048])
-     (gen/not-empty gen/bytes)
+     (-> gen/bytes gen/not-empty gen/vector gen/not-empty)
      (gen/elements [:md5 :sha1 :sha256 :sha512])]
     test-signing-keypair))
 
@@ -73,13 +74,13 @@
 (facts "Generative signature testing"
   (test-signing-keypair
     [:rsa :rsa-sign 1024]
-    "Important message!"
+    ["Important message!"]
     :sha1)
   (test-signing-keypair
     [:rsa :rsa-general 2048]
-    "Hello, world!"
+    ["Hello, world!"]
     :sha256)
   (test-signing-keypair
     [:rsa :rsa-general 4096]
-    "This needs protection"
+    ["This needs protection"]
     :sha512))
