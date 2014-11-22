@@ -251,7 +251,9 @@
     (keypair-with-signature-subpackets
       (case key-type
         encryption-key `(signature-generator :encryption)
-        signing-key    `(signature-generator :signing))
+        signing-key    `(signature-generator :signing)
+        (throw (IllegalArgumentException.
+                 (str "Unknown subkey type " key-type))))
       keypair
       sig-subpackets)))
 

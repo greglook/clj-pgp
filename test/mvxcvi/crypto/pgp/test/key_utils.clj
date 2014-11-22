@@ -3,9 +3,6 @@
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    (mvxcvi.crypto.pgp
-      [generate :as pgp-gen]
-      [tags :as tags])
     [mvxcvi.crypto.pgp.test.keys :as test-keys
      :refer [privkey pubkey pubring seckey secring]])
   (:import
@@ -157,43 +154,44 @@
 ;; ## Macro Expansion
 
 (deftest keyring-macro-generation
-  (is (thrown? Exception
-        (eval '(pgp-gen/generate-keys ..user-id.. ..passphrase..)))
+  (is (thrown? IllegalArgumentException
+        (eval '(mvxcvi.crypto.pgp/generate-keys
+                 ..user-id.. ..passphrase..)))
       "A master-key spec is required.")
 
-  (is (thrown? Exception
-        (eval '(pgp-gen/generate-keys
+  (is (thrown? IllegalArgumentException
+        (eval '(mvxcvi.crypto.pgp/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  (master-key ..keypair-2..))))
       "Multiple master-key specs are illegal.")
 
-  (is (thrown? Exception
-        (eval '(pgp-gen/generate-keys
+  (is (thrown? IllegalArgumentException
+        (eval '(mvxcvi.crypto.pgp/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  ..some-val..)))
       "Malformed subkey specs are illegal.")
 
   (is (thrown? Exception
-        (eval '(pgp-gen/generate-keys
+        (eval '(mvxcvi.crypto.pgp/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  (foobar-key ..keypair-2..))))
       "Unknown subkey spec types are illegal.")
 
   (is (thrown? Exception
-        (eval '(pgp-gen/generate-keys
-          ..user-id.. ..passphrase..
-          (master-key
-            ..keypair-1..
-            ..some-val..))))
+        (eval '(mvxcvi.crypto.pgp/generate-keys
+                 '..user-id.. '..passphrase..
+                 (master-key
+                   '..keypair-1..
+                   ..some-val..))))
       "Malformed signature subpackets are illegal.")
 
   (is (thrown? Exception
-        (eval '(pgp-gen/generate-keys
-                 ..user-id.. ..passphrase..
+        (eval '(mvxcvi.crypto.pgp/generate-keys
+                 '..user-id.. '..passphrase..
                  (master-key
-                   ..keypair-1..
+                   '..keypair-1..
                    (foobar-option ..arg..)))))
       "Unknown signature subpacket types are illegal."))
