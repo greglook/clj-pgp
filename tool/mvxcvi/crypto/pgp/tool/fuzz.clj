@@ -36,6 +36,8 @@
 
 
 (defn- report-checks
+  "Reports the results of running property checks by printing stats to
+  the output stream."
   [result]
   (printf
     "\n%s (%.3f sec @ %.1f cps)\n%s\n"
@@ -44,7 +46,38 @@
     (/ (:num-tests result) (:elapsed result) 0.001)
     (puget/cprint-str (dissoc result :title :elapsed)))
   (when (instance? Throwable (:result result))
-    (.printStackTrace (:result result))))
+    (.printStackTrace (:result result)))
+  (flush))
+
+
+(defn- worker-loop
+  "Creates a go-loop to pull jobs from and send reports to the given channels.
+  Sends a keyword of `::finish` when the jobs channel is closed."
+  [jobs results]
+  (async/go-loop []
+    (if-let [job (<! jobs)]
+      (do
+        (>! results (apply check-property job))
+        (recur))
+      (>! results ::finish))))
+
+
+(defn- publish-loop
+  "Creates a go-loop to publish check results from the given channel. Once it
+  has received n `::finish` keywords, the loop will exit. If a result does not
+  contain `true` for the `:result`, the system will exit with an error."
+  [n results]
+  (async/go-loop [active-workers n]
+    (when (pos? active-workers)
+      (when-let [result (<! results)]
+        (if (= result ::finish)
+          (recur (dec active-workers))
+          (do
+            (report-checks result)
+            (when-not (true? (:result result))
+              (println "\nGenerative tests failed!")
+              (System/exit 1))
+            (recur active-workers)))))))
 
 
 (defn -main
@@ -62,26 +95,9 @@
         job-queue (async/to-chan checks)
         results (async/chan)]
     (println "Running" (count check-templates) "property checks in" batches "batches of" n "iterations across" parallelism "threads")
-    (let [workers
-          (for [i (range parallelism)]
-            (async/go-loop []
-              (if-let [job (<! job-queue)]
-                (do
-                  (>! results (apply check-property job))
-                  (recur))
-                (>! results ::finish))))
-          reporter
-          (async/go-loop [active-workers parallelism]
-            (when (pos? active-workers)
-              (when-let [result (<! results)]
-                (if (= result ::finish)
-                  (recur (dec active-workers))
-                  (do
-                    (report-checks result)
-                    (when-not (true? (:result result))
-                      (println "\nGenerative tests failed!")
-                      (System/exit 1))
-                    (recur active-workers))))))]
+    (let [workers (for [i (range parallelism)]
+                    (worker-loop job-queue results))
+          reporter (publish-loop parallelism results)]
       ; Wait for workers to exit.
       (doseq [w workers] (<!! w))
       ; Wait for reporter to close on receiving ::finish signals.

@@ -29,10 +29,11 @@
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}
 
-  :profiles {:dev {:source-paths ["dev"]
-                   :dependencies [[org.clojure/clojure "1.6.0"]
+  :profiles {:dev {:dependencies [[org.clojure/clojure "1.6.0"]
                                   [org.clojure/test.check "0.5.9"]
                                   [org.clojure/tools.namespace "0.2.7"]]}
+
+             :repl {:source-paths ["dev"]}
 
              :tool {:source-paths ["tool"]
                     :dependencies [[mvxcvi/puget "0.6.4"]
