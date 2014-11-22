@@ -42,7 +42,9 @@
     (:title result)
     (/ (:elapsed result) 1000.0)
     (/ (:num-tests result) (:elapsed result) 0.001)
-    (puget/cprint-str (dissoc result :title :elapsed))))
+    (puget/cprint-str (dissoc result :title :elapsed)))
+  (when (instance? Throwable (:result result))
+    (.printStackTrace (:result result))))
 
 
 (defn -main
@@ -76,7 +78,7 @@
                   (recur (dec active-workers))
                   (do
                     (report-checks result)
-                    (when-not (:result result)
+                    (when-not (true? (:result result))
                       (println "\nGenerative tests failed!")
                       (System/exit 1))
                     (recur active-workers))))))]

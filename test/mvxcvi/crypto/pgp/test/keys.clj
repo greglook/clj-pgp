@@ -74,8 +74,23 @@
 
 (defn spec->keypair
   "Generates a keypair from a keyspec."
-  [[key-type & spec]]
+  [[key-type & opts]]
   (case key-type
-    :rsa (let [[algo strength] spec
+    :rsa (let [[algo strength] opts
                rsa (pgp-gen/rsa-keypair-generator strength)]
            (pgp-gen/generate-keypair rsa algo))))
+
+
+(def key-cache
+  "Stores generated keys by their key-specs to memoize key generation calls."
+  (atom {}))
+
+
+(defn memospec->keypair
+  "Returns a keypair for a keyspec. Uses the key-cache var to memoize the
+  generated keys."
+  [spec]
+  (or (get @key-cache spec)
+      (let [k (spec->keypair spec)]
+        (swap! key-cache assoc spec k)
+        k)))
