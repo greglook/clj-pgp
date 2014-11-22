@@ -45,7 +45,10 @@
       "key ids match")
   (testing "hex strings return numeric value"
     (is (= -7909697412827827830 (pgp/key-id "923b1c1c4392318a")))
-    (is (=  4557904421870553981 (pgp/key-id "3f40edec41c6cb7d")))))
+    (is (=  4557904421870553981 (pgp/key-id "3f40edec41c6cb7d"))))
+  (is (thrown? IllegalArgumentException
+               (pgp/key-id (Object.)))
+      "unknown types return an error"))
 
 
 (deftest hex-key-id
@@ -72,7 +75,13 @@
          (pgp/key-algorithm pubkey)
          (pgp/key-algorithm seckey)
          (pgp/key-algorithm privkey))
-      "keys return keyword values"))
+      "keys return keyword values")
+  (is (thrown? IllegalArgumentException
+               (pgp/key-algorithm ::invalid-algo))
+      "unknown algorithms return an error")
+  (is (thrown? IllegalArgumentException
+               (pgp/key-algorithm (Object.)))
+      "unknown types return an error"))
 
 
 (deftest public-key-coercion
@@ -80,6 +89,13 @@
       "nil returns nil")
   (is (identical? pubkey (pgp/public-key pubkey))
       "public keys return themselves"))
+
+
+(deftest private-key-coercion
+  (is (nil? (pgp/private-key nil))
+      "nil returns nil")
+  (is (identical? privkey (pgp/private-key privkey))
+      "private keys return themselves"))
 
 
 (deftest secret-key-unlocking
