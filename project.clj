@@ -1,4 +1,4 @@
-(defproject mvxcvi/clj-pgp "0.6.0-SNAPSHOT"
+(defproject mvxcvi/clj-pgp "0.8.0-SNAPSHOT"
   :description "Wrapper for the Bouncy Castle OpenPGP library"
   :url "https://github.com/greglook/clj-pgp"
   :license {:name "Public Domain"
@@ -8,7 +8,7 @@
 
   :aliases {"docs" ["do" ["hiera"] ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"]]
             "tests" ["do" ["check"] ["test"] ["cloverage"]]
-            "fuzz" ["run" "-m" "mvxcvi.crypto.pgp.tool.fuzz"]}
+            "fuzz" ["with-profile" "+tool" "run" "-m" "mvxcvi.crypto.pgp.tool.fuzz"]}
 
   :plugins [[codox "0.8.10"]
             [lein-cloverage "1.0.2"]
@@ -31,7 +31,11 @@
 
   :profiles {:dev {:source-paths ["dev"]
                    :dependencies [[midje "1.6.3"]
-                                  [mvxcvi/puget "0.6.4"]
                                   [org.clojure/clojure "1.6.0"]
                                   [org.clojure/test.check "0.5.9"]
-                                  [org.clojure/tools.namespace "0.2.7"]]}})
+                                  [org.clojure/tools.namespace "0.2.7"]]}
+
+             :tool {:source-paths ["tool"]
+                    :dependencies [[mvxcvi/puget "0.6.4"]
+                                   [org.clojure/core.async "0.1.303.0-886421-alpha"]]
+                    :jvm-opts []}})
