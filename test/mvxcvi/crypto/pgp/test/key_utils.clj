@@ -112,6 +112,8 @@
          :algorithm :rsa-general
          :strength 1024
          :master-key? true
+         :created-at #inst "2013-12-27T18:42:31.000-00:00"
+         :revoked? false
          :encryption-key? true
          :user-ids ["Test User <test@vault.mvxcvi.com>"]}]
     (doseq [[k v] expected]
@@ -119,13 +121,15 @@
   (let [info (pgp/key-info seckey)
         expected
         {:key-id "3f40edec41c6cb7d"
-          :fingerprint "798A598943062D6C0D1D40F73F40EDEC41C6CB7D"
-          :algorithm :rsa-general
-          :strength 1024
-          :master-key? false
-          :secret-key? true
-          :encryption-key? true
-          :signing-key? true}]
+         :fingerprint "798A598943062D6C0D1D40F73F40EDEC41C6CB7D"
+         :algorithm :rsa-general
+         :strength 1024
+         :master-key? false
+         :secret-key? true
+         :created-at #inst "2013-12-27T18:42:31.000-00:00"
+         :revoked? false
+         :encryption-key? true
+         :signing-key? true}]
     (doseq [[k v] expected]
       (is (= v (get info k))))))
 

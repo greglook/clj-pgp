@@ -5,6 +5,7 @@
     (mvxcvi.crypto.pgp
       [tags :as tags]))
   (:import
+    java.util.Date
     (org.bouncycastle.openpgp
       PGPKeyPair
       PGPKeyRing
@@ -202,8 +203,14 @@
        :strength (.getBitStrength pubkey)
        :algorithm (key-algorithm pubkey)
        :fingerprint (hex-fingerprint pubkey)
+       :created-at (.getCreationTime pubkey)
+       :revoked? (.isRevoked pubkey)
        :encryption-key? (.isEncryptionKey pubkey)
        :user-ids (-> pubkey .getUserIDs iterator-seq vec)}
+
+      (pos? (.getValidSeconds pubkey))
+      (assoc :expires-at (Date. (+ (.getTime (.getCreationTime pubkey))
+                                   (* 1000 (.getValidSeconds pubkey)))))
 
       (instance? PGPSecretKey k)
       (merge {:secret-key? true
