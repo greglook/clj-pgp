@@ -1,6 +1,7 @@
 (ns mvxcvi.crypto.pgp.test.encryption
   (:require
     [byte-streams :refer [bytes=]]
+    [clojure.java.io :as io]
     [clojure.test :refer :all]
     [clojure.test.check :as check]
     [clojure.test.check.generators :as gen]
@@ -8,7 +9,9 @@
     [mvxcvi.crypto.pgp :as pgp]
     [mvxcvi.crypto.pgp.tags :as tags]
     [mvxcvi.crypto.pgp.test.keys :refer
-     [memospec->keypair gen-rsa-keyspec]]))
+     [memospec->keypair gen-rsa-keyspec]])
+  (:import
+    java.io.ByteArrayOutputStream))
 
 
 (defn test-encryption-keypair
@@ -19,16 +22,31 @@
                 (count data) " bytes with " sym-algo
                 (when zip-algo (str " compressed with " zip-algo))
                 " encoded in " (if armor "ascii" "binary"))
-    (let [keypair (memospec->keypair keyspec)
-          ciphertext (pgp/encrypt
-                       data keypair
-                       :sym-algo sym-algo
-                       :zip-algo zip-algo
-                       :armor armor)]
-      (is (not (bytes= data ciphertext))
-          "ciphertext bytes differ from data")
-      (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
-          "decrypting the ciphertext returns plaintext"))))
+    (let [keypair (memospec->keypair keyspec)]
+      (testing "direct packet encryption"
+        (let [ciphertext (pgp/encrypt
+                           data keypair
+                           :sym-algo sym-algo
+                           :zip-algo zip-algo
+                           :armor armor)]
+          (is (not (bytes= data ciphertext))
+            "ciphertext bytes differ from data")
+          (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
+              "decrypting the ciphertext returns plaintext")))
+      (testing "stream encryption"
+        (let [buffer (ByteArrayOutputStream.)]
+          (with-open [crypt (pgp/encrypt-stream
+                              buffer [keypair]
+                              :buffer-size 512
+                              :sym-algo sym-algo
+                              :zip-algo zip-algo
+                              :armor armor)]
+            (io/copy data crypt))
+          (let [ciphertext (.toByteArray buffer)]
+            (is (not (bytes= data ciphertext))
+              "ciphertext bytes differ from data")
+            (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
+                "decrypting the ciphertext returns plaintext")))))))
 
 
 (def keypair-encryption-property
@@ -45,9 +63,9 @@
   (testing "Generative encryption testing"
     (test-encryption-keypair
       [:rsa :rsa-encrypt 1024]
-      ["Secret stuff to hide from prying eyes"]
+      "Secret stuff to hide from prying eyes"
       nil :aes-128 false)
     (test-encryption-keypair
       [:rsa :rsa-general 4096]
-      ["My hidden data files"]
+      "My hidden data files"
       :zip :aes-256 true)))
