@@ -68,5 +68,17 @@
                      (keypair rsa :rsa-general)))]
     (is (instance? PGPPublicKeyRing (:public keyrings)))
     (is (instance? PGPSecretKeyRing (:secret keyrings)))
-    ; TODO: test keys
-    ))
+    (let [[mk sk ek] (pgp/list-secret-keys (:secret keyrings))
+          mk-info (pgp/key-info mk)
+          sk-info (pgp/key-info sk)
+          ek-info (pgp/key-info ek)]
+      (is (:master-key? mk-info))
+      (is (not (:master-key? sk-info)))
+      (is (not (:master-key? ek-info)))
+      (is (= :rsa-general
+             (:algorithm mk-info)
+             (:algorithm sk-info)
+             (:algorithm ek-info)))
+      (is (:encryption-key? ek-info))
+      (is (:signing-key? sk-info))
+      (is (:expires-at sk-info)))))
