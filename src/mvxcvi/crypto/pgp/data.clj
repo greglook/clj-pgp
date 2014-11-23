@@ -5,7 +5,7 @@
     [clojure.java.io :as io]
     (mvxcvi.crypto.pgp
       [tags :as tags]
-      [util :refer [key-id public-key private-key arg-map]]))
+      [util :refer [key-id public-key private-key arg-coll arg-map]]))
   (:import
     (java.io
       ByteArrayOutputStream
@@ -32,13 +32,23 @@
       BcPublicKeyKeyEncryptionMethodGenerator)))
 
 
-;; ## IO Utilities
+;; ## Utility Functions
 
 (defn- read-pgp-objects
   "Decodes a lazy sequence of PGP objects from an input stream."
   [^InputStream input]
   (let [factory (PGPObjectFactory. input)]
     (take-while some? (repeatedly #(.nextObject factory)))))
+
+
+
+;; ## Armor ASCII Encoding
+
+(defn armored-data-stream
+  "Wraps an `OutputStream` with an armored data stream. Packets written to this
+  stream will be output in ASCII encoded Base64."
+  [^OutputStream stream]
+  (ArmoredOutputStream. stream))
 
 
 (defn armor-data-packet
@@ -70,7 +80,6 @@
   - `:data-type` PGP document type, binary by default
   - `:filename` string giving the 'filename' of the data
   - `:mtime` modification time of the packet contents, defaults to the current time"
-  ^OutputStream
   [^OutputStream stream & opts]
   (let [{:keys [data-type filename ^Date mtime buffer-size]
          :or {buffer-size 4096
@@ -124,7 +133,6 @@
   "Wraps an `OutputStream` with a compressed data generator, returning another
   stream. Typically, literal data packets will be written to this stream, which
   are compressed and written to an underlying encryption stream."
-  ^OutputStream
   [^OutputStream stream zip-algo]
   (.open (PGPCompressedDataGenerator.
            (tags/compression-algorithm zip-algo))
@@ -142,7 +150,7 @@
   [data zip-algo]
   (let [data-bytes (bytes/to-byte-array data)
         buffer (ByteArrayOutputStream.)]
-    (with-open [packet-out (compressed-data-stream buffer zip-algo)]
+    (with-open [packet-out ^OutputStream (compressed-data-stream buffer zip-algo)]
       (io/copy data-bytes packet-out))
     (.toByteArray buffer)))
 
@@ -165,7 +173,7 @@
                       (tags/symmetric-key-algorithm sym-algo))
                     integrity-check (.setWithIntegrityPacket true)
                     random          (.setSecureRandom ^SecureRandom random)))]
-    (doseq [pubkey pubkeys]
+    (doseq [pubkey (arg-coll pubkeys)]
       (.addMethod enc-gen (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))
     enc-gen))
 
@@ -185,7 +193,6 @@
   - `:sym-algo` symmetric encryption algorithm to use for session key
   - `:integrity-check` whether to include a Modification Detection Code packet
   - `:random` custom random number generator"
-  ^OutputStream
   [^OutputStream stream pubkeys & opts]
   (let [opts (arg-map opts)
         enc-gen (encrypted-data-generator pubkeys opts)]
@@ -193,7 +200,7 @@
 
 
 (defn encrypt-data-packet
-  "Builds an encrypted data packet containing th egiven data. Returns a byte
+  "Builds an encrypted data packet containing the given data. Returns a byte
   array containing the encoded packet. Typically, the input consists of
   literal or compressed data packets.
 
@@ -218,48 +225,34 @@
 
 (defn encrypt-stream
   "Wraps the given output stream with encryption and compression layers. The
-  data will be encrypted with a symmetric algorithm, whose key will be
-  encrypted by the given PGP public key.
+  data will decryptable by the owners of the given PGP public key(s).
 
   Opts may contain:
-  - `:algorithm`   symmetric key algorithm to use
-  - `:compress`    if specified, compress the cleartext with the given algorithm
+
+  - `:buffer-size` maximum number of bytes per chunk
+  - `:zip-algo`    if specified, compress the cleartext with the given algorithm
+  - `:sym-algo`    symmetric key algorithm to use
   - `:armor`       whether to ascii-encode the output
-  - `:filename`    optional name to give to the literal data packet"
-  ^OutputStream
+
+  See `literal-data-stream` and `encrypted-data-stream` for more options."
   [^OutputStream output
    pubkeys
    & opts]
-  ; TODO: clean this up
-  (let [opts (arg-map opts)
-        pubkeys (if (sequential? pubkeys) pubkeys [pubkeys])
+  (let [{:keys [zip-algo armor] :as opts} (arg-map opts)
 
-        wrap-stream-when
-        (fn [streams condition wrapper & args]
-          (if condition
-            (conj streams (apply wrapper (last streams) args))
-            streams))
-
-        wrap-stream
+        wrap-with
         (fn [streams wrapper & args]
-          (apply wrap-stream-when streams true wrapper args))
+          (conj streams (apply wrapper (last streams) args)))
 
         streams
         (->
           (vector output)
-          (wrap-stream-when (:armor opts)
-            #(ArmoredOutputStream. %))
-          (wrap-stream
-            encrypted-data-stream
-            pubkeys
-            opts)
-          (wrap-stream-when (:compress opts)
-            compressed-data-stream
-            (:compress opts))
-          (wrap-stream
-            literal-data-stream
-            opts)
-          ; Drop the original stream and return in top-down order.
+          (cond-> armor
+            (wrap-with armored-data-stream))
+          (wrap-with encrypted-data-stream pubkeys opts)
+          (cond-> zip-algo
+            (wrap-with compressed-data-stream zip-algo))
+          (wrap-with literal-data-stream opts)
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]
       (close []
@@ -267,17 +260,27 @@
 
 
 (defn encrypt
-  "Encrypts the given data source and returns an array of bytes with the
-  encrypted value. Opts are as in encrypt-stream."
+  "Compresses, encrypts, and encodes the given data and returns an array of
+  bytes containing the resulting packet. The data will decryptable by the
+  owners of the given PGP public key(s).
+
+  Opts may contain:
+
+  - `:zip-algo` if specified, compress the cleartext with the given algorithm
+  - `:sym-algo` symmetric key algorithm to use
+  - `:armor`    whether to ascii-encode the output
+
+  See `literal-data-packet` and `encrypt-data-packet` for more options."
   ^bytes
   [data pubkeys & opts]
-  (let [{:keys [zip-algo armor] :as opts} (arg-map opts)
-        pubkeys (if (sequential? pubkeys) pubkeys [pubkeys])]
+  (let [{:keys [zip-algo armor] :as opts} (arg-map opts)]
     (-> data
         (literal-data-packet opts)
-        (cond-> zip-algo (compress-data-packet zip-algo))
+        (cond-> zip-algo
+          (compress-data-packet zip-algo))
         (encrypt-data-packet pubkeys opts)
-        (cond-> armor (armor-data-packet)))))
+        (cond-> armor
+          (armor-data-packet)))))
 
 
 

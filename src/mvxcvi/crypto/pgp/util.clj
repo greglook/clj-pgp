@@ -24,6 +24,15 @@
 
 ;; ## Function Utilities
 
+(defn arg-coll
+  "Returns a collection of the arguments provided. If a non-collection is
+  given, a single-element collection is returned."
+  [ks]
+  (if (and ks (not (coll? ks)))
+    [ks]
+    ks))
+
+
 (defn arg-seq
   "Takes a sequence of args and returns a seq. If only one argument is given
   and it is sequential, it is retured directly. Otherwise the seq of args is
