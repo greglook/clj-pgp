@@ -25,8 +25,8 @@
 ;; ## Function Utilities
 
 (defn arg-coll
-  "Returns a collection of the arguments provided. If a non-collection is
-  given, a single-element collection is returned."
+  "Returns a collection from the arguments provided. If `ks` is a non-collection
+  value, a single-element collection containing `ks` is returned."
   [ks]
   (if (and ks (not (coll? ks)))
     [ks]
