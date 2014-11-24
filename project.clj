@@ -30,7 +30,7 @@
           :src-linenum-anchor-prefix "L"}
 
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.6.0"]
-                                  [org.clojure/test.check "0.5.9"]
+                                  [org.clojure/test.check "0.6.1"]
                                   [org.clojure/tools.namespace "0.2.7"]]}
 
              :repl {:source-paths ["dev"]}
