@@ -36,117 +36,7 @@
       BcPublicKeyKeyEncryptionMethodGenerator)))
 
 
-;; ## Armor ASCII Encoding
-
-(defn armored-data-stream
-  "Wraps an `OutputStream` with an armored data stream. Packets written to this
-  stream will be output in ASCII encoded Base64."
-  [^OutputStream output]
-  (ArmoredOutputStream. output))
-
-
-(defn armor-data-packet
-  "Builds an armored data packet containing the given data. Returns a byte
-  array containing the ASCII-encoded packet."
-  ^bytes
-  [data]
-  (let [buffer (ByteArrayOutputStream.)]
-    (with-open [armor-out (ArmoredOutputStream. buffer)]
-      (bytes/transfer data armor-out))
-    (.toByteArray buffer)))
-
-
-
-;; ## Literal Data Packets
-
-(defn literal-data-stream
-  "Wraps an `OutputStream` with a literal data generator, returning another
-  stream. Typically, the wrapped stream is a compressed data stream or
-  encrypted data stream.
-
-  Data written to the returned stream will write a literal data packet to the
-  wrapped output stream. If the data is longer than the buffer size, the packet
-  is written in chunks in a streaming fashion.
-
-  Options may be provided to customize the packet:
-
-  - `:buffer-size` maximum number of bytes per chunk
-  - `:data-type` PGP document type, binary by default
-  - `:filename` string giving the 'filename' of the data
-  - `:mtime` modification time of the packet contents, defaults to the current time"
-  [^OutputStream output & opts]
-  (let [{:keys [buffer-size data-type filename ^Date mtime]
-         :or {buffer-size 4096
-              data-type   PGPLiteralData/BINARY
-              filename    PGPLiteralData/CONSOLE
-              mtime       PGPLiteralData/NOW}}
-        (arg-map opts)]
-    (.open (PGPLiteralDataGenerator.)
-           output
-           (char data-type)
-           (str filename)
-           mtime
-           (byte-array buffer-size))))
-
-
-(defn literal-data-packet
-  "Builds a literal data packet containing the given data. Returns a byte array
-  containing the encoded packet. This function buffers the data in memory and
-  writes out a single content packet.
-
-  Options may be provided to customize the packet:
-
-  - `:data-type` sets the PGP document type - binary by default
-  - `:filename` a string giving the 'filename' of the data
-  - `:mtime` modification time of the packet contents - defaults to the current time"
-  ^bytes
-  [data & opts]
-  (let [{:keys [data-type filename ^Date mtime]
-         :or {data-type PGPLiteralData/BINARY
-              filename  PGPLiteralData/CONSOLE
-              mtime     PGPLiteralData/NOW}}
-        (arg-map opts)
-        data-bytes (bytes/to-byte-array data)
-        buffer (ByteArrayOutputStream.)]
-    (with-open [packet-out (.open (PGPLiteralDataGenerator.)
-                                  buffer
-                                  (char data-type)
-                                  (str filename)
-                                  (long (count data-bytes))
-                                  mtime)]
-      (io/copy data-bytes packet-out))
-    (.toByteArray buffer)))
-
-
-
-;; ## Compressed Data Packets
-
-(defn compressed-data-stream
-  "Wraps an `OutputStream` with a compressed data generator, returning another
-  stream. Typically, literal data packets will be written to this stream, which
-  are compressed and written to an underlying encryption stream."
-  [^OutputStream output zip-algo]
-  (.open (PGPCompressedDataGenerator.
-           (tags/compression-algorithm zip-algo))
-         output))
-
-
-(defn compress-data-packet
-  "Builds a compressed data packet containing the given data. Returns a byte
-  array containing the compressed packet. Typically, the input consists of
-  literal data packets. This function buffers the data in memory and writes out
-  a single compressed packet."
-  ^bytes
-  [data zip-algo]
-  (let [data-bytes (bytes/to-byte-array data)
-        buffer (ByteArrayOutputStream.)]
-    (with-open [packet-out ^OutputStream (compressed-data-stream buffer zip-algo)]
-      (io/copy data-bytes packet-out))
-    (.toByteArray buffer)))
-
-
-
-;; ## Encrypted Data Packets
+;; ## Data Output Streams
 
 (defn- encrypted-data-generator
   "Constructs a generator for encrypting a data packet with a symmetric session
@@ -183,31 +73,59 @@
   - `:sym-algo` symmetric encryption algorithm to use for session key
   - `:integrity-check` whether to include a Modification Detection Code packet
   - `:random` custom random number generator"
+  ; TODO: change 'pubkeys' to 'encryptors'
   [^OutputStream output pubkeys & opts]
   (let [opts (arg-map opts)
         enc-gen (encrypted-data-generator pubkeys opts)]
     (.open enc-gen output (byte-array (:buffer-size opts 4096)))))
 
 
-(defn encrypt-data-packet
-  "Builds an encrypted data packet containing the given data. Returns a byte
-  array containing the encoded packet. Typically, the input consists of
-  literal or compressed data packets.
+(defn compressed-data-stream
+  "Wraps an `OutputStream` with a compressed data generator, returning another
+  stream. Typically, literal data packets will be written to this stream, which
+  are compressed and written to an underlying encryption stream."
+  [^OutputStream output zip-algo]
+  (.open (PGPCompressedDataGenerator.
+           (tags/compression-algorithm zip-algo))
+         output))
+
+
+(defn literal-data-stream
+  "Wraps an `OutputStream` with a literal data generator, returning another
+  stream. Typically, the wrapped stream is a compressed data stream or
+  encrypted data stream.
+
+  Data written to the returned stream will write a literal data packet to the
+  wrapped output stream. If the data is longer than the buffer size, the packet
+  is written in chunks in a streaming fashion.
 
   Options may be provided to customize the packet:
 
-  - `:sym-algo` symmetric encryption algorithm to use for session key
-  - `:integrity-check` whether to include a Modification Detection Code packet
-  - `:random` custom random number generator"
-  ^bytes
-  [data pubkeys & opts]
-  (let [opts (arg-map opts)
-        data-bytes (bytes/to-byte-array data)
-        buffer (ByteArrayOutputStream.)
-        enc-gen (encrypted-data-generator pubkeys opts)]
-    (with-open [packet-out (.open enc-gen buffer (long (count data-bytes)))]
-      (io/copy data-bytes packet-out))
-    (.toByteArray buffer)))
+  - `:buffer-size` maximum number of bytes per chunk
+  - `:data-type` PGP document type, binary by default
+  - `:filename` string giving the 'filename' of the data
+  - `:mtime` modification time of the packet contents, defaults to the current time"
+  [^OutputStream output & opts]
+  (let [{:keys [buffer-size data-type filename ^Date mtime]
+         :or {buffer-size 4096
+              data-type   PGPLiteralData/BINARY
+              filename    PGPLiteralData/CONSOLE
+              mtime       PGPLiteralData/NOW}}
+        (arg-map opts)]
+    (.open (PGPLiteralDataGenerator.)
+           output
+           (char data-type)
+           (str filename)
+           mtime
+           (byte-array buffer-size))))
+
+
+
+(defn armored-data-stream
+  "Wraps an `OutputStream` with an armored data stream. Packets written to this
+  stream will be output in ASCII encoded Base64."
+  [^OutputStream output]
+  (ArmoredOutputStream. output))
 
 
 
@@ -254,27 +172,18 @@
   bytes containing the resulting packet. The data will decryptable by the
   owners of the given PGP public key(s).
 
-  Opts may contain:
-
-  - `:zip-algo` if specified, compress the cleartext with the given algorithm
-  - `:sym-algo` symmetric key algorithm to use
-  - `:armor`    whether to ascii-encode the output
-
-  See `literal-data-packet` and `encrypt-data-packet` for more options."
+  See `encrypt-stream` for options."
   ^bytes
   [data pubkeys & opts]
-  (let [{:keys [zip-algo armor] :as opts} (arg-map opts)]
-    (-> data
-        (literal-data-packet opts)
-        (cond-> zip-algo
-          (compress-data-packet zip-algo))
-        (encrypt-data-packet pubkeys opts)
-        (cond-> armor
-          (armor-data-packet)))))
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [^OutputStream stream
+                (encrypt-stream buffer pubkeys (arg-map opts))]
+      (io/copy data stream))
+    (.toByteArray buffer)))
 
 
 
-;; ## Data Reading
+;; ## Data Input Streams
 
 (defmulti ^:private unpack-data
   "Recursively unpacks a data packet, returning a lazy sequence of byte arrays
@@ -345,6 +254,9 @@
   (bytes/to-byte-array (.getInputStream data)))
 
 
+
+;; ## Data Decryption
+
 (defn decrypt-stream
   "Wraps the given input stream with decryption layers. The `decryptor` should
   either be a passphrase string (to unlock PBE encrypted data), or a function
@@ -367,6 +279,6 @@
     (with-open [^InputStream stream
                 (decrypt-stream
                   (bytes/to-input-stream data)
-                  get-privkey)]
+                  decryptor)]
       (io/copy stream buffer))
     (.toByteArray buffer)))
