@@ -48,6 +48,27 @@
 
 ;; ## Data Output Streams
 
+(defn- add-encryption-method!
+  "Adds an encryption method to an encrypted data generator. Returns the updated
+  generator."
+  [^PGPEncryptedDataGenerator generator encryptor]
+  (cond
+    (string? encryptor)
+    (.addMethod generator
+      (BcPBEKeyEncryptionMethodGenerator.
+        (.toCharArray ^String encryptor)))
+
+    (public-key encryptor)
+    (.addMethod generator
+      (BcPublicKeyKeyEncryptionMethodGenerator.
+        (public-key encryptor)))
+
+    :else
+    (throw (IllegalArgumentException.
+             (str "Don't know how to encrypt data with " (pr-str encryptor)))))
+  generator)
+
+
 (defn- encrypted-data-generator
   "Constructs a generator for encrypting a data packet with a symmetric session
   key. A custom random number generator may be provided. Message integrity may
@@ -57,28 +78,16 @@
    {:keys [sym-algo integrity-check random]
     :or {sym-algo :aes-256
          integrity-check true}}]
-  (let [enc-gen (PGPEncryptedDataGenerator.
-                  (cond->
-                    (BcPGPDataEncryptorBuilder.
-                      (tags/symmetric-key-algorithm sym-algo))
-                    integrity-check (.setWithIntegrityPacket true)
-                    random          (.setSecureRandom ^SecureRandom random)))]
-    (doseq [encryptor (arg-coll encryptors)]
-      (cond
-        (string? encryptor)
-        (.addMethod enc-gen
-          (BcPBEKeyEncryptionMethodGenerator.
-            (.toCharArray ^String encryptor)))
-
-        (public-key encryptor)
-        (.addMethod enc-gen
-          (BcPublicKeyKeyEncryptionMethodGenerator.
-            (public-key encryptor)))
-
-        :else
-        (throw (IllegalArgumentException.
-                 (str "Don't know how to encrypt data with " (pr-str encryptor))))))
-    enc-gen))
+  ; TODO: check for more than one passphrase encryptor?
+  (reduce
+    add-encryption-method!
+    (PGPEncryptedDataGenerator.
+      (cond->
+        (BcPGPDataEncryptorBuilder.
+          (tags/symmetric-key-algorithm sym-algo))
+        integrity-check (.setWithIntegrityPacket true)
+        random          (.setSecureRandom ^SecureRandom random)))
+    (arg-coll encryptors)))
 
 
 (defn encrypted-data-stream

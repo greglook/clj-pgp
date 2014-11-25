@@ -11,7 +11,8 @@
     [mvxcvi.crypto.pgp.test.keys :refer
      [memospec->keypair gen-rsa-keyspec]])
   (:import
-    java.io.ByteArrayOutputStream))
+    java.io.ByteArrayOutputStream
+    java.security.SecureRandom))
 
 
 (defn test-encryption-scenario
@@ -65,7 +66,9 @@
   (testing "Generative encryption testing"
     (is (thrown? IllegalArgumentException
           (pgp/encrypt "foo" :not-an-encryptor
-                       :sym-algo :aes-256))
+                       :sym-algo :aes-256
+                       :integrity-check false
+                       :random (SecureRandom.)))
         "Encryption with an invalid encryptor throws an exception")
     (let [data "My hidden data files"
           [[keypair] ciphertext]
