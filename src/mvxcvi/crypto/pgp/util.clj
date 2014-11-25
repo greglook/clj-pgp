@@ -59,10 +59,10 @@
 ;; ## Public Key Coercion
 
 (defmulti public-key
-  "Returns the PGP public key associated with the argument."
+  "Coerces the argument into a PGP public key. Returns nil for other values."
   class)
 
-(defmethod public-key nil [_] nil)
+(defmethod public-key :default [_] nil)
 
 (defmethod public-key PGPPublicKey
   [^PGPPublicKey pubkey]
@@ -81,10 +81,10 @@
 ;; ## Private Key Coercion
 
 (defmulti private-key
-  "Returns the PGP private key associated with the argument."
+  "Coerces the argument into a PGP private key. Returns nil for other values."
   class)
 
-(defmethod private-key nil [_] nil)
+(defmethod private-key :default [_] nil)
 
 (defmethod private-key PGPPrivateKey
   [^PGPPrivateKey privkey]

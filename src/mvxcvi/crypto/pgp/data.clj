@@ -1,5 +1,14 @@
 (ns mvxcvi.crypto.pgp.data
-  "Data encryption and decryption functions."
+  "Data encryption and decryption functions.
+
+  This namespace makes use of the concept of _encryptors_ and _decryptors_.
+  These are values used to encipher and decipher data, respectively. A
+  collection of encryptors may be provided to the encryption functions, and
+  the any corresponding decryptor will be able to read the resulting message.
+
+  An encryptor may be a passphrase string or a public-key object. A decryptor
+  may be a passphrase string, a private-key object, or a function that accepts
+  a key id and returns the corresponding private-key."
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]
@@ -31,6 +40,7 @@
     (org.bouncycastle.openpgp.operator.bc
       BcPGPDataEncryptorBuilder
       BcPBEDataDecryptorFactory
+      BcPBEKeyEncryptionMethodGenerator
       BcPGPDigestCalculatorProvider
       BcPublicKeyDataDecryptorFactory
       BcPublicKeyKeyEncryptionMethodGenerator)))
@@ -43,7 +53,7 @@
   key. A custom random number generator may be provided. Message integrity may
   be protected by Modification Detection Code (MDC) packets."
   ^PGPEncryptedDataGenerator
-  [pubkeys
+  [encryptors
    {:keys [sym-algo integrity-check random]
     :or {sym-algo :aes-256
          integrity-check true}}]
@@ -53,8 +63,21 @@
                       (tags/symmetric-key-algorithm sym-algo))
                     integrity-check (.setWithIntegrityPacket true)
                     random          (.setSecureRandom ^SecureRandom random)))]
-    (doseq [pubkey (arg-coll pubkeys)]
-      (.addMethod enc-gen (BcPublicKeyKeyEncryptionMethodGenerator. (public-key pubkey))))
+    (doseq [encryptor (arg-coll encryptors)]
+      (cond
+        (string? encryptor)
+        (.addMethod enc-gen
+          (BcPBEKeyEncryptionMethodGenerator.
+            (.toCharArray ^String encryptor)))
+
+        (public-key encryptor)
+        (.addMethod enc-gen
+          (BcPublicKeyKeyEncryptionMethodGenerator.
+            (public-key encryptor)))
+
+        :else
+        (throw (IllegalArgumentException.
+                 (str "Don't know how to encrypt data with " (pr-str encryptor))))))
     enc-gen))
 
 
@@ -73,10 +96,9 @@
   - `:sym-algo` symmetric encryption algorithm to use for session key
   - `:integrity-check` whether to include a Modification Detection Code packet
   - `:random` custom random number generator"
-  ; TODO: change 'pubkeys' to 'encryptors'
-  [^OutputStream output pubkeys & opts]
+  [^OutputStream output encryptors & opts]
   (let [opts (arg-map opts)
-        enc-gen (encrypted-data-generator pubkeys opts)]
+        enc-gen (encrypted-data-generator encryptors opts)]
     (.open enc-gen output (byte-array (:buffer-size opts 4096)))))
 
 
@@ -144,7 +166,7 @@
 
   See `literal-data-stream` and `encrypted-data-stream` for more options."
   [^OutputStream output
-   pubkeys
+   encryptors
    & opts]
   (let [{:keys [zip-algo armor] :as opts} (arg-map opts)
 
@@ -157,7 +179,7 @@
           (vector output)
           (cond-> armor
             (wrap-with armored-data-stream))
-          (wrap-with encrypted-data-stream pubkeys opts)
+          (wrap-with encrypted-data-stream encryptors opts)
           (cond-> zip-algo
             (wrap-with compressed-data-stream zip-algo))
           (wrap-with literal-data-stream opts)
@@ -174,10 +196,10 @@
 
   See `encrypt-stream` for options."
   ^bytes
-  [data pubkeys & opts]
+  [data encryptors & opts]
   (let [buffer (ByteArrayOutputStream.)]
     (with-open [^OutputStream stream
-                (encrypt-stream buffer pubkeys (arg-map opts))]
+                (encrypt-stream buffer encryptors (arg-map opts))]
       (io/copy data stream))
     (.toByteArray buffer)))
 
@@ -185,15 +207,14 @@
 
 ;; ## Data Input Streams
 
-(defmulti ^:private unpack-data
-  "Recursively unpacks a data packet, returning a lazy sequence of byte arrays
-  containing the packet contents. The first argument may be a string passphrase
-  to unlock PBE encrypted data, a function mapping key ids to private keys to
-  unlock public-key encrypted data, or nil.
+(defprotocol DataPacket
+  "Protocol for decryptable/unpackable data objects."
 
-  Throws an exception if encrypted data cannot be decrypted."
-  (fn [decryptor data]
-    (class data)))
+  (unpack-data
+    [data decryptor]
+    "Recursively unpacks a data packet and returns a nested sequence byte arrays
+    containing the content. The decryptor is used to access encrypted packets.
+    Throws an exception if encrypted data cannot be decrypted."))
 
 
 (defn- read-pgp-objects
@@ -204,54 +225,67 @@
     (->>
       (repeatedly #(.nextObject factory))
       (take-while some?)
-      (map (partial unpack-data decryptor)))))
+      (map #(unpack-data % decryptor)))))
 
 
-(defmethod unpack-data PGPEncryptedDataList
-  [decryptor ^PGPEncryptedDataList data]
-  (let [content (->> (.getEncryptedDataObjects data)
-                     iterator-seq
-                     (map (partial unpack-data decryptor))
-                     first)]
-    (when-not content
-      (throw (IllegalStateException.
-               (str "Cannot decrypt " (pr-str data) " with "
-                    (pr-str decryptor)))))
-    content))
+(extend-protocol DataPacket
+
+  PGPEncryptedDataList
+
+  (unpack-data
+    [data decryptor]
+    (let [content (->> (.getEncryptedDataObjects data)
+                       iterator-seq
+                       (map #(unpack-data % decryptor))
+                       first)]
+      (when-not content
+        (throw (IllegalArgumentException.
+                 (str "Cannot decrypt " (pr-str data) " with " (pr-str decryptor)
+                      " (no matching encrypted session key)"))))
+      content))
 
 
-(defmethod unpack-data PGPPBEEncryptedData
-  [decryptor ^PGPPBEEncryptedData data]
-  (when (string? decryptor)
+  PGPPBEEncryptedData
+
+  (unpack-data
+    [data decryptor]
+    (when (string? decryptor)
+      (->> (BcPBEDataDecryptorFactory.
+             (.toCharArray ^String decryptor)
+             (BcPGPDigestCalculatorProvider.))
+           (.getDataStream data)
+           (read-pgp-objects decryptor))))
+
+
+  PGPPublicKeyEncryptedData
+
+  (unpack-data
+    [data decryptor]
+    (when-let [privkey (private-key
+                         (if (instance? clojure.lang.IFn decryptor)
+                           (decryptor (key-id data))
+                           decryptor))]
+      (when (= (key-id data) (key-id privkey))
+        (->> (BcPublicKeyDataDecryptorFactory. privkey)
+             (.getDataStream data)
+             (read-pgp-objects decryptor)))))
+
+
+  PGPCompressedData
+
+  (unpack-data
+    [data decryptor]
     (->>
-      (BcPBEDataDecryptorFactory.
-        (.toCharArray ^String decryptor)
-        (BcPGPDigestCalculatorProvider.))
       (.getDataStream data)
-      (read-pgp-objects decryptor))))
+      (read-pgp-objects decryptor)
+      doall))
 
 
-(defmethod unpack-data PGPPublicKeyEncryptedData
-  [decryptor ^PGPPublicKeyEncryptedData data]
-  (when-let [privkey (and (not (string? decryptor))
-                          (private-key (decryptor (key-id data))))]
-    (->>
-      (BcPublicKeyDataDecryptorFactory. privkey)
-      (.getDataStream data)
-      (read-pgp-objects decryptor))))
+  PGPLiteralData
 
-
-(defmethod unpack-data PGPCompressedData
-  [decryptor ^PGPCompressedData data]
-  (->>
-    (.getDataStream data)
-    (read-pgp-objects decryptor)
-    doall))
-
-
-(defmethod unpack-data PGPLiteralData
-  [decryptor ^PGPLiteralData data]
-  (bytes/to-byte-array (.getInputStream data)))
+  (unpack-data
+    [data decryptor]
+    (bytes/to-byte-array (.getInputStream data))))
 
 
 
