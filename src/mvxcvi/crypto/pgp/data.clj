@@ -71,23 +71,25 @@
 
 (defn- encrypted-data-generator
   "Constructs a generator for encrypting a data packet with a symmetric session
-  key. A custom random number generator may be provided. Message integrity may
-  be protected by Modification Detection Code (MDC) packets."
+  key. Opts are documented in `encrypted-data-stream`."
   ^PGPEncryptedDataGenerator
   [encryptors
    {:keys [sym-algo integrity-check random]
     :or {sym-algo :aes-256
          integrity-check true}}]
-  ; TODO: check for more than one passphrase encryptor?
-  (reduce
-    add-encryption-method!
-    (PGPEncryptedDataGenerator.
-      (cond->
-        (BcPGPDataEncryptorBuilder.
-          (tags/symmetric-key-algorithm sym-algo))
-        integrity-check (.setWithIntegrityPacket true)
-        random          (.setSecureRandom ^SecureRandom random)))
-    (arg-coll encryptors)))
+  (let [encryptors (arg-coll encryptors)]
+    (when (< 1 (count (filter string? encryptors)))
+      (throw (IllegalArgumentException.
+               "Only one passphrase encryptor is supported")))
+    (reduce
+      add-encryption-method!
+      (PGPEncryptedDataGenerator.
+        (cond->
+          (BcPGPDataEncryptorBuilder.
+            (tags/symmetric-key-algorithm sym-algo))
+          integrity-check (.setWithIntegrityPacket true)
+          random          (.setSecureRandom ^SecureRandom random)))
+      encryptors)))
 
 
 (defn encrypted-data-stream

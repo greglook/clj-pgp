@@ -63,34 +63,34 @@
 
 
 (deftest data-encryption
-  (testing "Generative encryption testing"
+  (let [rsa (pgp/rsa-keypair-generator 1024)
+        keypair (pgp/generate-keypair rsa :rsa-general)
+        data "My hidden data files"]
     (is (thrown? IllegalArgumentException
-          (pgp/encrypt "foo" :not-an-encryptor
-                       :sym-algo :aes-256
+          (pgp/encrypt data :not-an-encryptor
                        :integrity-check false
                        :random (SecureRandom.)))
         "Encryption with an invalid encryptor throws an exception")
-    (let [data "My hidden data files"
-          [[keypair] ciphertext]
-          (test-encryption-scenario
-            [[:rsa :rsa-general 4096]]
-            data :zip :aes-256 true)]
+    (is (thrown? IllegalArgumentException
+          (pgp/encrypt data ["bar" "baz"]))
+        "Encryption with multiple passphrases throws an exception")
+    (let [ciphertext (pgp/encrypt data keypair)]
       (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
           "Decrypting with a keypair-retrieval function returns the data.")
       (is (thrown? IllegalArgumentException
             (pgp/decrypt ciphertext "passphrase"))
-          "Decrypting without a matching key throws an exception"))
-    (test-encryption-scenario
-      ["s3cr3t"]
-      "The data blobble"
-      nil :aes-128 true)
-    (test-encryption-scenario
-      [[:rsa :rsa-encrypt 1024]]
-      "Secret stuff to hide from prying eyes"
-      nil :aes-128 false)
-    (test-encryption-scenario
-      ["frobble bisvarkian"
-       [:rsa :rsa-general 1024]
-       [:rsa :rsa-general 2048]]
-      "Good news, everyone!"
-      :bzip2 :aes-256 true)))
+          "Decrypting without a matching key throws an exception")))
+  (test-encryption-scenario
+    ["s3cr3t"]
+    "The data blobble"
+    nil :aes-128 true)
+  (test-encryption-scenario
+    [[:rsa :rsa-encrypt 1024]]
+    "Secret stuff to hide from prying eyes"
+    nil :aes-128 false)
+  (test-encryption-scenario
+    ["frobble bisvarkian"
+     [:rsa :rsa-general 1024]
+     [:rsa :rsa-general 2048]]
+    "Good news, everyone!"
+    :bzip2 :aes-256 true))
