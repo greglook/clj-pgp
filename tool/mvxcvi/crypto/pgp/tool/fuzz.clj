@@ -3,14 +3,14 @@
     [clojure.core.async :as async :refer [<! >! <!!]]
     [clojure.test.check :as check]
     (mvxcvi.crypto.pgp.test
-      [encryption :refer [keypair-encryption-property]]
+      [encryption :refer [data-encryption-property]]
       [signing :refer [keypair-signing-property]])
     [puget.printer :as puget])
   (:gen-class))
 
 
 (def ^:private check-templates
-  [["public-key data encryption" keypair-encryption-property]
+  [["public-key data encryption" data-encryption-property]
    ["public-key data signatures" keypair-signing-property]])
 
 

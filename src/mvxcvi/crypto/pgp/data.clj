@@ -237,6 +237,7 @@
     (let [content (->> (.getEncryptedDataObjects data)
                        iterator-seq
                        (map #(unpack-data % decryptor))
+                       (remove nil?)
                        first)]
       (when-not content
         (throw (IllegalArgumentException.
@@ -262,7 +263,7 @@
   (unpack-data
     [data decryptor]
     (when-let [privkey (private-key
-                         (if (instance? clojure.lang.IFn decryptor)
+                         (if (ifn? decryptor)
                            (decryptor (key-id data))
                            decryptor))]
       (when (= (key-id data) (key-id privkey))

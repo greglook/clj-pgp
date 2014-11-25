@@ -90,7 +90,8 @@
   "Returns a keypair for a keyspec. Uses the key-cache var to memoize the
   generated keys."
   [spec]
-  (or (get @key-cache spec)
+  (or (when (string? spec) spec)
+      (get @key-cache spec)
       (let [k (spec->keypair spec)]
         (swap! key-cache assoc spec k)
         k)))

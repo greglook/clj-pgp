@@ -14,58 +14,80 @@
     java.io.ByteArrayOutputStream))
 
 
-(defn test-encryption-keypair
-  "Tests that encrypting and decrypting data with the given keypair returns
-  the original data."
-  [keyspec data zip-algo sym-algo armor]
-  (testing (str "Keypair " (pr-str keyspec) " encrypting "
-                (count data) " bytes with " sym-algo
+(defn test-encryption-scenario
+  "Tests that encrypting and decrypting data with the given keypairs/passphrases
+  returns the original data."
+  [keyspecs data zip-algo sym-algo armor]
+  (testing (str "Encrypting " (count data) " bytes with " sym-algo
+                " for keys " (pr-str keyspecs)
                 (when zip-algo (str " compressed with " zip-algo))
                 " encoded in " (if armor "ascii" "binary"))
-    (let [keypair (memospec->keypair keyspec)]
-      (testing "direct packet encryption"
-        (let [ciphertext (pgp/encrypt
-                           data keypair
-                           :sym-algo sym-algo
-                           :zip-algo zip-algo
-                           :armor armor)]
-          (is (not (bytes= data ciphertext))
-            "ciphertext bytes differ from data")
-          (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
-              "decrypting the ciphertext returns plaintext")))
-      (testing "stream encryption"
-        (let [buffer (ByteArrayOutputStream.)]
-          (with-open [crypt (pgp/encrypt-stream
-                              buffer [keypair]
-                              :buffer-size 512
-                              :sym-algo sym-algo
-                              :zip-algo zip-algo
-                              :armor armor)]
-            (io/copy data crypt))
-          (let [ciphertext (.toByteArray buffer)]
-            (is (not (bytes= data ciphertext))
-              "ciphertext bytes differ from data")
-            (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
-                "decrypting the ciphertext returns plaintext")))))))
+    (let [encryptors (map memospec->keypair keyspecs)
+          ciphertext (pgp/encrypt
+                       data encryptors
+                       :sym-algo sym-algo
+                       :zip-algo zip-algo
+                       :armor armor)]
+      (is (not (bytes= data ciphertext))
+        "ciphertext bytes differ from data")
+      (doseq [decryptor encryptors]
+        (is (bytes= data (pgp/decrypt ciphertext decryptor))
+            "decrypting the ciphertext returns plaintext"))
+      [encryptors ciphertext])))
 
 
-(def keypair-encryption-property
+(def gen-encryptors
+  (->>
+    (gen/tuple
+      gen/boolean
+      (gen/not-empty gen/string-ascii)
+      (gen/vector (gen-rsa-keyspec [1024 2048 4096])))
+    (gen/fmap
+      (fn [[p pass keypairs]]
+        (-> (if p
+              (cons pass keypairs)
+              keypairs)
+            set shuffle)))
+    gen/not-empty))
+
+
+(def data-encryption-property
   (prop/for-all*
-    [(gen-rsa-keyspec [1024 2048 4096])
+    [gen-encryptors
      (gen/not-empty gen/bytes)
      (gen/elements (cons nil (keys tags/compression-algorithms)))
-     (gen/elements (remove #{:null :safer} (keys tags/symmetric-key-algorithms)))
+     (gen/elements (remove #{:null :safer :camellia-256} (keys tags/symmetric-key-algorithms)))
      gen/boolean]
-    test-encryption-keypair))
+    test-encryption-scenario))
 
 
 (deftest data-encryption
   (testing "Generative encryption testing"
-    (test-encryption-keypair
-      [:rsa :rsa-encrypt 1024]
+    (is (thrown? IllegalArgumentException
+          (pgp/encrypt "foo" :not-an-encryptor
+                       :sym-algo :aes-256))
+        "Encryption with an invalid encryptor throws an exception")
+    (let [data "My hidden data files"
+          [[keypair] ciphertext]
+          (test-encryption-scenario
+            [[:rsa :rsa-general 4096]]
+            data :zip :aes-256 true)]
+      (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
+          "Decrypting with a keypair-retrieval function returns the data.")
+      (is (thrown? IllegalArgumentException
+            (pgp/decrypt ciphertext "passphrase"))
+          "Decrypting without a matching key throws an exception"))
+    (test-encryption-scenario
+      ["s3cr3t"]
+      "The data blobble"
+      nil :aes-128 true)
+    (test-encryption-scenario
+      [[:rsa :rsa-encrypt 1024]]
       "Secret stuff to hide from prying eyes"
       nil :aes-128 false)
-    (test-encryption-keypair
-      [:rsa :rsa-general 4096]
-      "My hidden data files"
-      :zip :aes-256 true)))
+    (test-encryption-scenario
+      ["frobble bisvarkian"
+       [:rsa :rsa-general 1024]
+       [:rsa :rsa-general 2048]]
+      "Good news, everyone!"
+      :bzip2 :aes-256 true)))
