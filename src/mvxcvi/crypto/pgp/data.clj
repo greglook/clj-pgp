@@ -74,8 +74,8 @@
   key. Opts are documented in `encrypted-data-stream`."
   ^PGPEncryptedDataGenerator
   [encryptors
-   {:keys [sym-algo integrity-check random]
-    :or {sym-algo :aes-256
+   {:keys [cipher integrity-check random]
+    :or {cipher :aes-256
          integrity-check true}}]
   (let [encryptors (arg-coll encryptors)]
     (when (< 1 (count (filter string? encryptors)))
@@ -86,7 +86,7 @@
       (PGPEncryptedDataGenerator.
         (cond->
           (BcPGPDataEncryptorBuilder.
-            (tags/symmetric-key-algorithm sym-algo))
+            (tags/symmetric-key-algorithm cipher))
           integrity-check (.setWithIntegrityPacket true)
           random          (.setSecureRandom ^SecureRandom random)))
       encryptors)))
@@ -103,10 +103,10 @@
 
   Options may be provided to customize the packet:
 
-  - `:buffer-size` maximum number of bytes per chunk
-  - `:sym-algo` symmetric encryption algorithm to use for session key
+  - `:buffer-size`     maximum number of bytes per chunk
+  - `:cipher`          symmetric encryption algorithm to use for session key
   - `:integrity-check` whether to include a Modification Detection Code packet
-  - `:random` custom random number generator"
+  - `:random`          custom random number generator"
   [^OutputStream output encryptors & opts]
   (let [opts (arg-map opts)
         enc-gen (encrypted-data-generator encryptors opts)]
@@ -117,9 +117,9 @@
   "Wraps an `OutputStream` with a compressed data generator, returning another
   stream. Typically, literal data packets will be written to this stream, which
   are compressed and written to an underlying encryption stream."
-  [^OutputStream output zip-algo]
+  [^OutputStream output compress]
   (.open (PGPCompressedDataGenerator.
-           (tags/compression-algorithm zip-algo))
+           (tags/compression-algorithm compress))
          output))
 
 
@@ -171,15 +171,15 @@
   Opts may contain:
 
   - `:buffer-size` maximum number of bytes per chunk
-  - `:zip-algo`    if specified, compress the cleartext with the given algorithm
-  - `:sym-algo`    symmetric key algorithm to use
+  - `:compress`    if specified, compress the cleartext with the given algorithm
+  - `:cipher`      symmetric key algorithm to use
   - `:armor`       whether to ascii-encode the output
 
   See `literal-data-stream` and `encrypted-data-stream` for more options."
   [^OutputStream output
    encryptors
    & opts]
-  (let [{:keys [zip-algo armor] :as opts} (arg-map opts)
+  (let [{:keys [compress armor] :as opts} (arg-map opts)
 
         wrap-with
         (fn [streams wrapper & args]
@@ -191,8 +191,8 @@
           (cond-> armor
             (wrap-with armored-data-stream))
           (wrap-with encrypted-data-stream encryptors opts)
-          (cond-> zip-algo
-            (wrap-with compressed-data-stream zip-algo))
+          (cond-> compress
+            (wrap-with compressed-data-stream compress))
           (wrap-with literal-data-stream opts)
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]

@@ -18,16 +18,16 @@
 (defn test-encryption-scenario
   "Tests that encrypting and decrypting data with the given keypairs/passphrases
   returns the original data."
-  [keyspecs data zip-algo sym-algo armor]
-  (testing (str "Encrypting " (count data) " bytes with " sym-algo
+  [keyspecs data compress cipher armor]
+  (testing (str "Encrypting " (count data) " bytes with " cipher
                 " for keys " (pr-str keyspecs)
-                (when zip-algo (str " compressed with " zip-algo))
+                (when compress (str " compressed with " compress))
                 " encoded in " (if armor "ascii" "binary"))
     (let [encryptors (map memospec->keypair keyspecs)
           ciphertext (pgp/encrypt
                        data encryptors
-                       :sym-algo sym-algo
-                       :zip-algo zip-algo
+                       :compress compress
+                       :cipher cipher
                        :armor armor)]
       (is (not (bytes= data ciphertext))
         "ciphertext bytes differ from data")
