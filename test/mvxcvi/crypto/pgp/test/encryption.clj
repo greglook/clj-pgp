@@ -7,9 +7,13 @@
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop]
     [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.tags :as tags]
+    (mvxcvi.crypto.pgp
+      [generate :as pgp-gen]
+      [tags :as tags])
     [mvxcvi.crypto.pgp.test.keys :refer
-     [memospec->keypair gen-rsa-keyspec]])
+     [gen-ec-keyspec
+      gen-rsa-keyspec
+      memospec->keypair]])
   (:import
     java.io.ByteArrayOutputStream
     java.security.SecureRandom))
@@ -42,7 +46,10 @@
     (gen/tuple
       gen/boolean
       (gen/not-empty gen/string-ascii)
-      (gen/vector (gen-rsa-keyspec [1024 2048 4096])))
+      (gen/vector
+        (gen/one-of
+          [(gen-rsa-keyspec [1024 2048 4096])
+           (gen-ec-keyspec :ecdh pgp-gen/elliptic-curve-names)])))
     (gen/fmap
       (fn [[p pass keypairs]]
         (-> (if p
@@ -89,8 +96,12 @@
     "Secret stuff to hide from prying eyes"
     nil :aes-128 false)
   (test-encryption-scenario
+    [[:ec :ecdh "secp256r1"]]
+    "Foooooood is nice"
+    :zip :aes-256 true)
+  (test-encryption-scenario
     ["frobble bisvarkian"
      [:rsa :rsa-general 1024]
-     [:rsa :rsa-general 2048]]
+     [:ec :ecdh "sect409r1"]]
     "Good news, everyone!"
     :bzip2 :aes-256 true))

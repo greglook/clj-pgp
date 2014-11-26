@@ -7,14 +7,19 @@
   (:import
     java.security.SecureRandom
     java.util.Date
+    org.bouncycastle.asn1.sec.SECNamedCurves
+    org.bouncycastle.asn1.x9.X9ECParameters
     (org.bouncycastle.bcpg.sig
       Features
       KeyFlags)
     (org.bouncycastle.crypto
       AsymmetricCipherKeyPairGenerator)
     (org.bouncycastle.crypto.generators
+      ECKeyPairGenerator
       RSAKeyPairGenerator)
     (org.bouncycastle.crypto.params
+      ECNamedDomainParameters
+      ECKeyGenerationParameters
       RSAKeyGenerationParameters)
     (org.bouncycastle.openpgp
       PGPKeyPair
@@ -53,10 +58,34 @@
                     random (SecureRandom/getInstance "SHA1PRNG")
                     certainty 80}}]
   (doto (RSAKeyPairGenerator.)
-    (.init (RSAKeyGenerationParameters. exponent random strength certainty))))
+    (.init (RSAKeyGenerationParameters.
+             exponent
+             random
+             strength
+             certainty))))
 
 
-; TODO: elliptic curve keypairs
+(def elliptic-curve-names
+  "Set of supported elliptic curves."
+  (set (iterator-seq (SECNamedCurves/getNames))))
+
+
+(defn ec-keypair-generator
+  "Constructs a new generator for keypairs on the named elliptic curve."
+  [curve
+   & {:keys [^SecureRandom random]
+      :or {random (SecureRandom/getInstance "SHA1PRNG")}}]
+  (let [^X9ECParameters params (SECNamedCurves/getByName curve)]
+    (doto (ECKeyPairGenerator.)
+      (.init (ECKeyGenerationParameters.
+               (ECNamedDomainParameters.
+                 (SECNamedCurves/getOID curve)
+                 (.getCurve params)
+                 (.getG params)
+                 (.getN params)
+                 (.getH params)
+                 (.getSeed params))
+               random)))))
 
 
 

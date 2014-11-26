@@ -41,35 +41,20 @@
 
 ;; ## Generative Utilities
 
-(defn gen-subseq
-  "Returns a generator for sequences of unique values from the keys of the
-  passed map."
-  [m]
-  (gen/fmap
-    #(take % (shuffle (keys m)))
-    (gen/choose 0 (count m))))
-
-
-#_
-(def gen-mastersig
-  "Generator for master key signature generators."
-  (gen/fmap
-    (fn [[hash-prefs symmetric-prefs zip-prefs]]
-      (doto (pgp-gen/signature-generator :master)
-        (pgp-gen/prefer-hash-algorithms! hash-prefs)
-        (pgp-gen/prefer-symmetric-algorithms! symmetric-prefs)
-        (pgp-gen/prefer-compression-algorithms! zip-prefs)))
-    (gen/tuple (gen-subseq tags/hash-algorithms)
-               (gen-subseq tags/symmetric-key-algorithms)
-               (gen-subseq tags/compression-algorithms))))
-
-
 (defn gen-rsa-keyspec
-  "Returns a generator for RSA keys with the given algorithms."
+  "Returns a generator for RSA keys with the given strengths."
   [strengths]
   (gen/fmap
     (partial vector :rsa :rsa-general)
     (gen/elements strengths)))
+
+
+(defn gen-ec-keyspec
+  "Returns a generator for EC keys with the given algorithm and named curves."
+  [algorithm curves]
+  (gen/fmap
+    (partial vector :ec algorithm)
+    (gen/elements curves)))
 
 
 (defn spec->keypair
@@ -78,7 +63,10 @@
   (case key-type
     :rsa (let [[algo strength] opts
                rsa (pgp-gen/rsa-keypair-generator strength)]
-           (pgp-gen/generate-keypair rsa algo))))
+           (pgp-gen/generate-keypair rsa algo))
+    :ec (let [[algo curve] opts
+              ec (pgp-gen/ec-keypair-generator curve)]
+          (pgp-gen/generate-keypair ec algo))))
 
 
 (def key-cache

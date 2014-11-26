@@ -6,8 +6,12 @@
     [clojure.test.check.properties :as prop]
     [byte-streams :refer [bytes=]]
     [mvxcvi.crypto.pgp :as pgp]
+    [mvxcvi.crypto.pgp.generate :as pgp-gen]
     [mvxcvi.crypto.pgp.test.keys :refer
-     [master-pubkey pubkey privkey memospec->keypair gen-rsa-keyspec]]))
+     [master-pubkey pubkey privkey
+      gen-ec-keyspec
+      gen-rsa-keyspec
+      memospec->keypair]]))
 
 
 (deftest signature-verification
@@ -63,7 +67,9 @@
 
 (def keypair-signing-property
   (prop/for-all*
-    [(gen-rsa-keyspec [1024 2048 4096])
+    [(gen/one-of
+       [(gen-rsa-keyspec [1024 2048 4096])
+        (gen-ec-keyspec :ecdsa pgp-gen/elliptic-curve-names)])
      (gen/not-empty gen/bytes)
      (gen/elements [:md5 :sha1 :sha256 :sha512])]
     test-signing-keypair))
