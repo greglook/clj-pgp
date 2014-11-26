@@ -10,7 +10,9 @@
     (org.bouncycastle.bcpg
       ArmoredOutputStream)
     (org.bouncycastle.openpgp
+      PGPKeyPair
       PGPObjectFactory
+      PGPPrivateKey
       PGPPublicKey
       PGPSecretKey
       PGPSignature
@@ -24,22 +26,33 @@
   [k ^java.io.Writer w]
   (.write w (str "#<PGPPublicKey " (hex-id k) ">")))
 
+(defmethod print-method PGPPrivateKey
+  [k ^java.io.Writer w]
+  (.write w (str "#<PGPPrivateKey " (hex-id k) ">")))
 
 (defmethod print-method PGPSecretKey
   [k ^java.io.Writer w]
   (.write w (str "#<PGPSecretKey " (hex-id k) ">")))
+
+(defmethod print-method PGPKeyPair
+  [k ^java.io.Writer w]
+  (.write w (str "#<PGPKeyPair " (hex-id k) ">")))
 
 
 
 ;; ## Encoding
 
 (defmulti encode
-  "Encodes a PGP object into a byte sequence."
+  "Encodes a PGP object into a byte array."
   class)
 
 (defmethod encode PGPPublicKey
   [^PGPPublicKey pubkey]
   (.getEncoded pubkey))
+
+(defmethod encode PGPPrivateKey
+  [^PGPPrivateKey privkey]
+  (.getEncoded (.getPrivateKeyDataPacket privkey)))
 
 (defmethod encode PGPSignature
   [^PGPSignature sig]
@@ -60,25 +73,30 @@
 
 (defn decode
   "Decodes PGP objects from an encoded data source. Returns a sequence of
-  decoded values."
-  [source]
+  decoded objects."
+  [data]
   (with-open [stream (PGPUtil/getDecoderStream
-                       (bytes/to-input-stream source))]
+                       (bytes/to-input-stream data))]
     (let [factory (PGPObjectFactory. stream)]
       (->> (repeatedly #(.nextObject factory))
-           (take-while identity)
+           (take-while some?)
            doall))))
 
 
 (defn decode-public-key
   "Decodes a public key from the given data."
-  [source]
-  (-> source decode first public-key))
+  [data]
+  (when-let [pubkey (first (decode data))]
+    (when-not (instance? PGPPublicKey pubkey)
+      (throw (IllegalStateException.
+               (str "Data did not contain a public key: " pubkey))))
+    pubkey))
 
 
 (defn decode-signature
-  [source]
-  (let [^PGPSignatureList sigs (first (decode source))]
+  "Decodes a single signature from an encoded signature list."
+  [data]
+  (let [^PGPSignatureList sigs (first (decode data))]
     (when-not (instance? PGPSignatureList sigs)
       (throw (IllegalArgumentException.
                (str "Data did not contain a PGPSignatureList: " sigs))))
