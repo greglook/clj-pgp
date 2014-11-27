@@ -74,6 +74,9 @@
         keypair (pgp/generate-keypair rsa :rsa-general)
         data "My hidden data files"]
     (is (thrown? IllegalArgumentException
+          (pgp/encrypted-data-stream nil :aes-128 []))
+        "Encryption with no encryptors throws an exception")
+    (is (thrown? IllegalArgumentException
           (pgp/encrypt data :not-an-encryptor
                        :integrity-check false
                        :random (SecureRandom.)))
@@ -86,22 +89,29 @@
           "Decrypting with a keypair-retrieval function returns the data.")
       (is (thrown? IllegalArgumentException
             (pgp/decrypt ciphertext "passphrase"))
-          "Decrypting without a matching key throws an exception")))
-  (test-encryption-scenario
-    ["s3cr3t"]
-    "The data blobble"
-    nil :aes-128 true)
-  (test-encryption-scenario
-    [[:rsa :rsa-encrypt 1024]]
-    "Secret stuff to hide from prying eyes"
-    nil :aes-128 false)
-  (test-encryption-scenario
-    [[:ec :ecdh "secp256r1"]]
-    "Foooooood is nice"
-    :zip :aes-256 true)
-  (test-encryption-scenario
-    ["frobble bisvarkian"
-     [:rsa :rsa-general 1024]
-     [:ec :ecdh "sect409r1"]]
-    "Good news, everyone!"
-    :bzip2 :aes-256 true))
+          "Decrypting without a matching key throws an exception"))))
+
+
+(deftest encryption-scenarios
+  (testing "passphrase-only encryption"
+    (test-encryption-scenario
+      ["s3cr3t"]
+      "The data blobble"
+      nil :aes-128 true))
+  (testing "RSA key encryption"
+    (test-encryption-scenario
+      [[:rsa :rsa-encrypt 1024]]
+      "Secret stuff to hide from prying eyes"
+      nil :aes-128 false))
+  (testing "ECDH key encryption"
+    (test-encryption-scenario
+      [[:ec :ecdh "secp256r1"]]
+      "Foooooood is nice"
+      :zip :aes-256 true))
+  (testing "passphrase and multi-key encryption"
+    (test-encryption-scenario
+      ["frobble bisvarkian"
+       [:rsa :rsa-general 1024]
+       [:ec :ecdh "sect409r1"]]
+      "Good news, everyone!"
+      :bzip2 :aes-256 true)))

@@ -26,12 +26,19 @@
   (mvxcvi.crypto.pgp.generate
     generate-keys
     generate-keypair
+    ec-keypair-generator
     rsa-keypair-generator)
   (mvxcvi.crypto.pgp.data
-    encrypt-stream
+    armored-data-stream
+    compressed-data-stream
+    decrypt
     encrypt
-    decrypt-stream
-    decrypt)
+    encrypted-data-stream
+    literal-data-stream
+    message-packet
+    message-stream
+    read-message
+    read-stream)
   (mvxcvi.crypto.pgp.signature
     sign
     verify)

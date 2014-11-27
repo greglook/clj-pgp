@@ -69,29 +69,6 @@
   generator)
 
 
-(defn- encrypted-data-generator
-  "Constructs a generator for encrypting a data packet with a symmetric session
-  key. Opts are documented in `encrypted-data-stream`."
-  ^PGPEncryptedDataGenerator
-  [encryptors
-   {:keys [cipher integrity-check random]
-    :or {cipher :aes-256
-         integrity-check true}}]
-  (let [encryptors (arg-coll encryptors)]
-    (when (< 1 (count (filter string? encryptors)))
-      (throw (IllegalArgumentException.
-               "Only one passphrase encryptor is supported")))
-    (reduce
-      add-encryption-method!
-      (PGPEncryptedDataGenerator.
-        (cond->
-          (BcPGPDataEncryptorBuilder.
-            (tags/symmetric-key-algorithm cipher))
-          integrity-check (.setWithIntegrityPacket true)
-          random          (.setSecureRandom ^SecureRandom random)))
-      encryptors)))
-
-
 (defn encrypted-data-stream
   "Wraps an `OutputStream` with an encrypted data generator, returning another
   stream. The data written to the stream will be encrypted with a symmetric
@@ -104,22 +81,41 @@
   Options may be provided to customize the packet:
 
   - `:buffer-size`     maximum number of bytes per chunk
-  - `:cipher`          symmetric encryption algorithm to use for session key
   - `:integrity-check` whether to include a Modification Detection Code packet
   - `:random`          custom random number generator"
-  [^OutputStream output encryptors & opts]
-  (let [opts (arg-map opts)
-        enc-gen (encrypted-data-generator encryptors opts)]
-    (.open enc-gen output (byte-array (:buffer-size opts 4096)))))
+  [^OutputStream output cipher encryptors & opts]
+  (let [encryptors (arg-coll encryptors)
+        {:keys [buffer-size integrity-check random]
+         :or {buffer-size 4096
+              integrity-check true}}
+        (arg-map opts)]
+    (when (empty? (remove nil? encryptors))
+      (throw (IllegalArgumentException.
+               "Cannot encrypt data stream without encryptors.")))
+    (when (< 1 (count (filter string? encryptors)))
+      (throw (IllegalArgumentException.
+               "Only one passphrase encryptor is supported")))
+    (.open
+      (reduce
+        add-encryption-method!
+        (PGPEncryptedDataGenerator.
+          (cond->
+            (BcPGPDataEncryptorBuilder.
+              (tags/symmetric-key-algorithm cipher))
+            integrity-check (.setWithIntegrityPacket true)
+            random          (.setSecureRandom ^SecureRandom random)))
+        encryptors)
+      output
+      (byte-array (:buffer-size opts 4096)))))
 
 
 (defn compressed-data-stream
   "Wraps an `OutputStream` with a compressed data generator, returning another
   stream. Typically, literal data packets will be written to this stream, which
   are compressed and written to an underlying encryption stream."
-  [^OutputStream output compress]
+  [^OutputStream output algorithm]
   (.open (PGPCompressedDataGenerator.
-           (tags/compression-algorithm compress))
+           (tags/compression-algorithm algorithm))
          output))
 
 
@@ -161,25 +157,26 @@
   (ArmoredOutputStream. output))
 
 
-
-;; ## Data Encryption
-
-(defn encrypt-stream
-  "Wraps the given output stream with encryption and compression layers. The
-  data will decryptable by the owners of the given PGP public key(s).
+(defn message-stream
+  "Wraps the given output stream with compression and encryption layers. The
+  data will decryptable by the corresponding decryptors.
 
   Opts may contain:
 
   - `:buffer-size` maximum number of bytes per chunk
   - `:compress`    if specified, compress the cleartext with the given algorithm
   - `:cipher`      symmetric key algorithm to use
+  - `:encryptors`  keys to encipher the data with if `:cipher` is set
   - `:armor`       whether to ascii-encode the output
 
   See `literal-data-stream` and `encrypted-data-stream` for more options."
-  [^OutputStream output
-   encryptors
-   & opts]
-  (let [{:keys [compress armor] :as opts} (arg-map opts)
+  [^OutputStream output & opts]
+  (let [{:keys [compress cipher encryptors armor]
+         :or {cipher :aes-256}
+         :as opts}
+        (arg-map opts)
+
+        encryptors (arg-coll encryptors)
 
         wrap-with
         (fn [streams wrapper & args]
@@ -188,11 +185,10 @@
         streams
         (->
           (vector output)
-          (cond-> armor
-            (wrap-with armored-data-stream))
-          (wrap-with encrypted-data-stream encryptors opts)
-          (cond-> compress
-            (wrap-with compressed-data-stream compress))
+          (cond->
+            armor      (wrap-with armored-data-stream)
+            encryptors (wrap-with encrypted-data-stream cipher encryptors opts)
+            compress   (wrap-with compressed-data-stream compress))
           (wrap-with literal-data-stream opts)
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]
@@ -200,19 +196,28 @@
         (dorun (map #(.close ^OutputStream %) streams))))))
 
 
-(defn encrypt
+(defn message-packet
   "Compresses, encrypts, and encodes the given data and returns an array of
   bytes containing the resulting packet. The data will decryptable by the
-  owners of the given PGP public key(s).
+  corresponding decryptors.
 
-  See `encrypt-stream` for options."
+  See `message-stream` for options."
   ^bytes
-  [data encryptors & opts]
+  [data & opts]
   (let [buffer (ByteArrayOutputStream.)]
     (with-open [^OutputStream stream
-                (encrypt-stream buffer encryptors (arg-map opts))]
+                (apply message-stream buffer opts)]
       (io/copy data stream))
     (.toByteArray buffer)))
+
+
+(defn encrypt
+  "Constructs a message packet enciphered for the given encryptors. See
+  `message-packet` for options."
+  [data encryptors & opts]
+  (apply message-packet data
+         :encryptors encryptors
+         opts))
 
 
 
@@ -222,21 +227,21 @@
   "Protocol for decryptable/unpackable data objects."
 
   (unpack-data
-    [data decryptor]
+    [data opts]
     "Recursively unpacks a data packet and returns a nested sequence byte arrays
     containing the content. The decryptor is used to access encrypted packets.
-    Throws an exception if encrypted data cannot be decrypted."))
+    Throws an exception if encrypted data cannot be read."))
 
 
 (defn- read-pgp-objects
   "Decodes a sequence of PGP objects from an input stream, unpacking each
   object's data."
-  [decryptor ^InputStream input]
+  [opts ^InputStream input]
   (let [factory (PGPObjectFactory. input)]
     (->>
       (repeatedly #(.nextObject factory))
       (take-while some?)
-      (map #(unpack-data % decryptor)))))
+      (map #(unpack-data % opts)))))
 
 
 (extend-protocol DataPacket
@@ -244,15 +249,15 @@
   PGPEncryptedDataList
 
   (unpack-data
-    [data decryptor]
+    [data opts]
     (let [content (->> (.getEncryptedDataObjects data)
                        iterator-seq
-                       (map #(unpack-data % decryptor))
+                       (map #(unpack-data % opts))
                        (remove nil?)
                        first)]
       (when-not content
         (throw (IllegalArgumentException.
-                 (str "Cannot decrypt " (pr-str data) " with " (pr-str decryptor)
+                 (str "Cannot decrypt " (pr-str data) " with " (pr-str opts)
                       " (no matching encrypted session key)"))))
       content))
 
@@ -260,71 +265,77 @@
   PGPPBEEncryptedData
 
   (unpack-data
-    [data decryptor]
-    (when (string? decryptor)
-      (->> (BcPBEDataDecryptorFactory.
-             (.toCharArray ^String decryptor)
-             (BcPGPDigestCalculatorProvider.))
-           (.getDataStream data)
-           (read-pgp-objects decryptor))))
+    [data opts]
+    (let [decryptor (:decryptor opts)]
+      (when (string? decryptor)
+        (->> (BcPBEDataDecryptorFactory.
+               (.toCharArray ^String decryptor)
+               (BcPGPDigestCalculatorProvider.))
+             (.getDataStream data)
+             (read-pgp-objects opts)))))
 
 
   PGPPublicKeyEncryptedData
 
   (unpack-data
-    [data decryptor]
-    (when-let [privkey (private-key
-                         (if (ifn? decryptor)
-                           (decryptor (key-id data))
-                           decryptor))]
-      (when (= (key-id data) (key-id privkey))
-        (->> (BcPublicKeyDataDecryptorFactory. privkey)
-             (.getDataStream data)
-             (read-pgp-objects decryptor)))))
+    [data opts]
+    (let [decryptor (:decryptor opts)]
+      (when-let [privkey (private-key
+                           (if (ifn? decryptor)
+                             (decryptor (key-id data))
+                             decryptor))]
+        (when (= (key-id data) (key-id privkey))
+          (->> (BcPublicKeyDataDecryptorFactory. privkey)
+               (.getDataStream data)
+               (read-pgp-objects opts))))))
 
 
   PGPCompressedData
 
   (unpack-data
-    [data decryptor]
+    [data opts]
     (->>
       (.getDataStream data)
-      (read-pgp-objects decryptor)
+      (read-pgp-objects opts)
       doall))
 
 
   PGPLiteralData
 
   (unpack-data
-    [data decryptor]
+    [data opts]
     (bytes/to-byte-array (.getInputStream data))))
 
 
-
-;; ## Data Decryption
-
-(defn decrypt-stream
-  "Wraps the given input stream with decryption layers. The `decryptor` should
-  either be a passphrase string (to unlock PBE encrypted data), or a function
-  which accepts a key-id and return the corresponding private key (to unlock
-  public-key encrypted data)."
-  [^InputStream input decryptor]
+(defn read-stream
+  "Wraps the given input stream with decryption and decompression layers."
+  [^InputStream input & opts]
   (->> (PGPUtil/getDecoderStream input)
-       (read-pgp-objects decryptor)
+       (read-pgp-objects (arg-map opts))
        flatten
        (map #(ByteBuffer/wrap %))
        bytes/to-input-stream))
 
 
-(defn decrypt
-  "Decrypts the given data source and returns an array of bytes with the
-  decrypted value. See `decrypt-stream`."
+(defn read-message
+  "Decrypts and decompresses the given data source and returns an array of
+  bytes with the decrypted value."
   ^bytes
-  [data decryptor]
+  [data & opts]
   (let [buffer (ByteArrayOutputStream.)]
     (with-open [^InputStream stream
-                (decrypt-stream
+                (apply read-stream
                   (bytes/to-input-stream data)
-                  decryptor)]
+                  opts)]
       (io/copy stream buffer))
     (.toByteArray buffer)))
+
+
+(defn decrypt
+  "Decrypts a message packet and attempts to decipher it with the given
+  decryptor. See `read-message` for options."
+  ^bytes
+  [data decryptor & opts]
+  (apply read-message data
+         :decryptor decryptor
+         opts))

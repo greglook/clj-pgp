@@ -27,10 +27,10 @@
 (defn arg-coll
   "Returns a collection from the arguments provided. If `ks` is a non-collection
   value, a single-element collection containing `ks` is returned."
-  [ks]
-  (if (and ks (not (coll? ks)))
-    [ks]
-    ks))
+  [args]
+  (if (and args (not (coll? args)))
+    (list args)
+    (seq args)))
 
 
 (defn arg-seq
