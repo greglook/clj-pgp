@@ -30,6 +30,7 @@
       PGPPBEEncryptedData
       PGPCompressedData
       PGPCompressedDataGenerator
+      PGPEncryptedData
       PGPEncryptedDataGenerator
       PGPEncryptedDataList
       PGPLiteralData
@@ -227,15 +228,22 @@
   ;; decipherable and an exception is thrown.
   (unpack-data
     [data opts]
-    (let [content (->> (.getEncryptedDataObjects data)
-                       iterator-seq
-                       (map #(unpack-data % opts))
-                       (remove nil?)
-                       first)]
+    (let [[^PGPEncryptedData object content]
+          (->> (.getEncryptedDataObjects data)
+               iterator-seq
+               (map #(when-let [ds (unpack-data % opts)]
+                       (vector % ds)))
+               (remove nil?)
+               first)]
       (when-not content
         (throw (IllegalArgumentException.
                  (str "Cannot decrypt " (pr-str data) " with " (pr-str opts)
                       " (no matching encrypted session key)"))))
+      (when (and (.isIntegrityProtected object)
+                 (not (.verify object)))
+        (throw (IllegalStateException.
+                 (str "Encrypted data object " object
+                      " failed integrity verification!"))))
       content))
 
 
@@ -251,7 +259,8 @@
                (.toCharArray ^String decryptor)
                (BcPGPDigestCalculatorProvider.))
              (.getDataStream data)
-             (read-pgp-objects opts)))))
+             (read-pgp-objects opts)
+             doall))))
 
 
   PGPPublicKeyEncryptedData
@@ -269,7 +278,8 @@
         (when (= (key-id data) (key-id privkey))
           (->> (BcPublicKeyDataDecryptorFactory. privkey)
                (.getDataStream data)
-               (read-pgp-objects opts)))))))
+               (read-pgp-objects opts)
+               doall))))))
 
 
 
