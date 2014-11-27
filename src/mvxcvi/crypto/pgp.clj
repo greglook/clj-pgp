@@ -17,10 +17,10 @@
     private-key
     unlock-key)
   (mvxcvi.crypto.pgp.keyring
-    list-public-keys
-    list-secret-keys
     get-public-key
     get-secret-key
+    list-public-keys
+    list-secret-keys
     load-public-keyring
     load-secret-keyring)
   (mvxcvi.crypto.pgp.generate

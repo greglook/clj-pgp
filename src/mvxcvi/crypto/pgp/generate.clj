@@ -51,11 +51,18 @@
 
 (defn rsa-keypair-generator
   "Constructs a new generator for RSA keypairs with the given bit strength.
-  Other parameters may be customized with keyword options."
+  Other parameters may be customized with keyword options.
+
+  Opts may include:
+
+  - `:random` a custom random number generator
+  - `:exponent` RSA algorithm public exponent
+  - `:certainty` threshold for probabilistic prime generation"
+  {:arglists '([strength & opts])}
   ^RSAKeyPairGenerator
-  [strength & {:keys [exponent random certainty]
-               :or {exponent (BigInteger/valueOf 0x10001)
-                    random (SecureRandom/getInstance "SHA1PRNG")
+  [strength & {:keys [random exponent certainty]
+               :or {random (SecureRandom/getInstance "SHA1PRNG")
+                    exponent (BigInteger/valueOf 0x10001)
                     certainty 80}}]
   (doto (RSAKeyPairGenerator.)
     (.init (RSAKeyGenerationParameters.
@@ -71,7 +78,12 @@
 
 
 (defn ec-keypair-generator
-  "Constructs a new generator for keypairs on the named elliptic curve."
+  "Constructs a new generator for keypairs on the named elliptic curve.
+
+  Opts may include:
+
+  - `:random` a custom random number generator"
+  {:arglists '([curve & opts])}
   [curve
    & {:keys [^SecureRandom random]
       :or {random (SecureRandom/getInstance "SHA1PRNG")}}]
