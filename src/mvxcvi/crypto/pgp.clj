@@ -28,20 +28,20 @@
     generate-keypair
     ec-keypair-generator
     rsa-keypair-generator)
-  (mvxcvi.crypto.pgp.data
-    armored-data-stream
-    compressed-data-stream
-    decrypt
-    encrypt
-    encrypted-data-stream
-    literal-data-stream
-    message-packet
-    message-stream
-    read-message
-    read-stream)
   (mvxcvi.crypto.pgp.signature
     sign
     verify)
+  (mvxcvi.crypto.pgp.data
+    literal-data-stream
+    compressed-data-stream
+    encrypted-data-stream
+    armored-data-stream
+    message-output-stream
+    build-message
+    encrypt
+    message-input-stream
+    read-message
+    decrypt)
   (mvxcvi.crypto.pgp.codec
     encode
     encode-ascii

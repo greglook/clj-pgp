@@ -69,7 +69,7 @@
     test-encryption-scenario))
 
 
-(deftest data-encryption
+(deftest pgp-messages
   (let [rsa (pgp/rsa-keypair-generator 1024)
         keypair (pgp/generate-keypair rsa :rsa-general)
         data "My hidden data files"]
@@ -84,6 +84,12 @@
     (is (thrown? IllegalArgumentException
           (pgp/encrypt data ["bar" "baz"]))
         "Encryption with multiple passphrases throws an exception")
+    (testing "uncompressed unenciphered data"
+      (let [message (pgp/build-message data)]
+        (is (not (bytes= data message))
+            "Message should wrap a literal packet around the data.")
+        (is (bytes= data (pgp/read-message message))
+            "Literal packet message should be readable with no decryptors.")))
     (let [ciphertext (pgp/encrypt data keypair)]
       (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
           "Decrypting with a keypair-retrieval function returns the data.")

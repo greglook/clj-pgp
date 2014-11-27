@@ -51,6 +51,7 @@
 (defn- add-encryption-method!
   "Adds an encryption method to an encrypted data generator. Returns the updated
   generator."
+  ^PGPEncryptedDataGenerator
   [^PGPEncryptedDataGenerator generator encryptor]
   (cond
     (string? encryptor)
@@ -83,6 +84,7 @@
   - `:buffer-size`     maximum number of bytes per chunk
   - `:integrity-check` whether to include a Modification Detection Code packet
   - `:random`          custom random number generator"
+  ^OutputStream
   [^OutputStream output cipher encryptors & opts]
   (let [encryptors (arg-coll encryptors)
         {:keys [buffer-size integrity-check random]
@@ -96,6 +98,7 @@
       (throw (IllegalArgumentException.
                "Only one passphrase encryptor is supported")))
     (.open
+      ^PGPEncryptedDataGenerator
       (reduce
         add-encryption-method!
         (PGPEncryptedDataGenerator.
@@ -113,6 +116,7 @@
   "Wraps an `OutputStream` with a compressed data generator, returning another
   stream. Typically, literal data packets will be written to this stream, which
   are compressed and written to an underlying encryption stream."
+  ^OutputStream
   [^OutputStream output algorithm]
   (.open (PGPCompressedDataGenerator.
            (tags/compression-algorithm algorithm))
@@ -134,6 +138,7 @@
   - `:data-type` PGP document type, binary by default
   - `:filename` string giving the 'filename' of the data
   - `:mtime` modification time of the packet contents, defaults to the current time"
+  ^OutputStream
   [^OutputStream output & opts]
   (let [{:keys [buffer-size data-type filename ^Date mtime]
          :or {buffer-size 4096
@@ -153,13 +158,15 @@
 (defn armored-data-stream
   "Wraps an `OutputStream` with an armored data stream. Packets written to this
   stream will be output in ASCII encoded Base64."
+  ^OutputStream
   [^OutputStream output]
   (ArmoredOutputStream. output))
 
 
-(defn message-stream
+(defn message-output-stream
   "Wraps the given output stream with compression and encryption layers. The
-  data will decryptable by the corresponding decryptors.
+  data will decryptable by the corresponding decryptors. Does _not_ close the
+  wrapped stream when it is closed.
 
   Opts may contain:
 
@@ -170,6 +177,7 @@
   - `:armor`       whether to ascii-encode the output
 
   See `literal-data-stream` and `encrypted-data-stream` for more options."
+  ^OutputStream
   [^OutputStream output & opts]
   (let [{:keys [compress cipher encryptors armor]
          :or {cipher :aes-256}
@@ -196,26 +204,27 @@
         (dorun (map #(.close ^OutputStream %) streams))))))
 
 
-(defn message-packet
+(defn build-message
   "Compresses, encrypts, and encodes the given data and returns an array of
   bytes containing the resulting packet. The data will decryptable by the
   corresponding decryptors.
 
-  See `message-stream` for options."
+  See `message-output-stream` for options."
   ^bytes
   [data & opts]
   (let [buffer (ByteArrayOutputStream.)]
     (with-open [^OutputStream stream
-                (apply message-stream buffer opts)]
+                (apply message-output-stream buffer opts)]
       (io/copy data stream))
     (.toByteArray buffer)))
 
 
 (defn encrypt
   "Constructs a message packet enciphered for the given encryptors. See
-  `message-packet` for options."
+  `message-output-stream` for options."
+  ^bytes
   [data encryptors & opts]
-  (apply message-packet data
+  (apply build-message data
          :encryptors encryptors
          opts))
 
@@ -307,8 +316,13 @@
     (bytes/to-byte-array (.getInputStream data))))
 
 
-(defn read-stream
-  "Wraps the given input stream with decryption and decompression layers."
+(defn message-input-stream
+  "Wraps the given input stream with decryption and decompression layers.
+
+  Opts may contain:
+
+  - `:decryptor` secret to decipher the message encryption"
+  ^InputStream
   [^InputStream input & opts]
   (->> (PGPUtil/getDecoderStream input)
        (read-pgp-objects (arg-map opts))
@@ -319,12 +333,12 @@
 
 (defn read-message
   "Decrypts and decompresses the given data source and returns an array of
-  bytes with the decrypted value."
+  bytes with the decrypted value. See `message-input-stream` for options."
   ^bytes
   [data & opts]
   (let [buffer (ByteArrayOutputStream.)]
     (with-open [^InputStream stream
-                (apply read-stream
+                (apply message-input-stream
                   (bytes/to-input-stream data)
                   opts)]
       (io/copy stream buffer))
@@ -333,7 +347,7 @@
 
 (defn decrypt
   "Decrypts a message packet and attempts to decipher it with the given
-  decryptor. See `read-message` for options."
+  decryptor. See `message-input-stream` for options."
   ^bytes
   [data decryptor & opts]
   (apply read-message data
