@@ -46,7 +46,113 @@
       BcPublicKeyKeyEncryptionMethodGenerator)))
 
 
-;; ## Data Output Streams
+; TODO: idea - have read-message return a map with info about the message
+; instead of direct byte content. For example - algorithm compressed with, ids
+; of keys encrypted for, cipher encrypted with, filename, mtime, etc.
+
+
+;; ## PGP Data Encoding
+
+(defprotocol DataPacket
+  "Protocol for decryptable/unpackable data objects."
+
+  (unpack-data
+    [data opts]
+    "Recursively unpacks a data packet and returns a nested sequence byte arrays
+    containing the content. The decryptor is used to access encrypted packets.
+    Throws an exception if encrypted data cannot be read."))
+
+
+(defn- read-pgp-objects
+  "Decodes a sequence of PGP objects from an input stream, unpacking each
+  object's data."
+  [opts ^InputStream input]
+  (let [factory (PGPObjectFactory. input)]
+    (->>
+      (repeatedly #(.nextObject factory))
+      (take-while some?)
+      (map #(unpack-data % opts)))))
+
+
+(defn armored-data-stream
+  "Wraps an `OutputStream` with an armored data stream. Packets written to this
+  stream will be output in ASCII encoded Base64."
+  ^OutputStream
+  [^OutputStream output]
+  (ArmoredOutputStream. output))
+
+
+
+;; ## Literal Data Packets
+
+(defn literal-data-stream
+  "Wraps an `OutputStream` with a literal data generator, returning another
+  stream. Typically, the wrapped stream is a compressed data stream or
+  encrypted data stream.
+
+  Data written to the returned stream will write a literal data packet to the
+  wrapped output stream. If the data is longer than the buffer size, the packet
+  is written in chunks in a streaming fashion.
+
+  Options may be provided to customize the packet:
+
+  - `:buffer-size` maximum number of bytes per chunk
+  - `:data-type` PGP document type, binary by default
+  - `:filename` string giving the 'filename' of the data
+  - `:mtime` modification time of the packet contents, defaults to the current time"
+  ^OutputStream
+  [^OutputStream output & opts]
+  (let [{:keys [buffer-size data-type filename ^Date mtime]
+         :or {buffer-size 4096
+              data-type   PGPLiteralData/BINARY
+              filename    PGPLiteralData/CONSOLE
+              mtime       PGPLiteralData/NOW}}
+        (arg-map opts)]
+    (.open (PGPLiteralDataGenerator.)
+           output
+           (char data-type)
+           (str filename)
+           mtime
+           (byte-array buffer-size))))
+
+
+;; Read the literal data bytes from the packet.
+(extend-protocol DataPacket
+  PGPLiteralData
+
+  (unpack-data
+    [data opts]
+    (bytes/to-byte-array (.getInputStream data))))
+
+
+
+;; ## Compressed Data Packets
+
+(defn compressed-data-stream
+  "Wraps an `OutputStream` with a compressed data generator, returning another
+  stream. Typically, literal data packets will be written to this stream, which
+  are compressed and written to an underlying encryption stream."
+  ^OutputStream
+  [^OutputStream output algorithm]
+  (.open (PGPCompressedDataGenerator.
+           (tags/compression-algorithm algorithm))
+         output))
+
+
+;; Decompress the data contained in the packet.
+(extend-protocol DataPacket
+  PGPCompressedData
+
+  (unpack-data
+    [data opts]
+    (->>
+      (.getDataStream data)
+      (read-pgp-objects opts)
+      doall)))
+
+
+
+;; ## Encrypted Data Packets
 
 (defn- add-encryption-method!
   "Adds an encryption method to an encrypted data generator. Returns the updated
@@ -112,56 +218,62 @@
       (byte-array (:buffer-size opts 4096)))))
 
 
-(defn compressed-data-stream
-  "Wraps an `OutputStream` with a compressed data generator, returning another
-  stream. Typically, literal data packets will be written to this stream, which
-  are compressed and written to an underlying encryption stream."
-  ^OutputStream
-  [^OutputStream output algorithm]
-  (.open (PGPCompressedDataGenerator.
-           (tags/compression-algorithm algorithm))
-         output))
+(extend-protocol DataPacket
+
+  PGPEncryptedDataList
+
+  ;; Read through the list of encrypted session keys and attempt to find one
+  ;; which the decryptor will unlock. If none are found, the message is not
+  ;; decipherable and an exception is thrown.
+  (unpack-data
+    [data opts]
+    (let [content (->> (.getEncryptedDataObjects data)
+                       iterator-seq
+                       (map #(unpack-data % opts))
+                       (remove nil?)
+                       first)]
+      (when-not content
+        (throw (IllegalArgumentException.
+                 (str "Cannot decrypt " (pr-str data) " with " (pr-str opts)
+                      " (no matching encrypted session key)"))))
+      content))
 
 
-(defn literal-data-stream
-  "Wraps an `OutputStream` with a literal data generator, returning another
-  stream. Typically, the wrapped stream is a compressed data stream or
-  encrypted data stream.
+  PGPPBEEncryptedData
 
-  Data written to the returned stream will write a literal data packet to the
-  wrapped output stream. If the data is longer than the buffer size, the packet
-  is written in chunks in a streaming fashion.
-
-  Options may be provided to customize the packet:
-
-  - `:buffer-size` maximum number of bytes per chunk
-  - `:data-type` PGP document type, binary by default
-  - `:filename` string giving the 'filename' of the data
-  - `:mtime` modification time of the packet contents, defaults to the current time"
-  ^OutputStream
-  [^OutputStream output & opts]
-  (let [{:keys [buffer-size data-type filename ^Date mtime]
-         :or {buffer-size 4096
-              data-type   PGPLiteralData/BINARY
-              filename    PGPLiteralData/CONSOLE
-              mtime       PGPLiteralData/NOW}}
-        (arg-map opts)]
-    (.open (PGPLiteralDataGenerator.)
-           output
-           (char data-type)
-           (str filename)
-           mtime
-           (byte-array buffer-size))))
+  ;; If the decryptor is a string, try to use it to decrypt the passphrase
+  ;; protected session key.
+  (unpack-data
+    [data opts]
+    (let [decryptor (:decryptor opts)]
+      (when (string? decryptor)
+        (->> (BcPBEDataDecryptorFactory.
+               (.toCharArray ^String decryptor)
+               (BcPGPDigestCalculatorProvider.))
+             (.getDataStream data)
+             (read-pgp-objects opts)))))
 
 
+  PGPPublicKeyEncryptedData
 
-(defn armored-data-stream
-  "Wraps an `OutputStream` with an armored data stream. Packets written to this
-  stream will be output in ASCII encoded Base64."
-  ^OutputStream
-  [^OutputStream output]
-  (ArmoredOutputStream. output))
+  ;; If the decryptor is callable, use it to find a private key matching the id
+  ;; on the data packet. Otherwise, use it directly as a private key. If the
+  ;; decryptor doesn't match the id, return nil.
+  (unpack-data
+    [data opts]
+    (let [decryptor (:decryptor opts)]
+      (when-let [privkey (private-key
+                           (if (ifn? decryptor)
+                             (decryptor (key-id data))
+                             decryptor))]
+        (when (= (key-id data) (key-id privkey))
+          (->> (BcPublicKeyDataDecryptorFactory. privkey)
+               (.getDataStream data)
+               (read-pgp-objects opts)))))))
 
+
+
+;; ## Constructing PGP Messages
 
 (defn message-output-stream
   "Wraps the given output stream with compression and encryption layers. The
@@ -171,9 +283,9 @@
   Opts may contain:
 
   - `:buffer-size` maximum number of bytes per chunk
-  - `:compress`    if specified, compress the cleartext with the given algorithm
-  - `:cipher`      symmetric key algorithm to use
-  - `:encryptors`  keys to encipher the data with if `:cipher` is set
+  - `:compress`    compress the cleartext with the given algorithm, if specified
+  - `:cipher`      symmetric key algorithm to use if encryptors are provided
+  - `:encryptors`  keys to encrypt the cipher session key with
   - `:armor`       whether to ascii-encode the output
 
   See `literal-data-stream` and `encrypted-data-stream` for more options."
@@ -230,91 +342,7 @@
 
 
 
-;; ## Data Input Streams
-
-(defprotocol DataPacket
-  "Protocol for decryptable/unpackable data objects."
-
-  (unpack-data
-    [data opts]
-    "Recursively unpacks a data packet and returns a nested sequence byte arrays
-    containing the content. The decryptor is used to access encrypted packets.
-    Throws an exception if encrypted data cannot be read."))
-
-
-(defn- read-pgp-objects
-  "Decodes a sequence of PGP objects from an input stream, unpacking each
-  object's data."
-  [opts ^InputStream input]
-  (let [factory (PGPObjectFactory. input)]
-    (->>
-      (repeatedly #(.nextObject factory))
-      (take-while some?)
-      (map #(unpack-data % opts)))))
-
-
-(extend-protocol DataPacket
-
-  PGPEncryptedDataList
-
-  (unpack-data
-    [data opts]
-    (let [content (->> (.getEncryptedDataObjects data)
-                       iterator-seq
-                       (map #(unpack-data % opts))
-                       (remove nil?)
-                       first)]
-      (when-not content
-        (throw (IllegalArgumentException.
-                 (str "Cannot decrypt " (pr-str data) " with " (pr-str opts)
-                      " (no matching encrypted session key)"))))
-      content))
-
-
-  PGPPBEEncryptedData
-
-  (unpack-data
-    [data opts]
-    (let [decryptor (:decryptor opts)]
-      (when (string? decryptor)
-        (->> (BcPBEDataDecryptorFactory.
-               (.toCharArray ^String decryptor)
-               (BcPGPDigestCalculatorProvider.))
-             (.getDataStream data)
-             (read-pgp-objects opts)))))
-
-
-  PGPPublicKeyEncryptedData
-
-  (unpack-data
-    [data opts]
-    (let [decryptor (:decryptor opts)]
-      (when-let [privkey (private-key
-                           (if (ifn? decryptor)
-                             (decryptor (key-id data))
-                             decryptor))]
-        (when (= (key-id data) (key-id privkey))
-          (->> (BcPublicKeyDataDecryptorFactory. privkey)
-               (.getDataStream data)
-               (read-pgp-objects opts))))))
-
-
-  PGPCompressedData
-
-  (unpack-data
-    [data opts]
-    (->>
-      (.getDataStream data)
-      (read-pgp-objects opts)
-      doall))
-
-
-  PGPLiteralData
-
-  (unpack-data
-    [data opts]
-    (bytes/to-byte-array (.getInputStream data))))
-
+;; ## Reading PGP Messages
 
 (defn message-input-stream
   "Wraps the given input stream with decryption and decompression layers.
