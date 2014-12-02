@@ -8,7 +8,7 @@
 
   :aliases {"docs" ["do" ["hiera"] ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"]]
             "tests" ["do" ["check"] ["test"] ["cloverage"]]
-            "fuzz" ["with-profile" "+tool" "run" "-m" "mvxcvi.crypto.pgp.tool.fuzz"]}
+            "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
   :plugins [[codox "0.8.10"]
             [lein-cloverage "1.0.2"]
