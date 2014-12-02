@@ -11,14 +11,14 @@
 ;; ## Keyring Fixtures
 
 (def pubring
-  (-> "mvxcvi/crypto/pgp/test/keys/pubring.gpg"
+  (-> "clj_pgp/test/keys/pubring.gpg"
       io/resource
       io/file
       pgp/load-public-keyring))
 
 
 (def secring
-  (-> "mvxcvi/crypto/pgp/test/keys/secring.gpg"
+  (-> "clj_pgp/test/keys/secring.gpg"
       io/resource
       io/file
       pgp/load-secret-keyring))

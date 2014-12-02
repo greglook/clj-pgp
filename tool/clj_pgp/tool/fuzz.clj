@@ -1,8 +1,8 @@
-(ns mvxcvi.crypto.pgp.tool.fuzz
+(ns clj-pgp.tool.fuzz
   (:require
     [clojure.core.async :as async :refer [<! >! <!!]]
     [clojure.test.check :as check]
-    (mvxcvi.crypto.pgp.test
+    (clj-pgp.test
       [encryption :refer [data-encryption-property]]
       [signing :refer [keypair-signing-property]])
     [puget.printer :as puget])
