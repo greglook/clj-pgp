@@ -1,9 +1,9 @@
-(ns mvxcvi.crypto.pgp.test.key-utils
+(ns clj-pgp.test.key-utils
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.test.keys :as test-keys
+    [clj-pgp :as pgp]
+    [clj-pgp.test.keys :as test-keys
      :refer [privkey pubkey pubring seckey secring]])
   (:import
     (org.bouncycastle.openpgp

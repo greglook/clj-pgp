@@ -1,13 +1,13 @@
-(ns mvxcvi.crypto.pgp.test.signing
+(ns clj-pgp.test.signing
   (:require
     [clojure.test :refer :all]
     [clojure.test.check :as check]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop]
     [byte-streams :refer [bytes=]]
-    [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.generate :as pgp-gen]
-    [mvxcvi.crypto.pgp.test.keys :refer
+    [clj-pgp :as pgp]
+    [clj-pgp.generate :as pgp-gen]
+    [clj-pgp.test.keys :refer
      [master-pubkey pubkey privkey
       gen-ec-keyspec
       gen-rsa-keyspec

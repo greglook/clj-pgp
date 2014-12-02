@@ -1,9 +1,9 @@
-(ns mvxcvi.crypto.pgp.test.keys
+(ns clj-pgp.test.keys
   (:require
     [clojure.java.io :as io]
     [clojure.test.check.generators :as gen]
-    [mvxcvi.crypto.pgp :as pgp]
-    (mvxcvi.crypto.pgp
+    [clj-pgp :as pgp]
+    (clj-pgp
       [generate :as pgp-gen]
       [tags :as tags])))
 

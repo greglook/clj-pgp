@@ -1,7 +1,7 @@
-(ns mvxcvi.crypto.pgp.test.generate
+(ns clj-pgp.test.generate
   (:require
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp :as pgp])
+    [clj-pgp :as pgp])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing
@@ -10,33 +10,33 @@
 
 (deftest keyring-macro-generation
   (is (thrown? IllegalArgumentException
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp/generate-keys
                  ..user-id.. ..passphrase..)))
       "A master-key spec is required.")
 
   (is (thrown? IllegalArgumentException
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  (master-key ..keypair-2..))))
       "Multiple master-key specs are illegal.")
 
   (is (thrown? IllegalArgumentException
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  ..some-val..)))
       "Malformed subkey specs are illegal.")
 
   (is (thrown? Exception
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  (foobar-key ..keypair-2..))))
       "Unknown subkey spec types are illegal.")
 
   (is (thrown? Exception
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp/generate-keys
                  '..user-id.. '..passphrase..
                  (master-key
                    '..keypair-1..
@@ -44,7 +44,7 @@
       "Malformed signature subpackets are illegal.")
 
   (is (thrown? Exception
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp/generate-keys
                  '..user-id.. '..passphrase..
                  (master-key
                    '..keypair-1..

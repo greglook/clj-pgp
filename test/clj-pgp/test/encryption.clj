@@ -1,4 +1,4 @@
-(ns mvxcvi.crypto.pgp.test.encryption
+(ns clj-pgp.test.encryption
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.java.io :as io]
@@ -6,11 +6,11 @@
     [clojure.test.check :as check]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop]
-    [mvxcvi.crypto.pgp :as pgp]
-    (mvxcvi.crypto.pgp
+    [clj-pgp :as pgp]
+    (clj-pgp
       [generate :as pgp-gen]
       [tags :as tags])
-    [mvxcvi.crypto.pgp.test.keys :refer
+    [clj-pgp.test.keys :refer
      [gen-ec-keyspec
       gen-rsa-keyspec
       memospec->keypair]])

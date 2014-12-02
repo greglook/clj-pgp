@@ -1,7 +1,7 @@
-(ns mvxcvi.crypto.pgp.test.tags
+(ns clj-pgp.test.tags
   (:require
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp.tags :as tags]))
+    [clj-pgp.tags :as tags]))
 
 
 (defmacro ^:private check-tags
