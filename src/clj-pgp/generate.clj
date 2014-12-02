@@ -1,7 +1,7 @@
-(ns mvxcvi.crypto.pgp.generate
+(ns clj-pgp.generate
   (:require
     [clojure.string :as str]
-    (mvxcvi.crypto.pgp
+    (clj-pgp
       [tags :as tags]
       [util :refer [arg-seq key-algorithm]]))
   (:import

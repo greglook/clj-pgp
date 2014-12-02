@@ -1,4 +1,4 @@
-(ns mvxcvi.crypto.pgp.data
+(ns clj-pgp.data
   "Data encryption and decryption functions.
 
   This namespace makes use of the concept of _encryptors_ and _decryptors_.
@@ -12,7 +12,7 @@
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]
-    (mvxcvi.crypto.pgp
+    (clj-pgp
       [tags :as tags]
       [util :refer [key-id public-key private-key arg-coll arg-map]]))
   (:import

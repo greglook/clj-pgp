@@ -1,8 +1,8 @@
-(ns mvxcvi.crypto.pgp.keyring
+(ns clj-pgp.keyring
   "Keyring functions."
   (:require
     [byte-streams :as bytes]
-    [mvxcvi.crypto.pgp.util :refer [key-id]])
+    [clj-pgp.util :refer [key-id]])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing

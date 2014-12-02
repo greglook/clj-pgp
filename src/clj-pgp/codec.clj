@@ -1,9 +1,9 @@
-(ns mvxcvi.crypto.pgp.codec
+(ns clj-pgp.codec
   "Functions for encoding and decoding PGP objects."
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]
-    [mvxcvi.crypto.pgp.util :refer [hex-id public-key]])
+    [clj-pgp.util :refer [hex-id public-key]])
   (:import
     (java.io
       ByteArrayOutputStream)

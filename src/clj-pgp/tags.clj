@@ -1,4 +1,4 @@
-(ns mvxcvi.crypto.pgp.tags
+(ns clj-pgp.tags
   "Vars which map Cloure keywords to numeric BouncyCastle tag codes."
   (:require
     [clojure.string :as str])

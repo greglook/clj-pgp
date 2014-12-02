@@ -1,9 +1,8 @@
-(ns mvxcvi.crypto.pgp.util
+(ns clj-pgp.util
   "Utility functions to validate and coerce various kinds of PGP values."
   (:require
     [clojure.string :as str]
-    (mvxcvi.crypto.pgp
-      [tags :as tags]))
+    [clj-pgp.tags :as tags])
   (:import
     java.util.Date
     (org.bouncycastle.openpgp

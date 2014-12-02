@@ -1,8 +1,8 @@
-(ns mvxcvi.crypto.pgp.signature
+(ns clj-pgp.signature
   "Signature generation and verification."
   (:require
     [byte-streams :as bytes]
-    (mvxcvi.crypto.pgp
+    (clj-pgp
       [tags :as tags]
       [util :as k]))
   (:import
