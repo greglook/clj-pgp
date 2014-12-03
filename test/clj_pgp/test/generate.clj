@@ -1,7 +1,9 @@
 (ns clj-pgp.test.generate
   (:require
     [clojure.test :refer :all]
-    [clj-pgp :as pgp])
+    [clj-pgp :as pgp]
+    (clj-pgp
+      [generate :as pgp-gen]))
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing
@@ -53,8 +55,8 @@
 
 
 (deftest keyring-generation
-  (let [rsa (pgp/rsa-keypair-generator 1024)
-        keyrings (pgp/generate-keys
+  (let [rsa (pgp-gen/rsa-keypair-generator 1024)
+        keyrings (pgp-gen/generate-keys
                    "test user" "test passphrase"
                    (master-key
                      (keypair rsa :rsa-general)

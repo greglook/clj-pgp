@@ -1,14 +1,18 @@
-(ns clj-pgp.data
-  "Data encryption and decryption functions.
+(ns clj-pgp.message
+  "The functions in this namespace package raw data into PGP _messages_, which
+  can be compressed, encrypted, and signed.
 
-  This namespace makes use of the concept of _encryptors_ and _decryptors_.
-  These are values used to encipher and decipher data, respectively. A
-  collection of encryptors may be provided to the encryption functions, and
-  the any corresponding decryptor will be able to read the resulting message.
+  The encryption functions use the concept of _encryptors_ and _decryptors_.
+  A collection of encryptors may be used to encipher a message, and any
+  corresponding decryptor will be able to decipher it.
 
-  An encryptor may be a passphrase string or a public-key object. A decryptor
-  may be a passphrase string, a private-key object, or a function that accepts
-  a key id and returns the corresponding private-key."
+  For symmetric encryption, the encryptor is the passphrase string and the
+  corresponding decryptor is the same string.
+
+  For public-key encryption, the encryptor is the public-key object and the
+  decryptor is the corresponding private-key. Alternately, the decryptor can be
+  a function which accepts a key id and returns the corresponding private-key,
+  to look it up or unlock the key on demand."
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]

@@ -3,7 +3,7 @@
   (:require
     [potemkin :refer [import-vars]]
     (clj-pgp
-      codec data generate keyring signature util)))
+      codec generate keyring message signature util)))
 
 
 (import-vars
@@ -31,7 +31,7 @@
   (clj-pgp.signature
     sign
     verify)
-  (clj-pgp.data
+  (clj-pgp.message
     literal-data-stream
     compressed-data-stream
     encrypted-data-stream

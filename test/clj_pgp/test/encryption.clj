@@ -9,6 +9,7 @@
     [clj-pgp :as pgp]
     (clj-pgp
       [generate :as pgp-gen]
+      [message :as pgp-msg]
       [tags :as tags])
     [clj-pgp.test.keys :refer
      [gen-ec-keyspec
@@ -28,7 +29,7 @@
                 (when compress (str " compressed with " compress))
                 " encoded in " (if armor "ascii" "binary"))
     (let [encryptors (map memospec->keypair keyspecs)
-          ciphertext (pgp/encrypt
+          ciphertext (pgp-msg/encrypt
                        data encryptors
                        :compress compress
                        :cipher cipher
@@ -36,7 +37,7 @@
       (is (not (bytes= data ciphertext))
         "ciphertext bytes differ from data")
       (doseq [decryptor encryptors]
-        (is (bytes= data (pgp/decrypt ciphertext decryptor))
+        (is (bytes= data (pgp-msg/decrypt ciphertext decryptor))
             "decrypting the ciphertext returns plaintext"))
       [encryptors ciphertext])))
 
@@ -70,31 +71,31 @@
 
 
 (deftest pgp-messages
-  (let [rsa (pgp/rsa-keypair-generator 1024)
-        keypair (pgp/generate-keypair rsa :rsa-general)
+  (let [rsa (pgp-gen/rsa-keypair-generator 1024)
+        keypair (pgp-gen/generate-keypair rsa :rsa-general)
         data "My hidden data files"]
     (is (thrown? IllegalArgumentException
-          (pgp/encrypted-data-stream nil :aes-128 []))
+          (pgp-msg/encrypted-data-stream nil :aes-128 []))
         "Encryption with no encryptors throws an exception")
     (is (thrown? IllegalArgumentException
-          (pgp/encrypt data :not-an-encryptor
+          (pgp-msg/encrypt data :not-an-encryptor
                        :integrity-check false
                        :random (SecureRandom.)))
         "Encryption with an invalid encryptor throws an exception")
     (is (thrown? IllegalArgumentException
-          (pgp/encrypt data ["bar" "baz"]))
+          (pgp-msg/encrypt data ["bar" "baz"]))
         "Encryption with multiple passphrases throws an exception")
     (testing "uncompressed unenciphered data"
-      (let [message (pgp/build-message data)]
+      (let [message (pgp-msg/build-message data)]
         (is (not (bytes= data message))
             "Message should wrap a literal packet around the data.")
-        (is (bytes= data (pgp/read-message message))
+        (is (bytes= data (pgp-msg/read-message message))
             "Literal packet message should be readable with no decryptors.")))
-    (let [ciphertext (pgp/encrypt data keypair)]
-      (is (bytes= data (pgp/decrypt ciphertext (constantly keypair)))
+    (let [ciphertext (pgp-msg/encrypt data keypair)]
+      (is (bytes= data (pgp-msg/decrypt ciphertext (constantly keypair)))
           "Decrypting with a keypair-retrieval function returns the data.")
       (is (thrown? IllegalArgumentException
-            (pgp/decrypt ciphertext "passphrase"))
+            (pgp-msg/decrypt ciphertext "passphrase"))
           "Decrypting without a matching key throws an exception"))))
 
 
