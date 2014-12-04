@@ -64,8 +64,8 @@
   (prop/for-all*
     [gen-encryptors
      (gen/not-empty gen/bytes)
-     (gen/elements (cons nil (keys tags/compression-algorithms)))
-     (gen/elements (remove #{:null :safer :camellia-256} (keys tags/symmetric-key-algorithms)))
+     (gen/elements (cons nil pgp/compression-algorithms))
+     (gen/elements (remove #{:null :safer :camellia-256} pgp/symmetric-key-algorithms))
      gen/boolean]
     test-encryption-scenario))
 

@@ -2,7 +2,10 @@
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
-    [clj-pgp :as pgp]
+    (clj-pgp
+      [codec :as pgp-io]
+      [core :as pgp]
+      [keyring :as keyring])
     [clj-pgp.test.keys :as test-keys
      :refer [privkey pubkey pubring seckey secring]])
   (:import
@@ -14,17 +17,17 @@
 
 (deftest keyrings
   (testing "public keyring contains two public keys"
-    (let [pks (pgp/list-public-keys pubring)]
+    (let [pks (keyring/list-public-keys pubring)]
       (is (= 2 (count pks)))
       (is (instance? PGPPublicKey (nth pks 0)))
       (is (instance? PGPPublicKey (nth pks 1)))))
   (testing "secret keyring contains two public keys"
-    (let [pks (pgp/list-public-keys secring)]
+    (let [pks (keyring/list-public-keys secring)]
       (is (= 2 (count pks)))
       (is (instance? PGPPublicKey (nth pks 0)))
       (is (instance? PGPPublicKey (nth pks 1)))))
   (testing "secret keyring contains two secret keys"
-    (let [pks (pgp/list-secret-keys secring)]
+    (let [pks (keyring/list-secret-keys secring)]
       (is (= 2 (count pks)))
       (is (instance? PGPSecretKey (nth pks 0)))
       (is (instance? PGPSecretKey (nth pks 1))))))
@@ -135,20 +138,20 @@
 
 
 (deftest public-key-binary-encoding
-  (let [encoded-key (pgp/encode pubkey)
-        decoded-key (pgp/decode-public-key encoded-key)]
+  (let [encoded-key (pgp-io/encode pubkey)
+        decoded-key (pgp-io/decode-public-key encoded-key)]
     (is (instance? PGPPublicKey decoded-key)
         "key is decoded as a PGP public key")
-    (is (bytes= encoded-key (pgp/encode decoded-key))
+    (is (bytes= encoded-key (pgp-io/encode decoded-key))
         "encoded key is canonical")))
 
 
 (deftest public-key-ascii-encoding
-  (let [encoded-key (pgp/encode-ascii pubkey)
-        decoded-key (pgp/decode-public-key encoded-key)]
+  (let [encoded-key (pgp-io/encode-ascii pubkey)
+        decoded-key (pgp-io/decode-public-key encoded-key)]
     (is (string? encoded-key)
         "key is encoded as a string")
     (is (instance? PGPPublicKey decoded-key)
         "key is decoded as a PGP public key")
-    (is (= encoded-key (pgp/encode-ascii decoded-key))
+    (is (= encoded-key (pgp-io/encode-ascii decoded-key))
         "encoded key is canonical")))
