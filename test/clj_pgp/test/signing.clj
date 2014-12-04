@@ -6,7 +6,6 @@
     [clojure.test.check.properties :as prop]
     [byte-streams :refer [bytes=]]
     (clj-pgp
-      [codec :as pgp-io]
       [core :as pgp]
       [generate :as pgp-gen]
       [signature :as pgp-sig])
@@ -32,14 +31,14 @@
 (deftest signature-encoding
   (let [data "very important data to trust"
         sig (pgp-sig/sign data privkey)
-        binary (pgp-io/encode sig)
-        sig' (pgp-io/decode-signature binary)]
-    (is (bytes= binary (pgp-io/encode sig'))
+        binary (pgp/encode sig)
+        sig' (pgp/decode-signature binary)]
+    (is (bytes= binary (pgp/encode sig'))
         "binary representation is canonical")
     (is (pgp-sig/verify data sig' pubkey)
         "decoded signature can be verified")
     (is (thrown? IllegalArgumentException
-                 (pgp-io/decode-signature (pgp-io/encode pubkey)))
+                 (pgp/decode-signature (pgp/encode pubkey)))
       "decoding non-signature value throws an exception")))
 
 
@@ -60,9 +59,9 @@
           "verification with the wrong public key throws error")
       (is (pgp-sig/verify data sig keypair)
           "verification with public key succeeds")
-      (let [binary (pgp-io/encode sig)
-            sig' (pgp-io/decode-signature binary)]
-        (is (bytes= binary (pgp-io/encode sig'))
+      (let [binary (pgp/encode sig)
+            sig' (pgp/decode-signature binary)]
+        (is (bytes= binary (pgp/encode sig'))
             "binary representation is canonical")
         (is (pgp-sig/verify data sig' keypair)
             "decoded signature can be verified")))))

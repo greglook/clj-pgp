@@ -16,8 +16,7 @@
 
   :dependencies [[byte-streams "0.1.13"]
                  [org.bouncycastle/bcpg-jdk15on "1.51"]
-                 [org.bouncycastle/bcprov-jdk15on "1.51"]
-                 [potemkin "0.3.11"]]
+                 [org.bouncycastle/bcprov-jdk15on "1.51"]]
 
   :hiera {:path "doc/ns-hiera.png"
           :cluster-depth 1

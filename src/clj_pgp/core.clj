@@ -1,21 +1,26 @@
 (ns clj-pgp.core
   "Core functions for handling PGP objects."
   (:require
+    [byte-streams :as bytes]
+    [clojure.java.io :as io]
     [clojure.string :as str]
     [clj-pgp.tags :as tags])
   (:import
+    java.io.ByteArrayOutputStream
     java.util.Date
+    (org.bouncycastle.bcpg
+      ArmoredOutputStream)
     (org.bouncycastle.openpgp
       PGPKeyPair
       PGPKeyRing
+      PGPObjectFactory
       PGPPrivateKey
       PGPPublicKey
       PGPPublicKeyEncryptedData
-      PGPPublicKeyRingCollection
       PGPSecretKey
-      PGPSecretKeyRing
-      PGPSecretKeyRingCollection
-      PGPSignature)
+      PGPSignature
+      PGPSignatureList
+      PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
       BcPBESecretKeyDecryptorBuilder
       BcPGPDigestCalculatorProvider)))
@@ -209,3 +214,68 @@
     (-> (BcPGPDigestCalculatorProvider.)
         (BcPBESecretKeyDecryptorBuilder.)
         (.build (.toCharArray passphrase)))))
+
+
+
+;; ## PGP Object Encoding
+
+(defmulti encode
+  "Encodes a PGP object into a byte array."
+  class)
+
+(defmethod encode PGPPublicKey
+  [^PGPPublicKey pubkey]
+  (.getEncoded pubkey))
+
+(defmethod encode PGPPrivateKey
+  [^PGPPrivateKey privkey]
+  (.getEncoded (.getPrivateKeyDataPacket privkey)))
+
+(defmethod encode PGPSignature
+  [^PGPSignature sig]
+  (.getEncoded sig))
+
+
+(defn encode-ascii
+  "Encodes a PGP object into an ascii-armored text blob."
+  [data]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [encoder (ArmoredOutputStream. buffer)]
+      (io/copy (encode data) encoder))
+    (str buffer)))
+
+
+
+;; ## PGP Object Decoding
+
+(defn decode
+  "Decodes PGP objects from an encoded data source. Returns a sequence of
+  decoded objects."
+  [data]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (bytes/to-input-stream data))]
+    (let [factory (PGPObjectFactory. stream)]
+      (->> (repeatedly #(.nextObject factory))
+           (take-while some?)
+           doall))))
+
+
+(defn decode-public-key
+  "Decodes a public key from the given data."
+  [data]
+  (when-let [pubkey (first (decode data))]
+    (when-not (instance? PGPPublicKey pubkey)
+      (throw (IllegalStateException.
+               (str "Data did not contain a public key: " pubkey))))
+    pubkey))
+
+
+(defn decode-signature
+  "Decodes a single signature from an encoded signature list."
+  [data]
+  (let [^PGPSignatureList sigs (first (decode data))]
+    (when-not (instance? PGPSignatureList sigs)
+      (throw (IllegalArgumentException.
+               (str "Data did not contain a PGPSignatureList: " sigs))))
+    (when-not (.isEmpty sigs)
+      (.get sigs 0))))
