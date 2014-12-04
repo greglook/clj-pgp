@@ -32,13 +32,13 @@
   (let [data "very important data to trust"
         sig (pgp-sig/sign data privkey)
         binary (pgp/encode sig)
-        sig' (pgp/decode-signature binary)]
+        [sig'] (pgp/decode-signatures binary)]
     (is (bytes= binary (pgp/encode sig'))
         "binary representation is canonical")
     (is (pgp-sig/verify data sig' pubkey)
         "decoded signature can be verified")
     (is (thrown? IllegalArgumentException
-                 (pgp/decode-signature (pgp/encode pubkey)))
+                 (pgp/decode-signatures (pgp/encode pubkey)))
       "decoding non-signature value throws an exception")))
 
 
@@ -60,7 +60,7 @@
       (is (pgp-sig/verify data sig keypair)
           "verification with public key succeeds")
       (let [binary (pgp/encode sig)
-            sig' (pgp/decode-signature binary)]
+            [sig'] (pgp/decode-signatures binary)]
         (is (bytes= binary (pgp/encode sig'))
             "binary representation is canonical")
         (is (pgp-sig/verify data sig' keypair)

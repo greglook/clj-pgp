@@ -6,7 +6,9 @@
     [clojure.string :as str]
     [clj-pgp.tags :as tags])
   (:import
-    java.io.ByteArrayOutputStream
+    (java.io
+      ByteArrayOutputStream
+      InputStream)
     java.util.Date
     (org.bouncycastle.bcpg
       ArmoredOutputStream)
@@ -248,20 +250,28 @@
 
 ;; ## PGP Object Decoding
 
+(defn ^:no-doc read-pgp-objects
+  "Decodes a sequence of PGP objects from an input stream."
+  [^InputStream input]
+  (let [factory (PGPObjectFactory. input)]
+    (->>
+      (repeatedly #(.nextObject factory))
+      (take-while some?)
+      doall)))
+
+
 (defn decode
   "Decodes PGP objects from an encoded data source. Returns a sequence of
   decoded objects."
   [data]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream data))]
-    (let [factory (PGPObjectFactory. stream)]
-      (->> (repeatedly #(.nextObject factory))
-           (take-while some?)
-           doall))))
+    (read-pgp-objects stream)))
 
 
 (defn decode-public-key
-  "Decodes a public key from the given data."
+  "Decodes a public key from the given data. Throws an exception if the data
+  does not contain a public key value."
   [data]
   (when-let [pubkey (first (decode data))]
     (when-not (instance? PGPPublicKey pubkey)
@@ -270,12 +280,23 @@
     pubkey))
 
 
-(defn decode-signature
-  "Decodes a single signature from an encoded signature list."
+(defn decode-signatures
+  "Decodes a sequence of signatures from the given data. Throws an exception if
+  the data does not contain a signature list."
   [data]
-  (let [^PGPSignatureList sigs (first (decode data))]
-    (when-not (instance? PGPSignatureList sigs)
-      (throw (IllegalArgumentException.
-               (str "Data did not contain a PGPSignatureList: " sigs))))
-    (when-not (.isEmpty sigs)
-      (.get sigs 0))))
+  (->>
+    (decode data)
+    (map
+      (fn [object]
+        (cond
+          (instance? PGPSignature object)
+          object
+
+          (instance? PGPSignatureList object)
+          (let [^PGPSignatureList sigs object]
+            (map #(.get sigs %) (range (.size sigs))))
+
+          :else
+          (throw (IllegalArgumentException.
+                   (str "Data did not contain a PGP signature or list: " object))))))
+    flatten))
