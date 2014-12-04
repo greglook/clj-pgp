@@ -2,8 +2,9 @@
   (:require
     [clojure.string :as str]
     (clj-pgp
+      [core :as pgp]
       [tags :as tags]
-      [util :refer [arg-seq key-algorithm]]))
+      [util :refer [arg-seq]]))
   (:import
     java.security.SecureRandom
     java.util.Date
@@ -207,7 +208,7 @@
     (.generate master-sig-gen)
     nil
     (BcPGPContentSignerBuilder.
-      (tags/public-key-algorithm (key-algorithm master-key))
+      (tags/public-key-algorithm (pgp/key-algorithm master-key))
       (tags/hash-algorithm :sha1))
     (secret-key-encryptor passphrase)))
 

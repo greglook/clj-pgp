@@ -20,11 +20,11 @@
                  [potemkin "0.3.11"]]
 
   :hiera {:path "doc/ns-hiera.png"
-          :cluster-depth 3
+          :cluster-depth 1
           :ignore-ns #{user}}
 
   :codox {:defaults {:doc/format :markdown}
-          :exclude #{user}
+          :exclude #{user clj-pgp.util}
           :output-dir "doc/api"
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}

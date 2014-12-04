@@ -2,7 +2,7 @@
   "Keyring functions."
   (:require
     [byte-streams :as bytes]
-    [clj-pgp.util :refer [key-id]])
+    [clj-pgp.core :as pgp])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing
@@ -38,7 +38,7 @@
 
   (get-public-key
     [this id]
-    (.getPublicKey this (key-id id)))
+    (.getPublicKey this (pgp/key-id id)))
 
 
   PGPPublicKeyRingCollection
@@ -49,7 +49,7 @@
 
   (get-public-key
     [this id]
-    (.getPublicKey this (key-id id)))
+    (.getPublicKey this (pgp/key-id id)))
 
 
   PGPSecretKeyRing
@@ -64,11 +64,11 @@
 
   (get-public-key
     [this id]
-    (.getPublicKey this (key-id id)))
+    (.getPublicKey this (pgp/key-id id)))
 
   (get-secret-key
     [this id]
-    (.getSecretKey this (key-id id)))
+    (.getSecretKey this (pgp/key-id id)))
 
 
   PGPSecretKeyRingCollection
@@ -83,12 +83,12 @@
 
   (get-public-key
     [this id]
-    (let [id (key-id id)]
+    (let [id (pgp/key-id id)]
       (-> this (.getSecretKeyRing id) (.getPublicKey id))))
 
   (get-secret-key
     [this id]
-    (.getSecretKey this (key-id id))))
+    (.getSecretKey this (pgp/key-id id))))
 
 
 (defn load-public-keyring

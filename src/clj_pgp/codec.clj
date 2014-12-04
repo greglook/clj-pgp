@@ -3,7 +3,7 @@
   (:require
     [byte-streams :as bytes]
     [clojure.java.io :as io]
-    [clj-pgp.util :refer [hex-id public-key]])
+    [clj-pgp.core :refer [hex-id]])
   (:import
     (java.io
       ByteArrayOutputStream)

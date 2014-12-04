@@ -28,7 +28,7 @@
          (into {}))))
 
 
-(defn- tag-code
+(defn- tag->code
   "Coerce a value into a numeric tag code. The argument may be a keyword or a
   number. If the tag map does not contain the value, an exception is thrown."
   ^Integer
@@ -68,19 +68,19 @@
                      (str/replace #"([a-z])([A-Z])" "$1-$2")
                      str/lower-case
                      symbol)
-        tag-map (symbol (str tag-name \s))]
+        tag-map (symbol (str tag-name "-tags"))]
     `(do
        (def ~tag-map
-         ~(str "Map of " tag-name " tags.")
+         ~(str "Map of " tag-name " tag codes.")
          (map-tags ~cls))
        (defn ~tag-name
          ~(str "Validate and coerce the argument into a " tag-name " tag code.")
          ^Integer
          [~'value]
-         (tag-code ~(str tag-name) ~tag-map ~'value)))))
+         (tag->code ~(str tag-name) ~tag-map ~'value)))))
 
 
-(deftags CompressionAlgorithmTags)
 (deftags HashAlgorithmTags)
+(deftags CompressionAlgorithmTags)
 (deftags PublicKeyAlgorithmTags)
 (deftags SymmetricKeyAlgorithmTags)

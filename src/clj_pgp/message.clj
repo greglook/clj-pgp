@@ -17,8 +17,9 @@
     [byte-streams :as bytes]
     [clojure.java.io :as io]
     (clj-pgp
+      [core :refer [key-id public-key private-key]]
       [tags :as tags]
-      [util :refer [key-id public-key private-key arg-coll arg-map]]))
+      [util :refer [arg-coll arg-map]]))
   (:import
     (java.io
       ByteArrayOutputStream

@@ -6,6 +6,6 @@
     [clojure.stacktrace :refer [print-cause-trace]]
     [clojure.string :as str]
     [clojure.tools.namespace.repl :refer [refresh]]
-    [clj-pgp :as pgp]
     (clj-pgp
+      [core :as pgp]
       [tags :as tags])))
