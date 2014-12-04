@@ -52,7 +52,7 @@
   (testing (str "Keypair " (pr-str keyspec) " signing "
                 (count data) " bytes with " hash-algo)
     (let [keypair (memospec->keypair keyspec)
-          sig (pgp-sig/sign data keypair hash-algo)]
+          sig (pgp-sig/sign data keypair :hash-algo hash-algo)]
       (is (= (pgp/key-id keypair) (pgp/key-id sig))
           "signature key-id matches key")
       (is (thrown? IllegalArgumentException (pgp-sig/verify data sig pubkey))
