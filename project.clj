@@ -23,7 +23,7 @@
           :ignore-ns #{user}}
 
   :codox {:defaults {:doc/format :markdown}
-          :exclude #{user clj-pgp.util}
+          :exclude #{user clj-pgp.tags clj-pgp.util}
           :output-dir "doc/api"
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}
