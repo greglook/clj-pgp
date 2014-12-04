@@ -32,15 +32,19 @@
 (defn sign
   "Creates a PGP signature by the given key. The data is first hashed with the
   given algorithm, then the digest is signed by the private key."
-  [data privkey & [hash-algo]]
-  (let [generator (PGPSignatureGenerator.
-                    (BcPGPContentSignerBuilder.
-                      (tags/public-key-algorithm (pgp/key-algorithm privkey))
-                      (tags/hash-algorithm (or hash-algo :sha1))))]
-    (.init generator PGPSignature/BINARY_DOCUMENT ^PGPPrivateKey (pgp/private-key privkey))
-    (apply-bytes data
-      (.update generator buffer 0 n))
-    (.generate generator)))
+  ([data privkey]
+   (sign data privkey :sha1))
+  ([data privkey hash-algo]
+   (let [generator (PGPSignatureGenerator.
+                     (BcPGPContentSignerBuilder.
+                       (tags/public-key-algorithm-code (pgp/key-algorithm privkey))
+                       (tags/hash-algorithm-code hash-algo)))]
+     (.init generator
+            PGPSignature/BINARY_DOCUMENT
+            ^PGPPrivateKey (pgp/private-key privkey))
+     (apply-bytes data
+       (.update generator buffer 0 n))
+     (.generate generator))))
 
 
 (defn verify
@@ -49,10 +53,8 @@
   [data ^PGPSignature signature pubkey]
   (when-not (= (pgp/key-id signature) (pgp/key-id pubkey))
     (throw (IllegalArgumentException.
-             (str "Signature key id "
-                  (pgp/hex-id signature)
-                  " doesn't match public key id "
-                  (pgp/hex-id pubkey)))))
+             (str "Signature key id " (pgp/hex-id signature)
+                  " doesn't match public key id " (pgp/hex-id pubkey)))))
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          ^PGPPublicKey (pgp/public-key pubkey))

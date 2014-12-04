@@ -45,7 +45,7 @@
   [^AsymmetricCipherKeyPairGenerator generator
    algorithm]
   (BcPGPKeyPair.
-    (tags/public-key-algorithm algorithm)
+    (tags/public-key-algorithm-code algorithm)
     (.generateKeyPair generator)
     (Date.)))
 
@@ -154,9 +154,9 @@
          false
          (int-array (map ~tag->code prefs#))))))
 
-(defpreference Symmetric   tags/symmetric-key-algorithm)
-(defpreference Hash        tags/hash-algorithm)
-(defpreference Compression tags/compression-algorithm)
+(defpreference Symmetric   tags/symmetric-key-algorithm-code)
+(defpreference Hash        tags/hash-algorithm-code)
+(defpreference Compression tags/compression-algorithm-code)
 
 
 (defn set-key-expiration!
@@ -175,7 +175,7 @@
   ^PGPDigestCalculator
   [algorithm]
   (.get (BcPGPDigestCalculatorProvider.)
-        (tags/hash-algorithm algorithm)))
+        (tags/hash-algorithm-code algorithm)))
 
 
 (defn- secret-key-encryptor
@@ -187,7 +187,7 @@
       :or {enc-algo :aes-256
            pass-algo :sha256}}]
   (.build (BcPBESecretKeyEncryptorBuilder.
-            (tags/symmetric-key-algorithm enc-algo)
+            (tags/symmetric-key-algorithm-code enc-algo)
             (digest-calculator pass-algo))
           (.toCharArray passphrase)))
 
@@ -208,8 +208,8 @@
     (.generate master-sig-gen)
     nil
     (BcPGPContentSignerBuilder.
-      (tags/public-key-algorithm (pgp/key-algorithm master-key))
-      (tags/hash-algorithm :sha1))
+      (tags/public-key-algorithm-code (pgp/key-algorithm master-key))
+      (tags/hash-algorithm-code :sha1))
     (secret-key-encryptor passphrase)))
 
 

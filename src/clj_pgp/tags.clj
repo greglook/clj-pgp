@@ -73,7 +73,7 @@
        (def ~tag-map
          ~(str "Map of " tag-name " tag codes.")
          (map-tags ~cls))
-       (defn ~tag-name
+       (defn ~(symbol (str tag-name "-code"))
          ~(str "Validate and coerce the argument into a " tag-name " tag code.")
          ^Integer
          [~'value]

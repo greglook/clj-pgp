@@ -6,8 +6,8 @@
     [clojure.test.check :as check]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop]
-    [clj-pgp :as pgp]
     (clj-pgp
+      [core :as pgp]
       [generate :as pgp-gen]
       [message :as pgp-msg]
       [tags :as tags])

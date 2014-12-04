@@ -141,7 +141,7 @@
   ^OutputStream
   [^OutputStream output algorithm]
   (.open (PGPCompressedDataGenerator.
-           (tags/compression-algorithm algorithm))
+           (tags/compression-algorithm-code algorithm))
          output))
 
 
@@ -216,7 +216,7 @@
         (PGPEncryptedDataGenerator.
           (cond->
             (BcPGPDataEncryptorBuilder.
-              (tags/symmetric-key-algorithm cipher))
+              (tags/symmetric-key-algorithm-code cipher))
             integrity-check (.setWithIntegrityPacket true)
             random          (.setSecureRandom ^SecureRandom random)))
         encryptors)
