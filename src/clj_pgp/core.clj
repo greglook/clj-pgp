@@ -288,15 +288,11 @@
     (decode data)
     (map
       (fn [object]
-        (cond
-          (instance? PGPSignature object)
+        (condp instance? object
+          PGPSignature
           object
 
-          (instance? PGPSignatureList object)
-          (let [^PGPSignatureList sigs object]
-            (map #(.get sigs %) (range (.size sigs))))
-
-          :else
-          (throw (IllegalArgumentException.
-                   (str "Data did not contain a PGP signature or list: " object))))))
+          PGPSignatureList
+          (map #(.get ^PGPSignatureList object %)
+               (range (.size ^PGPSignatureList object))))))
     flatten))
