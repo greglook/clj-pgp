@@ -162,7 +162,7 @@
 
 (defmethod key-algorithm Number
   [code]
-  (tags/lookup tags/public-key-algorithm-tags code))
+  (tags/public-key-algorithm-tag code))
 
 (defmethod key-algorithm PGPPublicKey
   [^PGPPublicKey pubkey]

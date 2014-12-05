@@ -51,7 +51,7 @@
              (str "Unknown " tag-name " identifier " value)))))
 
 
-(defn lookup
+(defn- code->tag
   "Look up the keyword for a tag from the numeric code."
   [tags code]
   (some #(if (= (val %) code) (key %)) tags))
@@ -77,7 +77,11 @@
          ~(str "Validate and coerce the argument into a " tag-name " tag code.")
          ^Integer
          [~'value]
-         (tag->code ~(str tag-name) ~tag-map ~'value)))))
+         (tag->code ~(str tag-name) ~tag-map ~'value))
+       (defn ~(symbol (str tag-name "-tag"))
+         ~(str "Validate and coerce the argument into a " tag-name " tag keyword.")
+         [~'value]
+         (code->tag ~tag-map (tag->code ~(str tag-name) ~tag-map ~'value))))))
 
 
 (deftags HashAlgorithmTags)
