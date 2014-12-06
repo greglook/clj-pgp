@@ -89,7 +89,7 @@
       (let [message (pgp-msg/build-message data)]
         (is (not (bytes= data message))
             "Message should wrap a literal packet around the data.")
-        (is (bytes= data (pgp-msg/read-message message))
+        (is (bytes= data (:data (first (pgp-msg/read-messages message))))
             "Literal packet message should be readable with no decryptors.")))
     (let [ciphertext (pgp-msg/encrypt data keypair)]
       (is (bytes= data (pgp-msg/decrypt ciphertext (constantly keypair)))
