@@ -28,7 +28,7 @@
          (into {}))))
 
 
-(defn- tag->code
+(defn tag->code
   "Coerce a value into a numeric tag code. The argument may be a keyword or a
   number. If the tag map does not contain the value, an exception is thrown."
   ^Integer
@@ -51,7 +51,7 @@
              (str "Unknown " tag-name " identifier " value)))))
 
 
-(defn- code->tag
+(defn code->tag
   "Look up the keyword for a tag from the numeric code."
   [tags code]
   (some #(if (= (val %) code) (key %)) tags))
