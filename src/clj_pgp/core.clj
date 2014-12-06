@@ -250,14 +250,13 @@
 
 ;; ## PGP Object Decoding
 
-(defn ^:no-doc read-pgp-objects
-  "Decodes a sequence of PGP objects from an input stream."
+(defn ^:no-doc read-objects
+  "Lazily decodes a sequence of PGP objects from an input stream."
   [^InputStream input]
   (let [factory (PGPObjectFactory. input)]
     (->>
       (repeatedly #(.nextObject factory))
-      (take-while some?)
-      doall)))
+      (take-while some?))))
 
 
 (defn decode
@@ -266,7 +265,7 @@
   [data]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream data))]
-    (read-pgp-objects stream)))
+    (doall (read-objects stream))))
 
 
 (defn decode-public-key
