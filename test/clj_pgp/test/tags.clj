@@ -34,5 +34,5 @@
 
 (deftest tag-lookup
   (let [tag (first tags/public-key-algorithm-tags)]
-    (is (= (key tag) (tags/lookup tags/public-key-algorithm-tags (val tag)))
+    (is (= (key tag) (tags/code->tag tags/public-key-algorithm-tags (val tag)))
         "tag lookup by value returns key")))
