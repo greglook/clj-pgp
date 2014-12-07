@@ -207,15 +207,15 @@
 
   Options may be provided to customize the packet:
 
-  - `:buffer-size`     maximum number of bytes per chunk
-  - `:integrity-check` whether to include a Modification Detection Code packet
-  - `:random`          custom random number generator"
+  - `:buffer-size`      maximum number of bytes per chunk
+  - `:integrity-packet` whether to include a Modification Detection Code packet
+  - `:random`           custom random number generator"
   ^OutputStream
   [^OutputStream output cipher encryptors & opts]
   (let [encryptors (arg-coll encryptors)
-        {:keys [buffer-size integrity-check random]
+        {:keys [buffer-size integrity-packet random]
          :or {buffer-size 4096
-              integrity-check true}}
+              integrity-packet true}}
         (arg-map opts)]
     (when (empty? (remove nil? encryptors))
       (throw (IllegalArgumentException.
@@ -231,8 +231,8 @@
           (cond->
             (BcPGPDataEncryptorBuilder.
               (tags/symmetric-key-algorithm-code cipher))
-            integrity-check (.setWithIntegrityPacket true)
-            random          (.setSecureRandom ^SecureRandom random)))
+            integrity-packet (.setWithIntegrityPacket true)
+            random           (.setSecureRandom ^SecureRandom random)))
         encryptors)
       output
       (byte-array buffer-size))))
@@ -355,10 +355,12 @@
         (dorun (map #(.close ^OutputStream %) streams))))))
 
 
-(defn build-message
-  "Compresses, encrypts, and encodes the given data and returns an array of
-  bytes containing the resulting packet. The data will decryptable by the
-  corresponding decryptors.
+(defn package
+  "Compresses, encrypts, and encodes the given data and returns an encoded
+  message packet. If the `:armor` option is set, the result will be an ASCII
+  string; otherwise, the function returns a byte array.
+
+  The message will readable by any of the corresponding decryptors.
 
   See `message-output-stream` for options."
   [data & opts]
@@ -375,7 +377,7 @@
   "Constructs a message packet enciphered for the given encryptors. See
   `message-output-stream` for options."
   [data encryptors & opts]
-  (apply build-message data
+  (apply package data
          :encryptors encryptors
          opts))
 

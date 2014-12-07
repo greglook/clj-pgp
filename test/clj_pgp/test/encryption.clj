@@ -86,10 +86,10 @@
           (pgp-msg/encrypt data ["bar" "baz"]))
         "Encryption with multiple passphrases throws an exception")
     (testing "uncompressed unenciphered data"
-      (let [message (pgp-msg/build-message data)]
-        (is (not (bytes= data message))
+      (let [envelope (pgp-msg/package data)]
+        (is (not (bytes= data envelope))
             "Message should wrap a literal packet around the data.")
-        (is (bytes= data (:data (first (pgp-msg/read-messages message))))
+        (is (bytes= data (:data (first (pgp-msg/read-messages envelope))))
             "Literal packet message should be readable with no decryptors.")))
     (let [ciphertext (pgp-msg/encrypt data keypair)]
       (is (bytes= data (pgp-msg/decrypt ciphertext (constantly keypair)))
