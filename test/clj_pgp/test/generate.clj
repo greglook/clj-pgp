@@ -1,7 +1,10 @@
-(ns mvxcvi.crypto.pgp.test.generate
+(ns clj-pgp.test.generate
   (:require
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp :as pgp])
+    (clj-pgp
+      [core :as pgp]
+      [generate :as pgp-gen]
+      [keyring :as keyring]))
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing
@@ -10,33 +13,33 @@
 
 (deftest keyring-macro-generation
   (is (thrown? IllegalArgumentException
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp.generate/generate-keys
                  ..user-id.. ..passphrase..)))
       "A master-key spec is required.")
 
   (is (thrown? IllegalArgumentException
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp.generate/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  (master-key ..keypair-2..))))
       "Multiple master-key specs are illegal.")
 
   (is (thrown? IllegalArgumentException
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp.generate/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  ..some-val..)))
       "Malformed subkey specs are illegal.")
 
   (is (thrown? Exception
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp.generate/generate-keys
                  ..user-id.. ..passphrase..
                  (master-key ..keypair-1..)
                  (foobar-key ..keypair-2..))))
       "Unknown subkey spec types are illegal.")
 
   (is (thrown? Exception
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp.generate/generate-keys
                  '..user-id.. '..passphrase..
                  (master-key
                    '..keypair-1..
@@ -44,7 +47,7 @@
       "Malformed signature subpackets are illegal.")
 
   (is (thrown? Exception
-        (eval '(mvxcvi.crypto.pgp/generate-keys
+        (eval '(clj-pgp.generate/generate-keys
                  '..user-id.. '..passphrase..
                  (master-key
                    '..keypair-1..
@@ -53,8 +56,8 @@
 
 
 (deftest keyring-generation
-  (let [rsa (pgp/rsa-keypair-generator 1024)
-        keyrings (pgp/generate-keys
+  (let [rsa (pgp-gen/rsa-keypair-generator 1024)
+        keyrings (pgp-gen/generate-keys
                    "test user" "test passphrase"
                    (master-key
                      (keypair rsa :rsa-general)
@@ -68,7 +71,7 @@
                      (keypair rsa :rsa-general)))]
     (is (instance? PGPPublicKeyRing (:public keyrings)))
     (is (instance? PGPSecretKeyRing (:secret keyrings)))
-    (let [[mk sk ek] (pgp/list-secret-keys (:secret keyrings))
+    (let [[mk sk ek] (keyring/list-secret-keys (:secret keyrings))
           mk-info (pgp/key-info mk)
           sk-info (pgp/key-info sk)
           ek-info (pgp/key-info ek)]

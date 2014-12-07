@@ -1,9 +1,11 @@
-(ns mvxcvi.crypto.pgp.test.key-utils
+(ns clj-pgp.test.key-utils
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.test.keys :as test-keys
+    (clj-pgp
+      [core :as pgp]
+      [keyring :as keyring])
+    [clj-pgp.test.keys :as test-keys
      :refer [privkey pubkey pubring seckey secring]])
   (:import
     (org.bouncycastle.openpgp
@@ -14,17 +16,17 @@
 
 (deftest keyrings
   (testing "public keyring contains two public keys"
-    (let [pks (pgp/list-public-keys pubring)]
+    (let [pks (keyring/list-public-keys pubring)]
       (is (= 2 (count pks)))
       (is (instance? PGPPublicKey (nth pks 0)))
       (is (instance? PGPPublicKey (nth pks 1)))))
   (testing "secret keyring contains two public keys"
-    (let [pks (pgp/list-public-keys secring)]
+    (let [pks (keyring/list-public-keys secring)]
       (is (= 2 (count pks)))
       (is (instance? PGPPublicKey (nth pks 0)))
       (is (instance? PGPPublicKey (nth pks 1)))))
   (testing "secret keyring contains two secret keys"
-    (let [pks (pgp/list-secret-keys secring)]
+    (let [pks (keyring/list-secret-keys secring)]
       (is (= 2 (count pks)))
       (is (instance? PGPSecretKey (nth pks 0)))
       (is (instance? PGPSecretKey (nth pks 1))))))

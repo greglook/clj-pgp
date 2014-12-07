@@ -1,40 +1,41 @@
-(ns mvxcvi.crypto.pgp.test.keys
+(ns clj-pgp.test.keys
   (:require
     [clojure.java.io :as io]
     [clojure.test.check.generators :as gen]
-    [mvxcvi.crypto.pgp :as pgp]
-    (mvxcvi.crypto.pgp
+    (clj-pgp
+      [core :as pgp]
       [generate :as pgp-gen]
+      [keyring :as keyring]
       [tags :as tags])))
 
 
 ;; ## Keyring Fixtures
 
 (def pubring
-  (-> "mvxcvi/crypto/pgp/test/keys/pubring.gpg"
+  (-> "clj_pgp/test/keys/pubring.gpg"
       io/resource
       io/file
-      pgp/load-public-keyring))
+      keyring/load-public-keyring))
 
 
 (def secring
-  (-> "mvxcvi/crypto/pgp/test/keys/secring.gpg"
+  (-> "clj_pgp/test/keys/secring.gpg"
       io/resource
       io/file
-      pgp/load-secret-keyring))
+      keyring/load-secret-keyring))
 
 
 (defn get-privkey
   [id]
   (some-> secring
-          (pgp/get-secret-key id)
+          (keyring/get-secret-key id)
           (pgp/unlock-key "test password")))
 
 
-(def master-pubkey (pgp/get-public-key pubring "923b1c1c4392318a"))
+(def master-pubkey (keyring/get-public-key pubring "923b1c1c4392318a"))
 
-(def pubkey  (pgp/get-public-key secring "3f40edec41c6cb7d"))
-(def seckey  (pgp/get-secret-key secring pubkey))
+(def pubkey  (keyring/get-public-key secring "3f40edec41c6cb7d"))
+(def seckey  (keyring/get-secret-key secring pubkey))
 (def privkey (pgp/unlock-key seckey "test password"))
 
 

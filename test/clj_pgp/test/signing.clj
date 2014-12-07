@@ -1,13 +1,15 @@
-(ns mvxcvi.crypto.pgp.test.signing
+(ns clj-pgp.test.signing
   (:require
     [clojure.test :refer :all]
     [clojure.test.check :as check]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop]
     [byte-streams :refer [bytes=]]
-    [mvxcvi.crypto.pgp :as pgp]
-    [mvxcvi.crypto.pgp.generate :as pgp-gen]
-    [mvxcvi.crypto.pgp.test.keys :refer
+    (clj-pgp
+      [core :as pgp]
+      [generate :as pgp-gen]
+      [signature :as pgp-sig])
+    [clj-pgp.test.keys :refer
      [master-pubkey pubkey privkey
       gen-ec-keyspec
       gen-rsa-keyspec
@@ -16,27 +18,27 @@
 
 (deftest signature-verification
   (let [data "cryptography is neat"
-        sig (pgp/sign data privkey)]
+        sig (pgp-sig/sign data privkey)]
     (is (= (pgp/key-id privkey) (pgp/key-id sig))
         "signature key-id matches key")
     (is (thrown? IllegalArgumentException
-                 (pgp/verify data sig master-pubkey))
+                 (pgp-sig/verify data sig master-pubkey))
         "verification with the wrong public key throws error")
-    (is (pgp/verify data sig pubkey)
+    (is (pgp-sig/verify data sig pubkey)
         "verification with public key succeeds")))
 
 
 (deftest signature-encoding
   (let [data "very important data to trust"
-        sig (pgp/sign data privkey)
+        sig (pgp-sig/sign data privkey)
         binary (pgp/encode sig)
-        sig' (pgp/decode-signature binary)]
+        [sig'] (pgp/decode-signatures binary)]
     (is (bytes= binary (pgp/encode sig'))
         "binary representation is canonical")
-    (is (pgp/verify data sig' pubkey)
+    (is (pgp-sig/verify data sig' pubkey)
         "decoded signature can be verified")
     (is (thrown? IllegalArgumentException
-                 (pgp/decode-signature (pgp/encode pubkey)))
+                 (pgp/decode-signatures (pgp/encode pubkey)))
       "decoding non-signature value throws an exception")))
 
 
@@ -50,18 +52,18 @@
   (testing (str "Keypair " (pr-str keyspec) " signing "
                 (count data) " bytes with " hash-algo)
     (let [keypair (memospec->keypair keyspec)
-          sig (pgp/sign data keypair hash-algo)]
+          sig (pgp-sig/sign data keypair :hash-algo hash-algo)]
       (is (= (pgp/key-id keypair) (pgp/key-id sig))
           "signature key-id matches key")
-      (is (thrown? IllegalArgumentException (pgp/verify data sig pubkey))
+      (is (thrown? IllegalArgumentException (pgp-sig/verify data sig pubkey))
           "verification with the wrong public key throws error")
-      (is (pgp/verify data sig keypair)
+      (is (pgp-sig/verify data sig keypair)
           "verification with public key succeeds")
       (let [binary (pgp/encode sig)
-            sig' (pgp/decode-signature binary)]
+            [sig'] (pgp/decode-signatures binary)]
         (is (bytes= binary (pgp/encode sig'))
             "binary representation is canonical")
-        (is (pgp/verify data sig' keypair)
+        (is (pgp-sig/verify data sig' keypair)
             "decoded signature can be verified")))))
 
 

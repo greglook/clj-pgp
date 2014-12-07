@@ -1,7 +1,7 @@
-(ns mvxcvi.crypto.pgp.test.tags
+(ns clj-pgp.test.tags
   (:require
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp.tags :as tags]))
+    [clj-pgp.tags :as tags]))
 
 
 (defmacro ^:private check-tags
@@ -15,24 +15,24 @@
          "tag map values are integers")))
 
 
-(check-tags tags/compression-algorithms)
-(check-tags tags/hash-algorithms)
-(check-tags tags/public-key-algorithms)
-(check-tags tags/symmetric-key-algorithms)
+(check-tags tags/compression-algorithm-tags)
+(check-tags tags/hash-algorithm-tags)
+(check-tags tags/public-key-algorithm-tags)
+(check-tags tags/symmetric-key-algorithm-tags)
 
 
 (deftest tag-coercion
-  (is (= 3 (tags/compression-algorithm :bzip2))
+  (is (= 3 (tags/compression-algorithm-code :bzip2))
     "keyword lookup returns numeric code")
-  (is (= 1 (tags/compression-algorithm 1))
+  (is (= 1 (tags/compression-algorithm-code 1))
       "numeric lookup returns numeric value")
   (testing "unknown tag throws exception"
     (are [v] (thrown? IllegalArgumentException
-                      (tags/compression-algorithm v))
+                      (tags/compression-algorithm-code v))
          :foo 82 "abcd")))
 
 
 (deftest tag-lookup
-  (let [tag (first tags/public-key-algorithms)]
-    (is (= (key tag) (tags/lookup tags/public-key-algorithms (val tag)))
+  (let [tag (first tags/public-key-algorithm-tags)]
+    (is (= (key tag) (tags/code->tag tags/public-key-algorithm-tags (val tag)))
         "tag lookup by value returns key")))

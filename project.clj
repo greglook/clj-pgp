@@ -8,7 +8,7 @@
 
   :aliases {"docs" ["do" ["hiera"] ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"]]
             "tests" ["do" ["check"] ["test"] ["cloverage"]]
-            "fuzz" ["with-profile" "+tool" "run" "-m" "mvxcvi.crypto.pgp.tool.fuzz"]}
+            "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
   :plugins [[codox "0.8.10"]
             [lein-cloverage "1.0.2"]
@@ -16,15 +16,14 @@
 
   :dependencies [[byte-streams "0.1.13"]
                  [org.bouncycastle/bcpg-jdk15on "1.51"]
-                 [org.bouncycastle/bcprov-jdk15on "1.51"]
-                 [potemkin "0.3.11"]]
+                 [org.bouncycastle/bcprov-jdk15on "1.51"]]
 
   :hiera {:path "doc/ns-hiera.png"
-          :cluster-depth 3
+          :cluster-depth 1
           :ignore-ns #{user}}
 
   :codox {:defaults {:doc/format :markdown}
-          :exclude #{user}
+          :exclude #{user clj-pgp.tags clj-pgp.util}
           :output-dir "doc/api"
           :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
           :src-linenum-anchor-prefix "L"}

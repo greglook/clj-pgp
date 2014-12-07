@@ -1,58 +1,50 @@
-(ns mvxcvi.crypto.pgp.util
-  "Utility functions to validate and coerce various kinds of PGP values."
+(ns clj-pgp.core
+  "Core functions for handling PGP objects."
   (:require
+    [byte-streams :as bytes]
+    [clojure.java.io :as io]
     [clojure.string :as str]
-    (mvxcvi.crypto.pgp
-      [tags :as tags]))
+    [clj-pgp.tags :as tags])
   (:import
+    (java.io
+      ByteArrayOutputStream
+      InputStream)
     java.util.Date
+    (org.bouncycastle.bcpg
+      ArmoredOutputStream)
     (org.bouncycastle.openpgp
       PGPKeyPair
       PGPKeyRing
+      PGPObjectFactory
       PGPPrivateKey
       PGPPublicKey
       PGPPublicKeyEncryptedData
-      PGPPublicKeyRingCollection
       PGPSecretKey
-      PGPSecretKeyRing
-      PGPSecretKeyRingCollection
-      PGPSignature)
+      PGPSignature
+      PGPSignatureList
+      PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
       BcPBESecretKeyDecryptorBuilder
       BcPGPDigestCalculatorProvider)))
 
 
-;; ## Function Utilities
+;; ## Supported Algorithms
 
-(defn arg-coll
-  "Returns a collection from the arguments provided. If `ks` is a non-collection
-  value, a single-element collection containing `ks` is returned."
-  [args]
-  (if (and args (not (coll? args)))
-    (list args)
-    (seq args)))
-
-
-(defn arg-seq
-  "Takes a sequence of args and returns a seq. If only one argument is given
-  and it is sequential, it is retured directly. Otherwise the seq of args is
-  returned. Returns nil for empty args."
-  [args]
-  (if (and (= 1 (count args))
-           (sequential? (first args)))
-    (seq (first args))
-    (seq args)))
+(defmacro ^:private defalgorithms
+  "Defines a set of supported tags for a type of algorithm."
+  [algo-type]
+  `(def ~(symbol (str algo-type "-algorithms"))
+     ~(str "The set of supported " algo-type " algorithm tags. Each value is "
+           "a keyword which can be mapped to a numeric code by `clj-pgp.tags/"
+           algo-type "-algorithm`.")
+     (set (keys ~(symbol "clj-pgp.tags"
+                         (str algo-type "-algorithm-tags"))))))
 
 
-(defn arg-map
-  "Takes a sequence of args and returns a map. If only one argument is given
-  and it is a map, it is retured directly. Otherwise the seq of args is
-  treated as keyword args and returned as a map."
-  [args]
-  (if (and (= 1 (count args))
-           (map? (first args)))
-    (first args)
-    (apply array-map args)))
+(defalgorithms hash)
+(defalgorithms compression)
+(defalgorithms public-key)
+(defalgorithms symmetric-key)
 
 
 
@@ -96,7 +88,7 @@
 
 
 
-;; ## Key Identity
+;; ## Keypair Identifiers
 
 (defmulti ^Long key-id
   "Returns the numeric PGP key identifier for the given value."
@@ -152,7 +144,7 @@
 
 
 
-;; ## Key Algorithms
+;; ## Keypair Algorithms
 
 (defmulti key-algorithm
   "Returns a keyword identifying the public-key algorithm used by the given
@@ -163,14 +155,14 @@
 
 (defmethod key-algorithm clojure.lang.Keyword
   [algorithm]
-  (when-not (contains? tags/public-key-algorithms algorithm)
+  (when-not (contains? public-key-algorithms algorithm)
     (throw (IllegalArgumentException.
              (str "Invalid public-key-algorithm name " algorithm))))
   algorithm)
 
 (defmethod key-algorithm Number
   [code]
-  (tags/lookup tags/public-key-algorithms code))
+  (tags/public-key-algorithm-tag code))
 
 (defmethod key-algorithm PGPPublicKey
   [^PGPPublicKey pubkey]
@@ -191,16 +183,6 @@
 
 
 ;; ## Key Utilities
-
-(defn unlock-key
-  "Decodes a secret key with a passphrase to obtain the private key."
-  [^PGPSecretKey seckey
-   ^String passphrase]
-  (.extractPrivateKey seckey
-    (-> (BcPGPDigestCalculatorProvider.)
-        (BcPBESecretKeyDecryptorBuilder.)
-        (.build (.toCharArray passphrase)))))
-
 
 (defn key-info
   "Returns a map of information about the given key."
@@ -224,3 +206,92 @@
       (instance? PGPSecretKey k)
       (merge {:secret-key? true
               :signing-key? (.isSigningKey ^PGPSecretKey k)}))))
+
+
+(defn unlock-key
+  "Decodes a secret key with a passphrase to obtain the private key."
+  [^PGPSecretKey seckey
+   ^String passphrase]
+  (.extractPrivateKey seckey
+    (-> (BcPGPDigestCalculatorProvider.)
+        (BcPBESecretKeyDecryptorBuilder.)
+        (.build (.toCharArray passphrase)))))
+
+
+
+;; ## PGP Object Encoding
+
+(defmulti encode
+  "Encodes a PGP object into a byte array."
+  class)
+
+(defmethod encode PGPPublicKey
+  [^PGPPublicKey pubkey]
+  (.getEncoded pubkey))
+
+(defmethod encode PGPPrivateKey
+  [^PGPPrivateKey privkey]
+  (.getEncoded (.getPrivateKeyDataPacket privkey)))
+
+(defmethod encode PGPSignature
+  [^PGPSignature sig]
+  (.getEncoded sig))
+
+
+(defn encode-ascii
+  "Encodes a PGP object into an ascii-armored text blob."
+  [data]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [encoder (ArmoredOutputStream. buffer)]
+      (io/copy (encode data) encoder))
+    (str buffer)))
+
+
+
+;; ## PGP Object Decoding
+
+(defn ^:no-doc read-objects
+  "Lazily decodes a sequence of PGP objects from an input stream."
+  [^InputStream input]
+  (let [factory (PGPObjectFactory. input)]
+    (->>
+      (repeatedly #(.nextObject factory))
+      (take-while some?))))
+
+
+(defn decode
+  "Decodes PGP objects from an encoded data source. Returns a sequence of
+  decoded objects."
+  [data]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (bytes/to-input-stream data))]
+    (doall (read-objects stream))))
+
+
+(defn decode-public-key
+  "Decodes a public key from the given data. Throws an exception if the data
+  does not contain a public key value."
+  [data]
+  (when-let [pubkey (first (decode data))]
+    (when-not (instance? PGPPublicKey pubkey)
+      (throw (IllegalStateException.
+               (str "Data did not contain a public key: " pubkey))))
+    pubkey))
+
+
+(defn decode-signatures
+  "Decodes a sequence of signatures from the given data. Throws an exception if
+  the data does not contain a signature list."
+  [data]
+  (->>
+    (decode data)
+    (map
+      (fn [object]
+        (condp instance? object
+          PGPSignature
+          object
+
+          PGPSignatureList
+          (map #(.get ^PGPSignatureList object %)
+               (range (.size ^PGPSignatureList object))))))
+    flatten))
