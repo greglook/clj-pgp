@@ -54,17 +54,13 @@
 
 ;; ## PGP Data Encoding
 
-; TODO: idea - have read-message return a map with info about the message
-; instead of direct byte content. For example - algorithm compressed with, ids
-; of keys encrypted for, cipher encrypted with, filename, mtime, etc.
-
-(defprotocol MessagePacket
+(defprotocol ^:no-doc MessagePacket
   "Protocol for packets of message data."
 
   (unpack-message
     [data opts]
-    "Recursively unpacks a message packet and returns a representation of the
-    data. This is generally a map with subpackets in `:content`.
+    "Recursively unpacks a message packet and returns a vector of message maps
+    contained in the packet.
 
     See `read-message` for options."))
 
@@ -294,18 +290,18 @@
   ;; decryptor doesn't match the id, return nil.
   (unpack-message
     [packet opts]
-    (let [decryptor (:decryptor opts)]
+    (let [for-key (.getKeyID packet)
+          decryptor (:decryptor opts)]
       (when-let [privkey (pgp/private-key
                            (if (ifn? decryptor)
-                             (decryptor (pgp/key-id packet))
+                             (decryptor for-key)
                              decryptor))]
-        (when (= (pgp/key-id packet) (pgp/key-id privkey))
+        (when (= for-key (pgp/key-id privkey))
           (let [decryptor-factory (BcPublicKeyDataDecryptorFactory. privkey)
-                key-id (pgp/key-id packet)
                 cipher (-> packet
                            (.getSymmetricAlgorithm decryptor-factory)
                            tags/symmetric-key-algorithm-tag)]
-            (mapv #(assoc % :key-id key-id :cipher cipher)
+            (mapv #(assoc % :encrypted-for for-key :cipher cipher)
                   (-> packet
                       (.getDataStream decryptor-factory)
                       (expand-content opts)))))))))

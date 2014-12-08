@@ -14,11 +14,9 @@
       ArmoredOutputStream)
     (org.bouncycastle.openpgp
       PGPKeyPair
-      PGPKeyRing
       PGPObjectFactory
       PGPPrivateKey
       PGPPublicKey
-      PGPPublicKeyEncryptedData
       PGPSecretKey
       PGPSignature
       PGPSignatureList
@@ -34,9 +32,7 @@
   "Defines a set of supported tags for a type of algorithm."
   [algo-type]
   `(def ~(symbol (str algo-type "-algorithms"))
-     ~(str "The set of supported " algo-type " algorithm tags. Each value is "
-           "a keyword which can be mapped to a numeric code by `clj-pgp.tags/"
-           algo-type "-algorithm`.")
+     ~(str "The set of supported " algo-type " algorithm keywords.")
      (set (keys ~(symbol "clj-pgp.tags"
                          (str algo-type "-algorithm-tags"))))))
 

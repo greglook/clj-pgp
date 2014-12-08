@@ -48,7 +48,7 @@
 
     :else
     (throw (IllegalArgumentException.
-             (str "Unknown " tag-name " identifier " value)))))
+             (str "Unknown " tag-name " identifier: " (pr-str value))))))
 
 
 (defn code->tag
