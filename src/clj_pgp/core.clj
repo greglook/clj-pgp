@@ -135,32 +135,29 @@
 
 (defmethod key-algorithm nil [_] nil)
 
-(defmethod key-algorithm clojure.lang.Keyword
-  [algorithm]
-  (when-not (contains? public-key-algorithms algorithm)
-    (throw (IllegalArgumentException.
-             (str "Invalid public-key-algorithm name " algorithm))))
-  algorithm)
-
-(defmethod key-algorithm Number
-  [code]
-  (tags/public-key-algorithm-tag code))
+(defmethod key-algorithm :default
+  [value]
+  (tags/public-key-algorithm-tag value))
 
 (defmethod key-algorithm PGPPublicKey
   [^PGPPublicKey pubkey]
-  (key-algorithm (.getAlgorithm pubkey)))
+  (tags/public-key-algorithm-tag
+    (.getAlgorithm pubkey)))
 
 (defmethod key-algorithm PGPSecretKey
   [^PGPSecretKey seckey]
-  (key-algorithm (.getPublicKey seckey)))
+  (tags/public-key-algorithm-tag
+    (.getAlgorithm (.getPublicKey seckey))))
 
 (defmethod key-algorithm PGPPrivateKey
   [^PGPPrivateKey privkey]
-  (key-algorithm (.getAlgorithm (.getPublicKeyPacket privkey))))
+  (tags/public-key-algorithm-tag
+    (.getAlgorithm (.getPublicKeyPacket privkey))))
 
 (defmethod key-algorithm PGPKeyPair
   [^PGPKeyPair keypair]
-  (key-algorithm (.getPublicKey keypair)))
+  (tags/public-key-algorithm-tag
+    (.getAlgorithm (.getPublicKey keypair))))
 
 
 
