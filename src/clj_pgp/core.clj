@@ -90,41 +90,23 @@
 
 ;; ## Keypair Identifiers
 
-(defmulti ^Long key-id
-  "Returns the numeric PGP key identifier for the given value."
-  class)
+(defprotocol KeyIdentifier
+  "Protocol for values which can be used as PGP key identifiers."
 
-(defmethod key-id nil [_] nil)
+  (key-id
+    [value]
+    "Returns the numeric PGP key identifier for the given value."))
 
-(defmethod key-id Long [id] id)
 
-(defmethod key-id String
-  [^String hex]
-  (-> hex (BigInteger. 16) .longValue))
-
-(defmethod key-id PGPPublicKey
-  [^PGPPublicKey pubkey]
-  (.getKeyID pubkey))
-
-(defmethod key-id PGPSecretKey
-  [^PGPSecretKey seckey]
-  (.getKeyID seckey))
-
-(defmethod key-id PGPKeyPair
-  [^PGPKeyPair keypair]
-  (.getKeyID keypair))
-
-(defmethod key-id PGPPrivateKey
-  [^PGPPrivateKey privkey]
-  (.getKeyID privkey))
-
-(defmethod key-id PGPSignature
-  [^PGPSignature sig]
-  (.getKeyID sig))
-
-(defmethod key-id PGPPublicKeyEncryptedData
-  [^PGPPublicKeyEncryptedData data]
-  (.getKeyID data))
+(extend-protocol KeyIdentifier
+  nil           (key-id [_] nil)
+  Long          (key-id [id] id)
+  String        (key-id [hex] (.longValue (BigInteger. hex 16)))
+  PGPPublicKey  (key-id [pubkey]  (.getKeyID pubkey))
+  PGPSecretKey  (key-id [seckey]  (.getKeyID seckey))
+  PGPPrivateKey (key-id [privkey] (.getKeyID privkey))
+  PGPKeyPair    (key-id [keypair] (.getKeyID keypair))
+  PGPSignature  (key-id [sig]     (.getKeyID sig)))
 
 
 (defn hex-id
