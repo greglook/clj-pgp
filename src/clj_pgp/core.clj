@@ -200,21 +200,32 @@
 
 ;; ## PGP Object Encoding
 
-(defmulti encode
-  "Encodes a PGP object into a byte array."
-  class)
+(defprotocol Encodable
+  "Protocol for encodable PGP objects."
 
-(defmethod encode PGPPublicKey
-  [^PGPPublicKey pubkey]
-  (.getEncoded pubkey))
+  (encode
+    [value]
+    "Encodes a PGP object into a byte array."))
 
-(defmethod encode PGPPrivateKey
-  [^PGPPrivateKey privkey]
-  (.getEncoded (.getPrivateKeyDataPacket privkey)))
 
-(defmethod encode PGPSignature
-  [^PGPSignature sig]
-  (.getEncoded sig))
+(extend-protocol Encodable
+
+  PGPPublicKey
+
+  (encode [pubkey]
+    (.getEncoded pubkey))
+
+
+  PGPPrivateKey
+
+  (encode [privkey]
+    (.getEncoded (.getPrivateKeyDataPacket privkey)))
+
+
+  PGPSignature
+
+  (encode [sig]
+    (.getEncoded sig)))
 
 
 (defn encode-ascii
