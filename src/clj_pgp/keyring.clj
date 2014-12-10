@@ -1,7 +1,11 @@
-(ns mvxcvi.crypto.pgp.keyring
+(ns clj-pgp.keyring
+  "This namespace handles interactions with PGP keyrings.
+
+  Literal keyring files are directly supported, and key servers and other
+  stores can extend the `KeyRing` protocol for further extension."
   (:require
-    [byte-streams :refer [to-input-stream]]
-    [mvxcvi.crypto.pgp.key :refer [key-id]])
+    [byte-streams :as bytes]
+    [clj-pgp.core :as pgp])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing
@@ -28,63 +32,79 @@
 
 
 (extend-protocol KeyRing
+
   PGPPublicKeyRing
 
-  (list-public-keys [this]
+  (list-public-keys
+    [this]
     (->> this .getPublicKeys iterator-seq))
 
-  (get-public-key [this id]
-    (.getPublicKey this (key-id id)))
+  (get-public-key
+    [this id]
+    (.getPublicKey this (pgp/key-id id)))
+
 
   PGPPublicKeyRingCollection
 
-  (list-public-keys [this]
+  (list-public-keys
+    [this]
     (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
 
-  (get-public-key [this id]
-    (.getPublicKey this (key-id id)))
+  (get-public-key
+    [this id]
+    (.getPublicKey this (pgp/key-id id)))
+
 
   PGPSecretKeyRing
 
-  (list-public-keys [this]
+  (list-public-keys
+    [this]
     (->> this .getPublicKeys iterator-seq))
 
-  (list-secret-keys [this]
+  (list-secret-keys
+    [this]
     (->> this .getSecretKeys iterator-seq))
 
-  (get-public-key [this id]
-    (.getPublicKey this (key-id id)))
+  (get-public-key
+    [this id]
+    (.getPublicKey this (pgp/key-id id)))
 
-  (get-secret-key [this id]
-    (.getSecretKey this (key-id id)))
+  (get-secret-key
+    [this id]
+    (.getSecretKey this (pgp/key-id id)))
+
 
   PGPSecretKeyRingCollection
 
-  (list-public-keys [this]
+  (list-public-keys
+    [this]
     (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
 
-  (list-secret-keys [this]
+  (list-secret-keys
+    [this]
     (->> this .getKeyRings iterator-seq (map list-secret-keys) flatten))
 
-  (get-public-key [this id]
-    (let [id (key-id id)]
+  (get-public-key
+    [this id]
+    (let [id (pgp/key-id id)]
       (-> this (.getSecretKeyRing id) (.getPublicKey id))))
 
-  (get-secret-key [this id]
-    (.getSecretKey this (key-id id))))
+  (get-secret-key
+    [this id]
+    (.getSecretKey this (pgp/key-id id))))
 
 
 (defn load-public-keyring
-  "Loads a public keyring collection from a file."
+  "Loads a public keyring collection from a data source."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
-                       (to-input-stream source))]
+                       (bytes/to-input-stream source))]
     (PGPPublicKeyRingCollection. stream)))
 
 
 (defn load-secret-keyring
-  "Loads a secret keyring collection from a file."
+  "Loads a secret keyring collection from a data source."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
-                       (to-input-stream source))]
+                       (bytes/to-input-stream source))]
     (PGPSecretKeyRingCollection. stream)))

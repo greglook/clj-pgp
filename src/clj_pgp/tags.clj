@@ -1,4 +1,5 @@
-(ns mvxcvi.crypto.pgp.tags
+(ns clj-pgp.tags
+  "Vars which map Cloure keywords to numeric BouncyCastle tag codes."
   (:require
     [clojure.string :as str])
   (:import
@@ -9,10 +10,10 @@
       SymmetricKeyAlgorithmTags)))
 
 
-;; TAG FUNCTIONS
+;; ## Tag Functions
 
 (defn- map-tags
-  "Converts static 'tag' fields on the given class into a map of keywords to
+  "Convert static 'tag' fields on the given class into a map of keywords to
   numeric codes."
   [^Class tags]
   (let [field->entry
@@ -27,8 +28,10 @@
          (into {}))))
 
 
-(defn- tag-code
-  "Coerces the argument into a numeric tag code."
+(defn tag->code
+  "Coerce a value into a numeric tag code. The argument may be a keyword or a
+  number. If the tag map does not contain the value, an exception is thrown."
+  ^Integer
   [tag-name tags value]
   (cond
     (keyword? value)
@@ -38,42 +41,50 @@
                (str "Invalid " tag-name " name " value))))
 
     (number? value)
-    (if (contains? (set (vals tags)) value)
+    (if (some #{value} (vals tags))
       value
       (throw (IllegalArgumentException.
                (str "Invalid " tag-name " code " value))))
 
     :else
     (throw (IllegalArgumentException.
-             (str "Unknown " tag-name " identifier " value)))))
+             (str "Unknown " tag-name " identifier: " (pr-str value))))))
 
 
-(defn lookup
-  "Looks up the keyword of an algorithm given the numeric code."
-  [codes code]
-  (some #(if (= (val %) code) (key %)) codes))
+(defn code->tag
+  "Look up the keyword for a tag from the numeric code."
+  [tags code]
+  (some #(if (= (val %) code) (key %)) tags))
 
 
 
-;; TAG DEFINITIONS
+;; ## Tag Definitions
 
 (defmacro ^:private deftags
+  "Defines a tag map and coersion function from fields on the given class."
   [cls]
   (let [tag-name (-> (name cls)
                      (as-> s (subs s 0 (- (count s) 4)))
                      (str/replace #"([a-z])([A-Z])" "$1-$2")
                      str/lower-case
                      symbol)
-        tag-map (symbol (str tag-name \s))]
+        tag-map (symbol (str tag-name "-tags"))]
     `(do
        (def ~tag-map
+         ~(str "Map of " tag-name " tag codes.")
          (map-tags ~cls))
-       (defn ~tag-name
-         [value#]
-         (tag-code ~(str tag-name) ~tag-map value#)))))
+       (defn ~(symbol (str tag-name "-code"))
+         ~(str "Validate and coerce the argument into a " tag-name " tag code.")
+         ^Integer
+         [~'value]
+         (tag->code ~(str tag-name) ~tag-map ~'value))
+       (defn ~(symbol (str tag-name "-tag"))
+         ~(str "Validate and coerce the argument into a " tag-name " tag keyword.")
+         [~'value]
+         (code->tag ~tag-map (tag->code ~(str tag-name) ~tag-map ~'value))))))
 
 
-(deftags CompressionAlgorithmTags)
 (deftags HashAlgorithmTags)
+(deftags CompressionAlgorithmTags)
 (deftags PublicKeyAlgorithmTags)
 (deftags SymmetricKeyAlgorithmTags)
