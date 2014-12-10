@@ -26,6 +26,10 @@ Leiningen, add the following dependency to your project definition:
 The main interface to the library is the `clj-pgp.core` namespace, which
 provides many general functions for working with PGP keys and data.
 
+***NOTE:*** 0.8.0 is a breaking API change! The namespaces changed from
+`mvxcvi.crypto.pgp.foo` to `clj-pgp.foo`, among many other functionality
+improvements.
+
 ### PGP Keys
 
 PGP stores keys in _keyrings_, which are collections of related asymmetric keys.
