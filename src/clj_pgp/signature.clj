@@ -52,8 +52,8 @@
 
 
 (defn sign
-  "Signs some data with the given provider and options. Attempts to coerce the
-  provider into a private-key.
+  "Signs data with the given provider and options. The `provider` must either be
+  coerceable into a private key or implement the `SignatureProvider` protocol.
 
   - `:hash-algo` digest algorithm to hash the data with
   - `:key-id`    identifier of the desired signature key"
