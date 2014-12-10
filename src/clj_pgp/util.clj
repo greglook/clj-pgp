@@ -29,6 +29,7 @@
   as keyword args and returned as a map."
   [args]
   (cond
+    (nil? args) nil
     (map? args) args
     (= 1 (count args)) (recur (first args))
     :else (apply array-map args)))
