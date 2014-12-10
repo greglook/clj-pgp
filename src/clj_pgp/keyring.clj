@@ -1,5 +1,8 @@
 (ns clj-pgp.keyring
-  "Keyring functions."
+  "This namespace handles interactions with PGP keyrings.
+
+  Literal keyring files are directly supported, and key servers and other
+  stores can extend the `KeyRing` protocol for further extension."
   (:require
     [byte-streams :as bytes]
     [clj-pgp.core :as pgp])

@@ -3,12 +3,12 @@ clj-pgp
 
 [![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=master)](https://travis-ci.org/greglook/clj-pgp)
 [![Coverage Status](https://coveralls.io/repos/greglook/clj-pgp/badge.png?branch=master)](https://coveralls.io/r/greglook/clj-pgp?branch=master)
-[![Dependency Status](https://www.versioneye.com/user/projects/53718e2314c1589a89000149/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.5.4)
+[![Dependency Status](https://www.versioneye.com/user/projects/53718e2314c1589a89000149/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.8.0)
 **master**
 <br/>
 [![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=develop)](https://travis-ci.org/greglook/clj-pgp)
 [![Coverage Status](https://coveralls.io/repos/greglook/clj-pgp/badge.png?branch=develop)](https://coveralls.io/r/greglook/clj-pgp?branch=develop)
-[![Dependency Status](https://www.versioneye.com/user/projects/53718e1914c1581079000056/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.6.0-SNAPSHOT)
+[![Dependency Status](https://www.versioneye.com/user/projects/53718e1914c1581079000056/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.9.0-SNAPSHOT)
 **develop**
 
 This is a Clojure library which wraps the Bouncy Castle OpenPGP implementation.
@@ -23,8 +23,8 @@ Leiningen, add the following dependency to your project definition:
 
 [![Clojars Project](http://clojars.org/mvxcvi/clj-pgp/latest-version.svg)](http://clojars.org/mvxcvi/clj-pgp)
 
-The main interface to the library is the `mvxcvi.crypto.pgp` namespace, which
-provides a high-level API for working with PGP keys and data.
+The main interface to the library is the `clj-pgp.core` namespace, which
+provides many general functions for working with PGP keys and data.
 
 ### PGP Keys
 
@@ -37,20 +37,25 @@ passphrase.
 ```clojure
 (require
   '[clojure.java.io :as io]
-  '[mvxcvi.crypto.pgp :as pgp])
+  '(clj-pgp
+     [core :as pgp]
+     [keyring :as keyring]))
 
 (def keyring
-  (pgp/load-secret-keyring (io/file "~/.gpg/secring.gpg")))
+  (keyring/load-secret-keyring (io/file "~/.gpg/secring.gpg")))
 
-(pgp/list-public-keys keyring)
-=> (#<PGPPublicKey {...}> #<PGPPublicKey {...}>)
+(keyring/list-public-keys keyring)
+=> (#<PGPPublicKey ...> #<PGPPublicKey ...>)
 
 (def pubkey (first *1))
 
 (pgp/key-id pubkey)
 => -7909697412827827830
 
-(def seckey (pgp/get-secret-key keyring *1))
+(pgp/hex-id pubkey)
+=> "923b1c1c4392318a"
+
+(def seckey (keyring/get-secret-key keyring *1))
 
 (pgp/key-algorithm seckey)
 => :rsa-general
@@ -65,23 +70,31 @@ passphrase.
     :user-ids ["Test User <test@mvxcvi.com>"]}
 ```
 
-### Data Encryption
+### Message Handling
 
-Encryption and decryption of arbitrary data is supported using PGP's literal
-data packets. The content is encrypted using a symmetric key algorithm, then
-the key is encrypted using the given public key.
+Data encryption is supported using PGP message packets. The content is encrypted
+using a symmetric key algorithm, then the key is encrypted using the given
+public key(s) or passphrase. Any matching private key or passphrase can then
+decipher and read the message.
+
+Data may also be compressed before encrypting it, and converted to an ASCII
+representation after. The ASCII format is sometimes referred to as an "armored"
+encoding because it is intended to be transmissible through email.
 
 ```clojure
-(def content (.getBytes "my sensitive data"))
+(require '[clj-pgp.message :as pgp-msg])
 
-(def ciphertext
-  (pgp/encrypt
+(def content "my sensitive data")
+
+(def message
+  (pgp-msg/encrypt
     content pubkey
-    :algorithm :aes-256
+    :format :utf8
+    :cipher :aes-256
     :compress :zip
     :armor true))
 
-(println (String. ciphertext))
+(println message)
 ;; -----BEGIN PGP MESSAGE-----
 ;; Version: BCPG v1.49
 ;;
@@ -92,23 +105,23 @@ the key is encrypted using the given public key.
 ;; =cvks
 ;; -----END PGP MESSAGE-----
 
-(defn get-privkey
-  "Define a function to get an unlocked private key by id. This is used to
-  check for a key matching the one the data packet is encrypted for."
-  [id]
-  (some->
-    keyring
-    (pgp/get-secret-key id)
-    (pgp/unlock-key "test password")))
+(def privkey (pgp/unlock-key seckey "test password"))
 
-(def cleartext (pgp/decrypt ciphertext get-privkey))
-
-(println (String. cleartext))
+(println (pgp/decrypt message privkey))
 ;; my sensitive data
-```
 
-There are also more primitive `encrypt-stream` and `decrypt-stream` functions
-which will wrap output and input streams, respectively.
+; Or, for more detail:
+(pgp-msg/read-messages message :decryptor privkey)
+=>
+({:data "my sensitive data"
+  :cipher :aes-256
+  :encrypted-for -7909697412827827830
+  :integrity-protected? true
+  :compress :zip
+  :format :utf8
+  :filename "_CONSOLE"
+  :mtime #inst "2014-12-06T22:44:59.000-00:00"})
+```
 
 ### Signatures
 
@@ -117,21 +130,21 @@ _private_ key. Later, the signature can be verified by decrypting it with the
 public key and comparing it with the hash of the data.
 
 ```clojure
-(def privkey (pgp/unlock-key seckey "test password"))
-(def sig (pgp/sign content privkey))
+(require '[clj-pgp.signature :as pgp-sig])
+
+(def sig (pgp-sig/sign content privkey))
 
 (= (pgp/key-id sig) (pgp/key-id privkey))
 => true
 
-(pgp/verify content sig pubkey)
+(pgp-sig/verify content sig pubkey)
 => true
 ```
 
 ### Serialization
 
-The library provides functions for encoding PGP objects in both binary and ASCII
-formats. The ASCII format is sometimes referred to as an "armored" encoding
-because it is intended to be transmissible through email.
+The library provides functions for encoding some PGP objects in both binary and
+ASCII formats.
 
 ```clojure
 (pgp/encode sig)

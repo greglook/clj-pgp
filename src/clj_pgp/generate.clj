@@ -1,4 +1,14 @@
 (ns clj-pgp.generate
+  "This namespace provides functionality to generate PGP keypairs and keyrings
+  using a convenient macro syntax.
+
+  The two primary supported key types are RSA keys (via `rsa-keypair-generator`)
+  and Elliptic Curve keys (via `ec-keypair-generator`). A set of the supported
+  named curves can be found in `elliptic-curve-names`.
+
+  To generate PGP keyrings with designater master keys and subkeys with specific
+  roles and restrictions, use the `generate-keys` macro. This returns a map with
+  `:public` and `:secret` entries containing the respective keyrings."
   (:require
     [clojure.string :as str]
     (clj-pgp
