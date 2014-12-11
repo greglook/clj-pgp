@@ -74,6 +74,36 @@ passphrase.
     :user-ids ["Test User <test@mvxcvi.com>"]}
 ```
 
+Keypairs and keyrings can be created using the `clj-pgp.generate` namespace.
+RSA and EC keys can be generated directly or as part of a keyring, which binds a
+master key together with signing and encryption subkeys. The `generate-keys`
+macro provides a handy syntax for creating new keyrings:
+
+```
+(require '[clj-pgp.generate :as pgp-gen])
+
+(def rsa (pgp-gen/rsa-keypair-generator 2048))
+(def ec (pgp-gen/ec-keypair-generator "secp160r2"))
+
+(pgp-gen/generate-keypair ec :ecdsa)
+=> #<PGPKeyPair ...>
+
+(pgp-gen/generate-keys
+  "test user" "test passphrase"
+  (master-key
+    (keypair rsa :rsa-general)
+    (prefer-symmetric :aes-256 :aes-128)
+    (prefer-hash :sha512 :sha256 :sha1)
+    (prefer-compression :zlib :bzip2))
+  (signing-key
+    (keypair rsa :rsa-general)
+    (expires 36000))
+  (encryption-key
+    (keypair ec :ecdh)))
+=> {:public #<PGPPublicKeyRing ...>
+    :secret #<PGPSecretKeyRing ...>}
+```
+
 ### Message Handling
 
 Data encryption is supported using PGP message packets. The content is encrypted
