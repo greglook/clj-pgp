@@ -79,7 +79,7 @@ RSA and EC keys can be generated directly or as part of a keyring, which binds a
 master key together with signing and encryption subkeys. The `generate-keys`
 macro provides a handy syntax for creating new keyrings:
 
-```
+```clojure
 (require '[clj-pgp.generate :as pgp-gen])
 
 (def rsa (pgp-gen/rsa-keypair-generator 2048))
