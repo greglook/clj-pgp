@@ -280,11 +280,10 @@
   "Decodes a public key from the given data. Throws an exception if the data
   does not contain a public key value."
   [data]
-  (when-let [pubkey (first (decode data))]
-    (when-not (instance? PGPPublicKey pubkey)
-      (throw (IllegalStateException.
-               (str "Data did not contain a public key: " pubkey))))
-    pubkey))
+  (let [value (first (decode data))]
+    (or (public-key value)
+        (throw (IllegalStateException.
+                 (str "Data did not contain a public key: " value))))))
 
 
 (defn decode-signatures
