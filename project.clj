@@ -6,8 +6,7 @@
 
   :deploy-branches ["master"]
 
-  :aliases {"docs" ["do" ["hiera"] ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"]]
-            "tests" ["do" ["check"] ["test"] ["cloverage"]]
+  :aliases {"docs" ["do" ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"] ["hiera"]]
             "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
   :plugins [[codox "0.8.10"]
@@ -34,6 +33,6 @@
                                   [org.clojure/tools.namespace "0.2.7"]]}
 
              :tool {:source-paths ["tool"]
-                    :dependencies [[mvxcvi/puget "0.6.4"]
+                    :dependencies [[mvxcvi/puget "0.7.1"]
                                    [org.clojure/core.async "0.1.303.0-886421-alpha"]]
                     :jvm-opts []}})
