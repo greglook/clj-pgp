@@ -6,26 +6,19 @@
 
   :deploy-branches ["master"]
 
-  :aliases {"docs" ["do" ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"] ["hiera"]]
+  :aliases {"doc-lit" ["marg" "--multi" "--dir" "doc/marginalia"]
             "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
-  :plugins [[codox "0.8.10"]
-            [lein-cloverage "1.0.2"]
-            [lein-marginalia "0.8.0"]]
+  :plugins [[lein-cloverage "1.0.2"]]
 
   :dependencies [[byte-streams "0.1.13"]
                  [org.bouncycastle/bcpg-jdk15on "1.51"]
                  [org.bouncycastle/bcprov-jdk15on "1.51"]]
 
-  :hiera {:path "doc/ns-hiera.png"
-          :cluster-depth 1
-          :ignore-ns #{user}}
+  :hiera {:cluster-depth 1}
 
-  :codox {:defaults {:doc/format :markdown}
-          :exclude #{user clj-pgp.tags clj-pgp.util}
-          :output-dir "doc/api"
-          :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
-          :src-linenum-anchor-prefix "L"}
+  :codox {:exclude #{clj-pgp.tags clj-pgp.util}
+          :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"}
 
   :profiles {:dev {:source-paths ["dev"]
                    :dependencies [[org.clojure/clojure "1.6.0"]
