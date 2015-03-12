@@ -312,7 +312,25 @@
 
 (defmacro generate-keys
   "Macro to generate keys with a mini-language to specify preferences and
-  subkeys."
+  subkeys.
+
+  An example invocation that creates a master key with signing and encryption
+  subkeys:
+
+  ```
+  (pgp-gen/generate-keys
+    \"test user\" \"test passphrase\"
+    (master-key
+      (keypair rsa :rsa-general)
+      (prefer-symmetric :aes-256 :aes-128)
+      (prefer-hash :sha512 :sha256 :sha1)
+      (prefer-compression :zlib :bzip2))
+    (signing-key
+      (keypair rsa :rsa-general)
+      (expires 36000))
+    (encryption-key
+      (keypair rsa :rsa-general)))
+  ```"
   [user-id passphrase & key-specs]
   (let [spec-map (reduce group-key-spec {:subkeys []} key-specs)]
     (when-not (:master spec-map)

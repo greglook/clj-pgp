@@ -1,20 +1,14 @@
 clj-pgp
 =======
 
-[![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=master)](https://travis-ci.org/greglook/clj-pgp)
-[![Coverage Status](https://coveralls.io/repos/greglook/clj-pgp/badge.png?branch=master)](https://coveralls.io/r/greglook/clj-pgp?branch=master)
-[![Dependency Status](https://www.versioneye.com/user/projects/53718e2314c1589a89000149/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.8.0)
-**master**
-<br/>
 [![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=develop)](https://travis-ci.org/greglook/clj-pgp)
 [![Coverage Status](https://coveralls.io/repos/greglook/clj-pgp/badge.png?branch=develop)](https://coveralls.io/r/greglook/clj-pgp?branch=develop)
-[![Dependency Status](https://www.versioneye.com/user/projects/53718e1914c1581079000056/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp/0.9.0-SNAPSHOT)
-**develop**
+[![Dependency Status](https://www.versioneye.com/user/projects/53718e2314c1589a89000149/badge.png)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp)
+[![API codox](http://b.repl.ca/v1/doc-API-blue.png)](https://greglook.github.io/clj-pgp/api/)
+[![marginalia docs](http://b.repl.ca/v1/doc-marginalia-blue.png)](https://greglook.github.io/clj-pgp/marginalia/toc.html)
 
-This is a Clojure library which wraps the Bouncy Castle OpenPGP implementation.
-API documentation can be found [here](https://greglook.github.io/clj-pgp/api/),
-along with a [literate view](https://greglook.github.io/clj-pgp/marginalia/toc.html)
-of the code.
+This is a Clojure library which wraps the
+[Bouncy Castle](http://bouncycastle.org/) OpenPGP implementation.
 
 ## Usage
 
@@ -25,6 +19,10 @@ Leiningen, add the following dependency to your project definition:
 
 The main interface to the library is the `clj-pgp.core` namespace, which
 provides many general functions for working with PGP keys and data.
+
+***NOTE:*** 0.8.0 is a breaking API change! The namespaces changed from
+`mvxcvi.crypto.pgp.foo` to `clj-pgp.foo`, among many other functionality
+improvements.
 
 ### PGP Keys
 
@@ -68,6 +66,36 @@ passphrase.
     :fingerprint "4C0F256D432975418FAB3D7B923B1C1C4392318A",
     :encryption-key? true,
     :user-ids ["Test User <test@mvxcvi.com>"]}
+```
+
+Keypairs and keyrings can be created using the `clj-pgp.generate` namespace.
+RSA and EC keys can be generated directly or as part of a keyring, which binds a
+master key together with signing and encryption subkeys. The `generate-keys`
+macro provides a handy syntax for creating new keyrings:
+
+```clojure
+(require '[clj-pgp.generate :as pgp-gen])
+
+(def rsa (pgp-gen/rsa-keypair-generator 2048))
+(def ec (pgp-gen/ec-keypair-generator "secp160r2"))
+
+(pgp-gen/generate-keypair ec :ecdsa)
+=> #<PGPKeyPair ...>
+
+(pgp-gen/generate-keys
+  "test user" "test passphrase"
+  (master-key
+    (keypair rsa :rsa-general)
+    (prefer-symmetric :aes-256 :aes-128)
+    (prefer-hash :sha512 :sha256 :sha1)
+    (prefer-compression :zlib :bzip2))
+  (signing-key
+    (keypair rsa :rsa-general)
+    (expires 36000))
+  (encryption-key
+    (keypair ec :ecdh)))
+=> {:public #<PGPPublicKeyRing ...>
+    :secret #<PGPSecretKeyRing ...>}
 ```
 
 ### Message Handling

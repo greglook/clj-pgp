@@ -17,6 +17,7 @@
       PGPObjectFactory
       PGPPrivateKey
       PGPPublicKey
+      PGPPublicKeyRing
       PGPSecretKey
       PGPSignature
       PGPSignatureList
@@ -46,41 +47,57 @@
 
 ;; ## Public Key Coercion
 
-(defmulti public-key
-  "Coerces the argument into a PGP public key. Returns nil for other values."
-  class)
+(defprotocol PublicKeyContainer
+  "Protocol for value types which contain or are coercible to a PGP public key."
 
-(defmethod public-key :default [_] nil)
+  (public-key
+    [this]
+    "Coerces the argument into a PGP public key. Returns nil for other values."))
 
-(defmethod public-key PGPPublicKey
-  [^PGPPublicKey pubkey]
-  pubkey)
 
-(defmethod public-key PGPSecretKey
-  [^PGPSecretKey seckey]
-  (.getPublicKey seckey))
+(extend-protocol PublicKeyContainer
+  nil
+  (public-key [_] nil)
 
-(defmethod public-key PGPKeyPair
-  [^PGPKeyPair keypair]
-  (.getPublicKey keypair))
+  Object
+  (public-key [_] nil)
+
+  PGPPublicKey
+  (public-key [pubkey] pubkey)
+
+  PGPSecretKey
+  (public-key [seckey] (.getPublicKey seckey))
+
+  PGPKeyPair
+  (public-key [keypair] (.getPublicKey keypair))
+
+  PGPPublicKeyRing
+  (public-key [keyring] (.getPublicKey keyring)))
 
 
 
 ;; ## Private Key Coercion
 
-(defmulti private-key
-  "Coerces the argument into a PGP private key. Returns nil for other values."
-  class)
+(defprotocol PrivateKeyContainer
+  "Protocol for value types which contain or are coercible to a PGP private key."
 
-(defmethod private-key :default [_] nil)
+  (private-key
+    [this]
+    "Coerces the argument into a PGP private key. Returns nil for other values."))
 
-(defmethod private-key PGPPrivateKey
-  [^PGPPrivateKey privkey]
-  privkey)
 
-(defmethod private-key PGPKeyPair
-  [^PGPKeyPair keypair]
-  (.getPrivateKey keypair))
+(extend-protocol PrivateKeyContainer
+  nil
+  (private-key [_] nil)
+
+  Object
+  (private-key [_] nil)
+
+  PGPPrivateKey
+  (private-key [privkey] privkey)
+
+  PGPKeyPair
+  (private-key [keypair] (.getPrivateKey keypair)))
 
 
 
@@ -124,36 +141,41 @@
 
 ;; ## Keypair Algorithms
 
-(defmulti key-algorithm
-  "Returns a keyword identifying the public-key algorithm used by the given
-  value."
-  class)
+(defprotocol KeyAlgorithmIdentifier
+  "Protocol for values which can use or identify a cryptographic algorithm."
 
-(defmethod key-algorithm nil [_] nil)
+  (key-algorithm
+    [value]
+    "Returns a keyword identifying the key algorithm used by the given value."))
 
-(defmethod key-algorithm :default
-  [value]
-  (tags/public-key-algorithm-tag value))
 
-(defmethod key-algorithm PGPPublicKey
-  [^PGPPublicKey pubkey]
-  (tags/public-key-algorithm-tag
-    (.getAlgorithm pubkey)))
+(extend-protocol KeyAlgorithmIdentifier
+  nil
+  (key-algorithm [_] nil)
 
-(defmethod key-algorithm PGPSecretKey
-  [^PGPSecretKey seckey]
-  (tags/public-key-algorithm-tag
-    (.getAlgorithm (.getPublicKey seckey))))
+  Object
+  (key-algorithm [value]
+    (tags/public-key-algorithm-tag value))
 
-(defmethod key-algorithm PGPPrivateKey
-  [^PGPPrivateKey privkey]
-  (tags/public-key-algorithm-tag
-    (.getAlgorithm (.getPublicKeyPacket privkey))))
+  PGPPublicKey
+  (key-algorithm [pubkey]
+    (tags/public-key-algorithm-tag
+      (.getAlgorithm pubkey)))
 
-(defmethod key-algorithm PGPKeyPair
-  [^PGPKeyPair keypair]
-  (tags/public-key-algorithm-tag
-    (.getAlgorithm (.getPublicKey keypair))))
+  PGPSecretKey
+  (key-algorithm [seckey]
+    (tags/public-key-algorithm-tag
+      (.getAlgorithm (.getPublicKey seckey))))
+
+  PGPPrivateKey
+  (key-algorithm [privkey]
+    (tags/public-key-algorithm-tag
+      (.getAlgorithm (.getPublicKeyPacket privkey))))
+
+  PGPKeyPair
+  (key-algorithm [keypair]
+    (tags/public-key-algorithm-tag
+      (.getAlgorithm (.getPublicKey keypair)))))
 
 
 
@@ -258,11 +280,10 @@
   "Decodes a public key from the given data. Throws an exception if the data
   does not contain a public key value."
   [data]
-  (when-let [pubkey (first (decode data))]
-    (when-not (instance? PGPPublicKey pubkey)
-      (throw (IllegalStateException.
-               (str "Data did not contain a public key: " pubkey))))
-    pubkey))
+  (let [value (first (decode data))]
+    (or (public-key value)
+        (throw (IllegalStateException.
+                 (str "Data did not contain a public key: " value))))))
 
 
 (defn decode-signatures
