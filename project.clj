@@ -11,7 +11,7 @@
 
   :plugins [[lein-cloverage "1.0.2"]]
 
-  :dependencies [[byte-streams "0.1.13"]
+  :dependencies [[byte-streams "0.2.0"]
                  [org.bouncycastle/bcpg-jdk15on "1.51"]
                  [org.bouncycastle/bcprov-jdk15on "1.51"]]
 
@@ -22,10 +22,10 @@
 
   :profiles {:dev {:source-paths ["dev"]
                    :dependencies [[org.clojure/clojure "1.6.0"]
-                                  [org.clojure/test.check "0.6.1"]
-                                  [org.clojure/tools.namespace "0.2.7"]]}
+                                  [org.clojure/test.check "0.7.0"]
+                                  [org.clojure/tools.namespace "0.2.10"]]}
 
              :tool {:source-paths ["tool"]
-                    :dependencies [[mvxcvi/puget "0.7.1"]
+                    :dependencies [[mvxcvi/puget "0.8.1"]
                                    [org.clojure/core.async "0.1.303.0-886421-alpha"]]
                     :jvm-opts []}})
