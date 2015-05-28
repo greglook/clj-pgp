@@ -12,8 +12,8 @@
   :plugins [[lein-cloverage "1.0.2"]]
 
   :dependencies [[byte-streams "0.2.0"]
-                 [org.bouncycastle/bcpg-jdk15on "1.51"]
-                 [org.bouncycastle/bcprov-jdk15on "1.51"]]
+                 [org.bouncycastle/bcpg-jdk15on "1.52"]
+                 [org.bouncycastle/bcprov-jdk15on "1.52"]]
 
   :hiera {:cluster-depth 1}
 

@@ -12,7 +12,9 @@
       PGPPublicKeyRingCollection
       PGPSecretKeyRing
       PGPSecretKeyRingCollection
-      PGPUtil)))
+      PGPUtil)
+    (org.bouncycastle.openpgp.operator.bc
+      BcKeyFingerprintCalculator)))
 
 
 (defprotocol KeyRing
@@ -99,7 +101,7 @@
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream source))]
-    (PGPPublicKeyRingCollection. stream)))
+    (PGPPublicKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
 
 
 (defn load-secret-keyring
@@ -107,4 +109,4 @@
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream source))]
-    (PGPSecretKeyRingCollection. stream)))
+    (PGPSecretKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
