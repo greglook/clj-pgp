@@ -23,6 +23,7 @@
       PGPSignatureList
       PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
+      BcKeyFingerprintCalculator
       BcPBESecretKeyDecryptorBuilder
       BcPGPDigestCalculatorProvider)))
 
@@ -261,7 +262,7 @@
 (defn ^:no-doc read-objects
   "Lazily decodes a sequence of PGP objects from an input stream."
   [^InputStream input]
-  (let [factory (PGPObjectFactory. input)]
+  (let [factory (PGPObjectFactory. input (BcKeyFingerprintCalculator.))]
     (->>
       (repeatedly #(.nextObject factory))
       (take-while some?))))

@@ -1,4 +1,4 @@
-(defproject mvxcvi/clj-pgp "0.8.1"
+(defproject mvxcvi/clj-pgp "0.8.2"
   :description "Wrapper for the Bouncy Castle OpenPGP library"
   :url "https://github.com/greglook/clj-pgp"
   :license {:name "Public Domain"
@@ -6,33 +6,26 @@
 
   :deploy-branches ["master"]
 
-  :aliases {"docs" ["do" ["doc"] ["marg" "--multi" "--dir" "doc/marginalia"] ["hiera"]]
+  :aliases {"doc-lit" ["marg" "--multi" "--dir" "doc/marginalia"]
             "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
-  :plugins [[codox "0.8.10"]
-            [lein-cloverage "1.0.2"]
-            [lein-marginalia "0.8.0"]]
+  :plugins [[lein-cloverage "1.0.2"]]
 
-  :dependencies [[byte-streams "0.1.13"]
-                 [org.bouncycastle/bcpg-jdk15on "1.51"]
-                 [org.bouncycastle/bcprov-jdk15on "1.51"]]
+  :dependencies [[byte-streams "0.2.0"]
+                 [org.bouncycastle/bcpg-jdk15on "1.52"]
+                 [org.bouncycastle/bcprov-jdk15on "1.52"]]
 
-  :hiera {:path "doc/ns-hiera.png"
-          :cluster-depth 1
-          :ignore-ns #{user}}
+  :hiera {:cluster-depth 1}
 
-  :codox {:defaults {:doc/format :markdown}
-          :exclude #{user clj-pgp.tags clj-pgp.util}
-          :output-dir "doc/api"
-          :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"
-          :src-linenum-anchor-prefix "L"}
+  :codox {:exclude #{clj-pgp.tags clj-pgp.util}
+          :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"}
 
   :profiles {:dev {:source-paths ["dev"]
                    :dependencies [[org.clojure/clojure "1.6.0"]
-                                  [org.clojure/test.check "0.6.1"]
-                                  [org.clojure/tools.namespace "0.2.7"]]}
+                                  [org.clojure/test.check "0.7.0"]
+                                  [org.clojure/tools.namespace "0.2.10"]]}
 
              :tool {:source-paths ["tool"]
-                    :dependencies [[mvxcvi/puget "0.7.1"]
-                                   [org.clojure/core.async "0.1.303.0-886421-alpha"]]
+                    :dependencies [[mvxcvi/puget "0.8.1"]
+                                   [org.clojure/core.async "0.1.361.0-d8047c-alpha"]]
                     :jvm-opts []}})
