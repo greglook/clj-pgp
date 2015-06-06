@@ -27,5 +27,5 @@
 
              :tool {:source-paths ["tool"]
                     :dependencies [[mvxcvi/puget "0.8.1"]
-                                   [org.clojure/core.async "0.1.303.0-886421-alpha"]]
+                                   [org.clojure/core.async "0.1.361.0-d8047c-alpha"]]
                     :jvm-opts []}})
