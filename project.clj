@@ -14,8 +14,8 @@
 
   :dependencies
   [[byte-streams "0.2.0"]
-   [org.bouncycastle/bcpg-jdk15on "1.53"]
-   [org.bouncycastle/bcprov-jdk15on "1.53"]]
+   [org.bouncycastle/bcpg-jdk15on "1.54"]
+   [org.bouncycastle/bcprov-jdk15on "1.54"]]
 
   :hiera {:cluster-depth 1}
 
