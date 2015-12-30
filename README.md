@@ -4,8 +4,8 @@ clj-pgp
 [![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=master)](https://travis-ci.org/greglook/clj-pgp)
 [![Coverage Status](https://coveralls.io/repos/greglook/clj-pgp/badge.png?branch=master)](https://coveralls.io/r/greglook/clj-pgp?branch=master)
 [![Dependency Status](https://www.versioneye.com/user/projects/53718e2314c1589a89000149/badge.png?style=flat)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp)
-[![API codox](http://b.repl.ca/v1/doc-API-blue.png)](https://greglook.github.io/clj-pgp/api/)
-[![marginalia docs](http://b.repl.ca/v1/doc-marginalia-blue.png)](https://greglook.github.io/clj-pgp/marginalia/toc.html)
+[![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://greglook.github.io/clj-pgp/api/)
+[![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://greglook.github.io/clj-pgp/marginalia/toc.html)
 
 This is a Clojure library which wraps the
 [Bouncy Castle](http://bouncycastle.org/) OpenPGP implementation.
