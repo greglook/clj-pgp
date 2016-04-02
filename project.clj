@@ -13,7 +13,7 @@
   [[lein-cloverage "1.0.6"]]
 
   :dependencies
-  [[byte-streams "0.2.0"]
+  [[byte-streams "0.2.1"]
    [org.bouncycastle/bcpg-jdk15on "1.54"]
    [org.bouncycastle/bcprov-jdk15on "1.54"]]
 
