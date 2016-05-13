@@ -139,7 +139,7 @@ encoding because it is intended to be transmissible through email.
 ; Secret keys can be 'unlocked' to get the private key:
 => (def privkey (pgp/unlock-key seckey "test password"))
 
-=> (println (pgp/decrypt message privkey))
+=> (println (pgp-msg/decrypt message privkey))
 ; my sensitive data
 
 ; Or, for more detail:
