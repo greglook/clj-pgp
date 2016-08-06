@@ -33,6 +33,25 @@
     "Loads a secret key by id."))
 
 
+
+;; ## Public Key Rings
+
+(defn public-keyring-coll
+  "Wraps the collection of public keyrings in a `PGPPublicKeyRingCollection`."
+  ([]
+   (public-keyring-coll nil))
+  ([keyrings]
+   (PGPPublicKeyRingCollection. keyrings)))
+
+
+(defn load-public-keyring
+  "Loads a public keyring collection from a data source."
+  [source]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (bytes/to-input-stream source))]
+    (PGPPublicKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
+
+
 (extend-type PGPPublicKeyRing
 
   KeyRing
@@ -59,8 +78,7 @@
 
   (list-public-keys
     [this]
-    (->> (iterator-seq (.getKeyRings this))
-         (mapcat list-public-keys)))
+    (mapcat list-public-keys this))
 
   (get-public-key
     [this id]
@@ -72,6 +90,25 @@
   (encode
     [this]
     (.getEncoded this)))
+
+
+
+;; ## Secret Key Rings
+
+(defn secret-keyring-coll
+  "Wraps the collection of public keyrings in a `PGPPublicKeyRingCollection`."
+  ([]
+   (secret-keyring-coll nil))
+  ([keyrings]
+   (PGPPublicKeyRingCollection. keyrings)))
+
+
+(defn load-secret-keyring
+  "Loads a secret keyring collection from a data source."
+  [source]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (bytes/to-input-stream source))]
+    (PGPSecretKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
 
 
 (extend-type PGPSecretKeyRing
@@ -95,7 +132,6 @@
     (.getSecretKey this (pgp/key-id id)))
 
 
-
   pgp/Encodable
 
   (encode
@@ -109,13 +145,11 @@
 
   (list-public-keys
     [this]
-    (->> (iterator-seq (.getKeyRings this))
-         (mapcat list-public-keys)))
+    (mapcat list-public-keys this))
 
   (list-secret-keys
     [this]
-    (->> (iterator-seq (.getKeyRings this))
-         (mapcat list-secret-keys)))
+    (mapcat list-secret-keys this))
 
   (get-public-key
     [this id]
@@ -132,22 +166,3 @@
   (encode
     [this]
     (.getEncoded this)))
-
-
-
-;; ## Loading Functions
-
-(defn load-public-keyring
-  "Loads a public keyring collection from a data source."
-  [source]
-  (with-open [stream (PGPUtil/getDecoderStream
-                       (bytes/to-input-stream source))]
-    (PGPPublicKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
-
-
-(defn load-secret-keyring
-  "Loads a secret keyring collection from a data source."
-  [source]
-  (with-open [stream (PGPUtil/getDecoderStream
-                       (bytes/to-input-stream source))]
-    (PGPSecretKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
