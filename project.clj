@@ -13,21 +13,25 @@
   [[lein-cloverage "1.0.6"]]
 
   :dependencies
-  [[byte-streams "0.2.1"]
+  [[org.clojure/clojure "1.8.0" :scope "provided"]
    [org.bouncycastle/bcpg-jdk15on "1.54"]
-   [org.bouncycastle/bcprov-jdk15on "1.54"]]
+   [org.bouncycastle/bcprov-jdk15on "1.54"]
+   [byte-streams "0.2.2"]]
 
-  :hiera {:cluster-depth 1}
+  :hiera
+  {:cluster-depth 1}
 
-  :codox {:exclude #{clj-pgp.tags clj-pgp.util}
-          :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"}
+  :codox
+  {:exclude #{clj-pgp.tags clj-pgp.util}
+   :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"}
 
-  :profiles {:dev {:source-paths ["dev"]
-                   :dependencies [[org.clojure/clojure "1.7.0"]
-                                  [org.clojure/test.check "0.9.0"]
-                                  [org.clojure/tools.namespace "0.2.10"]]}
+  :profiles
+  {:dev
+   {:source-paths ["dev"]
+    :dependencies [[org.clojure/test.check "0.9.0"]
+                   [org.clojure/tools.namespace "0.2.10"]]}
 
-             :tool {:source-paths ["tool"]
-                    :dependencies [[mvxcvi/puget "1.0.0"]
-                                   [org.clojure/core.async "0.2.374"]]
-                    :jvm-opts []}})
+   :tool
+   {:source-paths ["tool"]
+    :dependencies [[mvxcvi/puget "1.0.0"]]
+    :jvm-opts []}})
