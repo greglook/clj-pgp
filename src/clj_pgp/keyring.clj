@@ -33,39 +33,58 @@
     "Loads a secret key by id."))
 
 
-(extend-protocol KeyRing
+(extend-type PGPPublicKeyRing
 
-  PGPPublicKeyRing
+  KeyRing
 
   (list-public-keys
     [this]
-    (->> this .getPublicKeys iterator-seq))
+    (iterator-seq (.getPublicKeys this)))
 
   (get-public-key
     [this id]
     (.getPublicKey this (pgp/key-id id)))
 
 
-  PGPPublicKeyRingCollection
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))
+
+
+(extend-type PGPPublicKeyRingCollection
+
+  KeyRing
 
   (list-public-keys
     [this]
-    (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
+    (->> (iterator-seq (.getKeyRings this))
+         (mapcat list-public-keys)))
 
   (get-public-key
     [this id]
     (.getPublicKey this (pgp/key-id id)))
 
 
-  PGPSecretKeyRing
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))
+
+
+(extend-type PGPSecretKeyRing
+
+  KeyRing
 
   (list-public-keys
     [this]
-    (->> this .getPublicKeys iterator-seq))
+    (iterator-seq (.getPublicKeys this)))
 
   (list-secret-keys
     [this]
-    (->> this .getSecretKeys iterator-seq))
+    (iterator-seq (.getSecretKeys this)))
 
   (get-public-key
     [this id]
@@ -76,15 +95,27 @@
     (.getSecretKey this (pgp/key-id id)))
 
 
-  PGPSecretKeyRingCollection
+
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))
+
+
+(extend-type PGPSecretKeyRingCollection
+
+  KeyRing
 
   (list-public-keys
     [this]
-    (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
+    (->> (iterator-seq (.getKeyRings this))
+         (mapcat list-public-keys)))
 
   (list-secret-keys
     [this]
-    (->> this .getKeyRings iterator-seq (map list-secret-keys) flatten))
+    (->> (iterator-seq (.getKeyRings this))
+         (mapcat list-secret-keys)))
 
   (get-public-key
     [this id]
@@ -93,8 +124,18 @@
 
   (get-secret-key
     [this id]
-    (.getSecretKey this (pgp/key-id id))))
+    (.getSecretKey this (pgp/key-id id)))
 
+
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))
+
+
+
+;; ## Loading Functions
 
 (defn load-public-keyring
   "Loads a public keyring collection from a data source."
