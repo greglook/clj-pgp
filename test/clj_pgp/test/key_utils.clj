@@ -136,21 +136,23 @@
       (is (= v (get info k))))))
 
 
-(deftest public-key-binary-encoding
-  (let [encoded-key (pgp/encode pubkey)
-        decoded-key (pgp/decode-public-key encoded-key)]
-    (is (instance? PGPPublicKey decoded-key)
-        "key is decoded as a PGP public key")
-    (is (bytes= encoded-key (pgp/encode decoded-key))
-        "encoded key is canonical")))
+(deftest public-key-encoding
+  (testing "binary"
+    (let [encoded-key (pgp/encode pubkey)
+          decoded-key (pgp/decode-public-key encoded-key)]
+      (is (instance? PGPPublicKey decoded-key)
+          "key is decoded as a PGP public key")
+      (is (bytes= encoded-key (pgp/encode decoded-key))
+          "encoded key is canonical")))
+  (testing "ascii"
+    (let [encoded-key (pgp/encode-ascii pubkey)
+          decoded-key (pgp/decode-public-key encoded-key)]
+      (is (string? encoded-key)
+          "key is encoded as a string")
+      (is (instance? PGPPublicKey decoded-key)
+          "key is decoded as a PGP public key")
+      (is (= encoded-key (pgp/encode-ascii decoded-key))
+          "encoded key is canonical"))))
 
 
-(deftest public-key-ascii-encoding
-  (let [encoded-key (pgp/encode-ascii pubkey)
-        decoded-key (pgp/decode-public-key encoded-key)]
-    (is (string? encoded-key)
-        "key is encoded as a string")
-    (is (instance? PGPPublicKey decoded-key)
-        "key is decoded as a PGP public key")
-    (is (= encoded-key (pgp/encode-ascii decoded-key))
-        "encoded key is canonical")))
+; TODO: keyring encoding tests
