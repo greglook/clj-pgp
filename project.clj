@@ -28,11 +28,11 @@
    :output-path "target/doc/api"}
 
   :profiles
-  {:dev
+  {:repl
    {:source-paths ["dev"]
     :dependencies
     [[org.clojure/test.check "0.9.0"]
-     [org.clojure/tools.namespace "0.2.10"]]}
+     [org.clojure/tools.namespace "0.2.11"]]}
 
    :tool
    {:source-paths ["tool"]
