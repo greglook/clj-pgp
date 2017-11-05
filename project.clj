@@ -6,13 +6,11 @@
 
   :aliases
   {"doc-lit" ["marg" "--multi" "--dir" "doc/marginalia"]
+   "coverage" ["with-profile" "+coverage" "cloverage"]
    "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
   :deploy-branches ["master"]
   :pedantic? :abort
-
-  :plugins
-  [[lein-cloverage "1.0.10"]]
 
   :dependencies
   [[org.clojure/clojure "1.8.0" :scope "provided"]
@@ -39,4 +37,8 @@
    :tool
    {:source-paths ["tool"]
     :dependencies [[mvxcvi/puget "1.0.2"]]
-    :jvm-opts []}})
+    :jvm-opts []}
+
+   :coverage
+   {:plugins [[lein-cloverage "1.0.10"]]
+    :dependencies [[riddley "0.1.14"]]} })
