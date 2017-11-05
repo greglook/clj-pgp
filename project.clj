@@ -4,34 +4,39 @@
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
 
-  :deploy-branches ["master"]
+  :aliases
+  {"doc-lit" ["marg" "--multi" "--dir" "doc/marginalia"]
+   "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
-  :aliases {"doc-lit" ["marg" "--multi" "--dir" "doc/marginalia"]
-            "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
+  :deploy-branches ["master"]
+  :pedantic? :abort
 
   :plugins
-  [[lein-cloverage "1.0.6"]]
+  [[lein-cloverage "1.0.10"]]
 
   :dependencies
   [[org.clojure/clojure "1.8.0" :scope "provided"]
-   [org.bouncycastle/bcpg-jdk15on "1.54"]
-   [org.bouncycastle/bcprov-jdk15on "1.54"]
-   [byte-streams "0.2.2"]]
+   [org.bouncycastle/bcpg-jdk15on "1.58"]
+   [org.bouncycastle/bcprov-jdk15on "1.58"]
+   [byte-streams "0.2.3"]]
 
   :hiera
   {:cluster-depth 1}
 
   :codox
-  {:exclude #{clj-pgp.tags clj-pgp.util}
-   :src-dir-uri "https://github.com/greglook/clj-pgp/blob/master/"}
+  {:metadata {:doc/format :markdown}
+   :exclude #{clj-pgp.tags clj-pgp.util}
+   :source-uri "https://github.com/greglook/clj-pgp/blob/master/"
+   :output-path "target/doc/api"}
 
   :profiles
   {:dev
    {:source-paths ["dev"]
-    :dependencies [[org.clojure/test.check "0.9.0"]
-                   [org.clojure/tools.namespace "0.2.10"]]}
+    :dependencies
+    [[org.clojure/test.check "0.9.0"]
+     [org.clojure/tools.namespace "0.2.10"]]}
 
    :tool
    {:source-paths ["tool"]
-    :dependencies [[mvxcvi/puget "1.0.0"]]
+    :dependencies [[mvxcvi/puget "1.0.2"]]
     :jvm-opts []}})
