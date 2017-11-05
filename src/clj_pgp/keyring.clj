@@ -33,67 +33,15 @@
     "Loads a secret key by id."))
 
 
-(extend-protocol KeyRing
 
-  PGPPublicKeyRing
+;; ## Public Key Rings
 
-  (list-public-keys
-    [this]
-    (->> this .getPublicKeys iterator-seq))
-
-  (get-public-key
-    [this id]
-    (.getPublicKey this (pgp/key-id id)))
-
-
-  PGPPublicKeyRingCollection
-
-  (list-public-keys
-    [this]
-    (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
-
-  (get-public-key
-    [this id]
-    (.getPublicKey this (pgp/key-id id)))
-
-
-  PGPSecretKeyRing
-
-  (list-public-keys
-    [this]
-    (->> this .getPublicKeys iterator-seq))
-
-  (list-secret-keys
-    [this]
-    (->> this .getSecretKeys iterator-seq))
-
-  (get-public-key
-    [this id]
-    (.getPublicKey this (pgp/key-id id)))
-
-  (get-secret-key
-    [this id]
-    (.getSecretKey this (pgp/key-id id)))
-
-
-  PGPSecretKeyRingCollection
-
-  (list-public-keys
-    [this]
-    (->> this .getKeyRings iterator-seq (map list-public-keys) flatten))
-
-  (list-secret-keys
-    [this]
-    (->> this .getKeyRings iterator-seq (map list-secret-keys) flatten))
-
-  (get-public-key
-    [this id]
-    (let [id (pgp/key-id id)]
-      (-> this (.getSecretKeyRing id) (.getPublicKey id))))
-
-  (get-secret-key
-    [this id]
-    (.getSecretKey this (pgp/key-id id))))
+(defn public-keyring-coll
+  "Wraps the collection of public keyrings in a `PGPPublicKeyRingCollection`."
+  ([]
+   (public-keyring-coll nil))
+  ([keyrings]
+   (PGPPublicKeyRingCollection. keyrings)))
 
 
 (defn load-public-keyring
@@ -104,9 +52,117 @@
     (PGPPublicKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
 
 
+(extend-type PGPPublicKeyRing
+
+  KeyRing
+
+  (list-public-keys
+    [this]
+    (iterator-seq (.getPublicKeys this)))
+
+  (get-public-key
+    [this id]
+    (.getPublicKey this (pgp/key-id id)))
+
+
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))
+
+
+(extend-type PGPPublicKeyRingCollection
+
+  KeyRing
+
+  (list-public-keys
+    [this]
+    (mapcat list-public-keys this))
+
+  (get-public-key
+    [this id]
+    (.getPublicKey this (pgp/key-id id)))
+
+
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))
+
+
+
+;; ## Secret Key Rings
+
+(defn secret-keyring-coll
+  "Wraps the collection of public keyrings in a `PGPPublicKeyRingCollection`."
+  ([]
+   (secret-keyring-coll nil))
+  ([keyrings]
+   (PGPPublicKeyRingCollection. keyrings)))
+
+
 (defn load-secret-keyring
   "Loads a secret keyring collection from a data source."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream source))]
     (PGPSecretKeyRingCollection. stream (BcKeyFingerprintCalculator.))))
+
+
+(extend-type PGPSecretKeyRing
+
+  KeyRing
+
+  (list-public-keys
+    [this]
+    (iterator-seq (.getPublicKeys this)))
+
+  (list-secret-keys
+    [this]
+    (iterator-seq (.getSecretKeys this)))
+
+  (get-public-key
+    [this id]
+    (.getPublicKey this (pgp/key-id id)))
+
+  (get-secret-key
+    [this id]
+    (.getSecretKey this (pgp/key-id id)))
+
+
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))
+
+
+(extend-type PGPSecretKeyRingCollection
+
+  KeyRing
+
+  (list-public-keys
+    [this]
+    (mapcat list-public-keys this))
+
+  (list-secret-keys
+    [this]
+    (mapcat list-secret-keys this))
+
+  (get-public-key
+    [this id]
+    (let [id (pgp/key-id id)]
+      (-> this (.getSecretKeyRing id) (.getPublicKey id))))
+
+  (get-secret-key
+    [this id]
+    (.getSecretKey this (pgp/key-id id)))
+
+
+  pgp/Encodable
+
+  (encode
+    [this]
+    (.getEncoded this)))

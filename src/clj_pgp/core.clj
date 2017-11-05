@@ -235,12 +235,6 @@
     (.getEncoded pubkey))
 
 
-  PGPPrivateKey
-
-  (encode [privkey]
-    (.getEncoded (.getPrivateKeyDataPacket privkey)))
-
-
   PGPSignature
 
   (encode [sig]
