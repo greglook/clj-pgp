@@ -1,9 +1,8 @@
 clj-pgp
 =======
 
-[![Build Status](https://travis-ci.org/greglook/clj-pgp.svg?branch=master)](https://travis-ci.org/greglook/clj-pgp)
-[![Coverage Status](https://coveralls.io/repos/greglook/clj-pgp/badge.png?branch=master)](https://coveralls.io/r/greglook/clj-pgp?branch=master)
-[![Dependency Status](https://www.versioneye.com/user/projects/53718e2314c1589a89000149/badge.png?style=flat)](https://www.versioneye.com/clojure/mvxcvi:clj-pgp)
+[![CircleCI](https://circleci.com/gh/greglook/clj-pgp/tree/develop.svg?style=shield&circle-token=4779449f186dd17cab4c69bbe4f524bef076bd67)](https://circleci.com/gh/greglook/clj-pgp/tree/master)
+[![codecov](https://codecov.io/gh/greglook/clj-pgp/branch/develop/graph/badge.svg)](https://codecov.io/gh/greglook/clj-pgp)
 [![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://greglook.github.io/clj-pgp/api/)
 [![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://greglook.github.io/clj-pgp/marginalia/toc.html)
 
