@@ -28,17 +28,18 @@
    :output-path "target/doc/api"}
 
   :profiles
-  {:repl
+  {:dev
+   {:dependencies [[org.clojure/test.check "0.9.0"]]}
+
+   :repl
    {:source-paths ["dev"]
-    :dependencies
-    [[org.clojure/test.check "0.9.0"]
-     [org.clojure/tools.namespace "0.2.11"]]}
+    :dependencies [[org.clojure/tools.namespace "0.2.11"]]}
+
+   :coverage
+   {:plugins [[lein-cloverage "1.0.10"]]
+    :dependencies [[riddley "0.1.14"]]}
 
    :tool
    {:source-paths ["tool"]
     :dependencies [[mvxcvi/puget "1.0.2"]]
-    :jvm-opts []}
-
-   :coverage
-   {:plugins [[lein-cloverage "1.0.10"]]
-    :dependencies [[riddley "0.1.14"]]} })
+    :jvm-opts []}})
