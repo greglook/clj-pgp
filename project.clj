@@ -14,8 +14,8 @@
 
   :dependencies
   [[org.clojure/clojure "1.8.0" :scope "provided"]
-   [org.bouncycastle/bcpg-jdk15on "1.58"]
-   [org.bouncycastle/bcprov-jdk15on "1.58"]
+   [org.bouncycastle/bcpg-jdk15on "1.61"]
+   [org.bouncycastle/bcprov-jdk15on "1.61"]
    [byte-streams "0.2.3"]]
 
   :hiera
