@@ -108,6 +108,7 @@
   "Protocol for values which can be used as PGP key identifiers."
 
   (key-id
+    ^Long
     [value]
     "Returns the numeric PGP key identifier for the given value."))
 
