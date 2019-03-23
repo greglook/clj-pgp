@@ -13,10 +13,10 @@
   :pedantic? :abort
 
   :dependencies
-  [[org.clojure/clojure "1.8.0" :scope "provided"]
+  [[org.clojure/clojure "1.10.0" :scope "provided"]
    [org.bouncycastle/bcpg-jdk15on "1.61"]
    [org.bouncycastle/bcprov-jdk15on "1.61"]
-   [byte-streams "0.2.3"]]
+   [byte-streams "0.2.4"]]
 
   :hiera
   {:cluster-depth 1}
@@ -36,10 +36,9 @@
     :dependencies [[org.clojure/tools.namespace "0.2.11"]]}
 
    :coverage
-   {:plugins [[lein-cloverage "1.0.10"]]
-    :dependencies [[riddley "0.1.14"]]}
+   {:plugins [[lein-cloverage "1.1.0"]]}
 
    :tool
    {:source-paths ["tool"]
-    :dependencies [[mvxcvi/puget "1.0.2"]]
+    :dependencies [[mvxcvi/puget "1.1.0"]]
     :jvm-opts []}})
