@@ -420,7 +420,7 @@
           ;; To be able to verify the integrity we must have consumed the stream itself.
           ;; Make sure to call the reducing function and then verify the message.
           (let [results (r-fn acc message)]
-            (when (and (isa? (type object) PGPEncryptedData)
+            (when (and (instance? PGPEncryptedData object)
                        (.isIntegrityProtected object)
                        (not (.verify object)))
               (throw (IllegalStateException.
