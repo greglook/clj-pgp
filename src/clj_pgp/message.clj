@@ -52,6 +52,18 @@
       BcPublicKeyKeyEncryptionMethodGenerator)))
 
 
+;; ## Helpers
+
+(defn- with-reduce-attrs
+  "Creates a new reducing function that merges the kvs onto the value passed
+  to the `rf`"
+  [rf & kvs]
+  (fn reducer
+    [acc value]
+    (rf acc (apply assoc value kvs))))
+
+
+
 ;; ## PGP Data Encoding
 
 (defprotocol ^:no-doc MessagePacket
@@ -172,7 +184,7 @@
                      (.getAlgorithm packet))]
       (reduce
         (fn [acc packet]
-          (reduce-message packet opts #(rf %1 (assoc %2 :compress zip-algo)) acc))
+          (reduce-message packet opts (with-reduce-attrs rf :compress zip-algo) acc))
         acc
         (pgp/read-objects (.getDataStream packet)))))
 
@@ -285,7 +297,7 @@
       (reduce-content
         (.getDataStream packet decryptor-factory)
         opts
-        #(rf %1 (assoc %2 :cipher cipher :object packet))
+        (with-reduce-attrs rf :cipher cipher :object packet)
         acc)))
 
   ;; If the decryptor is a string, try to use it to decrypt the passphrase
@@ -312,7 +324,7 @@
       (reduce-content
         (.getDataStream packet decryptor-factory)
         opts
-        #(rf %1 (assoc %2 :encrypted-for for-key :cipher cipher :object packet))
+        (with-reduce-attrs rf :encrypted-for for-key :cipher cipher :object packet )
         acc)))
 
   ;; If the decryptor is callable, use it to find a private key matching the id
