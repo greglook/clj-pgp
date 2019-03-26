@@ -69,7 +69,7 @@
 
 
 (defn- reduce-content
-  "Decodes an sequence of PGP objects from an input stream. unpacking each
+  "Decodes a sequence of PGP objects from an input stream, unpacking each
   objects data.
   See `reduce-messages` for options"
   [^InputStream input opts rf acc]
