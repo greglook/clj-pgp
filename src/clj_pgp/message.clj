@@ -62,9 +62,10 @@
     "Recursively unpacks a message packet and calls `rf` with `acc` and the message as map.
     See `reduce-messages` for the map structure and options")
 
-  (can-decrypt?
+  (readable
     [data opts]
-    "Determines if the message packet can be decrypted"))
+    "Determines if the message packet be read using the given options. Should return the
+    readable object itself if its readable or nil if its not."))
 
 
 (defn- reduce-content
@@ -141,10 +142,10 @@
                :mtime (.getModificationTime packet)
                :data data})))
 
-  (can-decrypt?
+  (readable
     [packet opts]
-    ;; This is NOOP as this data is already decrypted
-    true))
+    ;; PGPLiteralData is always readable
+    packet))
 
 
 
@@ -175,9 +176,10 @@
         acc
         (pgp/read-objects (.getDataStream packet)))))
 
-  (can-decrypt?
+  (readable
     [packet opts]
-    true))
+    ;; PGPCompressedData is always readable
+    packet))
 
 
 
@@ -257,23 +259,17 @@
 
   (reduce-message
     [packet opts rf acc]
-    (when-not (can-decrypt? packet opts)
+    (if-let [readable-packet (readable packet opts)]
+      (reduce-message readable-packet opts rf acc)
       (throw (IllegalArgumentException.
                (str "Cannot decrypt " (pr-str packet) " with " (pr-str opts)
-                    " (no matching encrypted session key)"))))
-    (reduce-message
-      (->> (.getEncryptedDataObjects packet)
-           iterator-seq
-           (filter #(can-decrypt? % opts))
-           first)
-      opts rf acc))
+                    " (no matching encrypted session key)")))))
 
-  (can-decrypt?
+  (readable
     [packet opts]
-    (boolean
-      (some
-        #(can-decrypt? % opts)
-        (iterator-seq (.getEncryptedDataObjects packet)))))
+    (some
+      #(readable % opts)
+      (iterator-seq (.getEncryptedDataObjects packet))))
 
 
   PGPPBEEncryptedData
@@ -294,9 +290,10 @@
 
   ;; If the decryptor is a string, try to use it to decrypt the passphrase
   ;; protected session key.
-  (can-decrypt?
+  (readable
     [packet {:keys [decryptor] :as opts}]
-    (string? decryptor))
+    (when (string? decryptor)
+      packet))
 
 
   PGPPublicKeyEncryptedData
@@ -321,15 +318,16 @@
   ;; If the decryptor is callable, use it to find a private key matching the id
   ;; on the data packet. Otherwise, use it directly as a private key. If the
   ;; decryptor doesn't match the id, return nil.
-  (can-decrypt?
+  (readable
     [packet {:keys [decryptor] :as opts}]
     (let [for-key (.getKeyID packet)]
-      (if-let [privkey (pgp/private-key
-                         (if (ifn? decryptor)
-                           (decryptor for-key)
-                           decryptor))]
-        (= for-key (pgp/key-id privkey))
-        false))))
+      (when (some-> (if (ifn? decryptor)
+                      (decryptor for-key)
+                      decryptor)
+                    (pgp/private-key)
+                    (pgp/key-id)
+                    (= for-key))
+        packet))))
 
 
 
