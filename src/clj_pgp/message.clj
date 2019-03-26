@@ -450,7 +450,7 @@
        bytes/to-input-stream
        PGPUtil/getDecoderStream
        pgp/read-objects
-       (reduce-objects opts rf acc)))
+       (reduce-objects (apply hash-map opts) rf acc)))
 
 
 (defn read-messages
