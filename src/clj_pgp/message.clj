@@ -67,7 +67,7 @@
     "Determines if the message packet can be decrypted"))
 
 
-(defn- reduce-conent
+(defn- reduce-content
   "Decodes an sequence of PGP objects from an input stream. unpacking each
   objects data.
   See `reduce-messages` for options"
