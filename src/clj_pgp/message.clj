@@ -76,12 +76,12 @@
 
   (readable
     [data opts]
-    "Determines if the message packet be read using the given options. Should return the
-    readable object itself if its readable or nil if its not."))
+    "Determines if the message packet can be read using the given options. Should return the
+    readable object itself if it's readable or nil if not."))
 
 
 (defn- reduce-content
-  "Decodes an sequence of PGP objects from an input stream. unpacking each
+  "Decodes a sequence of PGP objects from an input stream, unpacking each
   objects data.
   See `reduce-messages` for options"
   [^InputStream input opts rf acc]
@@ -467,7 +467,7 @@
 
 (defn read-messages
   "Reads message packets from an input source and returns a sequence of message
-  maps.
+  maps which have realized `:data` entries.
 
   See `reduce-messages` for options
   "
