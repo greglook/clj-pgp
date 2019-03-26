@@ -455,7 +455,7 @@
 
 (defn read-messages
   "Reads message packets from an input source and returns a sequence of message
-  maps.
+  maps which have realized `:data` entries.
 
   See `reduce-messages` for options
   "
