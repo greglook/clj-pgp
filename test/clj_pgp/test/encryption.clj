@@ -1,6 +1,6 @@
 (ns clj-pgp.test.encryption
   (:require
-    [byte-streams :refer [bytes=]]
+    [byte-streams :refer [bytes=] :as bytes]
     [clojure.java.io :as io]
     [clojure.test :refer :all]
     [clojure.test.check :as check]
@@ -14,6 +14,7 @@
     [clj-pgp.test.keys :refer
      [gen-ec-keyspec
       gen-rsa-keyspec
+      spec->keypair
       memospec->keypair]])
   (:import
     java.io.ByteArrayOutputStream
@@ -122,3 +123,36 @@
        [:ec :ecdh "sect409r1"]]
       "Good news, everyone!"
       :bzip2 :aes-256 true)))
+
+
+(defn- test-multiple-packages-scenario
+  [data encryptor & opts]
+  (let [packages (for [data (repeat 3 data)]
+                   (apply pgp-msg/package data :encryptors [encryptor] opts))]
+    (is
+      (every?
+        (fn check-message
+          [message]
+          (bytes= data (:data message)))
+        (apply pgp-msg/read-messages (bytes/to-input-stream packages) :decryptor encryptor opts)))))
+
+
+(deftest multiple-packages
+  (testing "PBE encryption"
+    (test-multiple-packages-scenario
+      "Secret stuff to hide from prying eyes"
+      "s3cr3t"))
+  (testing "compressed PBE encrpytion"
+    (test-multiple-packages-scenario
+      "secrets"
+      "p@ssw0rdz"
+      :compress :zip))
+  (testing "compressed RSA key encryption"
+    (test-multiple-packages-scenario
+      "More secretz"
+      (spec->keypair [:rsa :rsa-general 1024])
+      :compress :zip))
+  (testing "RSA key encryption"
+    (test-multiple-packages-scenario
+      "RSA secrets"
+      (spec->keypair [:rsa :rsa-general 1024]))))
