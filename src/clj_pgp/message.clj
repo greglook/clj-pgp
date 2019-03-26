@@ -58,9 +58,9 @@
   "Protocol for packets of message data."
 
   (reduce-message
-    [data acc r-fn opts]
-    "Recursively unpacks a message packet and calls `r-fn` with `acc` the packet itself.
-    See `reduce-messages` for options")
+    [data opts rf acc]
+    "Recursively unpacks a message packet and calls `rf` with `acc` and the message as map.
+    See `reduce-messages` for the map structure and options")
 
   (can-decrypt?
     [data opts]
@@ -71,9 +71,9 @@
   "Decodes an sequence of PGP objects from an input stream. unpacking each
   objects data.
   See `reduce-messages` for options"
-  [^InputStream input acc r-fn opts]
+  [^InputStream input opts rf acc]
   (reduce
-    #(reduce-message %2 %1 r-fn opts)
+    #(reduce-message %2 opts rf %1)
     acc
     (pgp/read-objects input)))
 
@@ -133,13 +133,13 @@
   PGPLiteralData
 
   (reduce-message
-    [packet acc r-fn opts]
+    [packet opts rf acc]
     (let [data (.getInputStream packet)
           format (tags/code->tag data-formats (char (.getFormat packet)))]
-      (r-fn acc {:format format
-                 :filename (.getFileName packet)
-                 :mtime (.getModificationTime packet)
-                 :data data})))
+      (rf acc {:format format
+               :filename (.getFileName packet)
+               :mtime (.getModificationTime packet)
+               :data data})))
 
   (can-decrypt?
     [packet opts]
@@ -166,12 +166,12 @@
   PGPCompressedData
 
   (reduce-message
-    [packet acc r-fn opts]
+    [packet opts rf acc]
     (let [zip-algo (tags/compression-algorithm-tag
                      (.getAlgorithm packet))]
       (reduce
         (fn [acc packet]
-          (reduce-message packet acc #(r-fn %1 (assoc %2 :compress zip-algo)) opts))
+          (reduce-message packet opts #(rf %1 (assoc %2 :compress zip-algo)) acc))
         acc
         (pgp/read-objects (.getDataStream packet)))))
 
@@ -256,7 +256,7 @@
   ;; decipherable and an exception is thrown.
 
   (reduce-message
-    [packet acc r-fn opts]
+    [packet opts rf acc]
     (when-not (can-decrypt? packet opts)
       (throw (IllegalArgumentException.
                (str "Cannot decrypt " (pr-str packet) " with " (pr-str opts)
@@ -266,7 +266,7 @@
            iterator-seq
            (filter #(can-decrypt? % opts))
            first)
-      acc r-fn opts))
+      opts rf acc))
 
   (can-decrypt?
     [packet opts]
@@ -279,18 +279,18 @@
   PGPPBEEncryptedData
 
   (reduce-message
-    [packet acc r-fn {:keys [decryptor] :as opts}]
+    [packet {:keys [decryptor] :as opts} rf acc]
     (let [decryptor-factory (BcPBEDataDecryptorFactory.
                               (.toCharArray ^String decryptor)
                               (BcPGPDigestCalculatorProvider.))
           cipher (-> packet
                      (.getSymmetricAlgorithm decryptor-factory)
                      tags/symmetric-key-algorithm-tag)]
-      (reduce-conent
+      (reduce-content
         (.getDataStream packet decryptor-factory)
-        acc
-        #(r-fn %1 (assoc %2 :cipher cipher :object packet))
-        opts)))
+        opts
+        #(rf %1 (assoc %2 :cipher cipher :object packet))
+        acc)))
 
   ;; If the decryptor is a string, try to use it to decrypt the passphrase
   ;; protected session key.
@@ -302,7 +302,7 @@
   PGPPublicKeyEncryptedData
 
   (reduce-message
-    [packet acc r-fn {:keys [decryptor] :as opts}]
+    [packet {:keys [decryptor] :as opts} rf acc]
     (let [for-key (.getKeyID packet)
           privkey (pgp/private-key
                     (if (ifn? decryptor)
@@ -312,11 +312,11 @@
           cipher (-> packet
                      (.getSymmetricAlgorithm decryptor-factory)
                      tags/symmetric-key-algorithm-tag)]
-      (reduce-conent
+      (reduce-content
         (.getDataStream packet decryptor-factory)
-        acc
-        #(r-fn %1 (assoc %2 :encrypted-for for-key :cipher cipher :object packet))
-        opts)))
+        opts
+        #(rf %1 (assoc %2 :encrypted-for for-key :cipher cipher :object packet))
+        acc)))
 
   ;; If the decryptor is callable, use it to find a private key matching the id
   ;; on the data packet. Otherwise, use it directly as a private key. If the
@@ -409,17 +409,17 @@
 (defn- reduce-objects
   "Reduces over the PGP objects the returns the resulting accumulator.
   Verifys the integrity of each object and throws if its invalid."
-  [acc r-fn opts objects]
+  [opts rf acc objects]
   (reduce
     (fn reduce-and-verify!
       [acc message]
       (reduce-message
         message
-        acc
+        opts
         (fn [acc {:keys [object] :as message}]
           ;; To be able to verify the integrity we must have consumed the stream itself.
           ;; Make sure to call the reducing function and then verify the message.
-          (let [results (r-fn acc message)]
+          (let [results (rf acc message)]
             (when (and (instance? PGPEncryptedData object)
                        (.isIntegrityProtected object)
                        (not (.verify object)))
@@ -427,16 +427,16 @@
                        (str "Encrypted data object " object
                             " failed integrity verification!"))))
             results))
-        opts))
+        acc))
     acc
     objects))
 
 
 (defn reduce-messages
   "Reads message packets form an input source and reduces over them with the
-  given accumulator `acc` and reducing function `r-fn`. Each message contains
-  keys similiar to the optios used to build them, describing the type of compression used,
-  cophier encrypted with, etc. The `r-fn` should take the accumulator and a `message` and
+  given accumulator `acc` and reducing function `rf`. Each message contains
+  keys similiar to the options used to build them, describing the type of compression used,
+  cophier encrypted with, etc. The `rf` should take the accumulator and a `message` and
   return the resulting accumulator. It must consume the stream passed in the `:data` field.
   A message is a map containing:
   - `:format` one of #{:binary :text :utf8}
@@ -447,12 +447,12 @@
   Opts may contain:
 
   - `:decryptor` secret to decipher the message encryption"
-  [input acc r-fn & opts]
+  [input rf acc & opts]
   (->> input
        bytes/to-input-stream
        PGPUtil/getDecoderStream
        pgp/read-objects
-       (reduce-objects acc r-fn opts)))
+       (reduce-objects opts rf acc)))
 
 
 (defn read-messages
@@ -465,7 +465,6 @@
   (apply
     reduce-messages
     input
-    []
     (fn [acc {:keys [format data] :as message}]
       (let [data' (bytes/to-byte-array data)]
         (->> (case format
@@ -473,6 +472,7 @@
                data')
              (assoc message :data)
              (conj acc))))
+    []
     opts))
 
 
