@@ -65,7 +65,7 @@
   (readable
     [data opts]
     "Determines if the message packet be read using the given options. Should return the
-    readable object itself if its readable or nil if its not."))
+    readable object itself if it's readable or nil if not."))
 
 
 (defn- reduce-content
