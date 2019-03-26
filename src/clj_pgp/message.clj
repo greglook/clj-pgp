@@ -64,7 +64,7 @@
 
   (readable
     [data opts]
-    "Determines if the message packet be read using the given options. Should return the
+    "Determines if the message packet can be read using the given options. Should return the
     readable object itself if it's readable or nil if not."))
 
 
