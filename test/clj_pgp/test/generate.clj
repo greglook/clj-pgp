@@ -12,35 +12,35 @@
 
 
 (deftest keyring-macro-generation
-  (is (thrown? IllegalArgumentException
+  (is (thrown? clojure.lang.Compiler$CompilerException
         (eval '(clj-pgp.generate/generate-keys
-                 ..user-id.. ..passphrase..)))
+                 "user" "p4ssw0rd")))
       "A master-key spec is required.")
 
-  (is (thrown? IllegalArgumentException
+  (is (thrown? clojure.lang.Compiler$CompilerException
         (eval '(clj-pgp.generate/generate-keys
-                 ..user-id.. ..passphrase..
-                 (master-key ..keypair-1..)
-                 (master-key ..keypair-2..))))
+                 "user" "p4ssw0rd"
+                 (master-key (keypair rsa :rsa-general))
+                 (master-key (keypair rsa :rsa-general)))))
       "Multiple master-key specs are illegal.")
 
-  (is (thrown? IllegalArgumentException
+  (is (thrown? clojure.lang.Compiler$CompilerException
         (eval '(clj-pgp.generate/generate-keys
-                 ..user-id.. ..passphrase..
-                 (master-key ..keypair-1..)
+                 "user" "p4ssw0rd"
+                 (master-key (keypair rsa :rsa-general))
                  ..some-val..)))
       "Malformed subkey specs are illegal.")
 
   (is (thrown? Exception
         (eval '(clj-pgp.generate/generate-keys
-                 ..user-id.. ..passphrase..
+                 "user" "p4ssw0rd"
                  (master-key ..keypair-1..)
                  (foobar-key ..keypair-2..))))
       "Unknown subkey spec types are illegal.")
 
   (is (thrown? Exception
         (eval '(clj-pgp.generate/generate-keys
-                 '..user-id.. '..passphrase..
+                 "user" "p4ssw0rd"
                  (master-key
                    '..keypair-1..
                    ..some-val..))))
@@ -48,7 +48,7 @@
 
   (is (thrown? Exception
         (eval '(clj-pgp.generate/generate-keys
-                 '..user-id.. '..passphrase..
+                 "user" "p4ssw0rd"
                  (master-key
                    '..keypair-1..
                    (foobar-option ..arg..)))))

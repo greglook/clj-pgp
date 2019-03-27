@@ -4,19 +4,19 @@ jobs:
   build:
     working_directory: ~/repo
     docker:
-      - image: circleci/clojure:lein-2.7.1
+      - image: circleci/clojure:lein-2.9.0
     steps:
       - checkout
       - restore_cache:
           keys:
-            - clj-pgp-{{ checksum "project.clj" }}
-            - clj-pgp-
+            - v1-{{ checksum "project.clj" }}
+            - v1-
       - run: lein deps
       - run: lein check
       - run: lein test
       - run: lein coverage --codecov
       - save_cache:
-          key: clj-pgp-{{ checksum "project.clj" }}
+          key: v1-{{ checksum "project.clj" }}
           paths:
             - ~/.m2
       - store_artifacts:
@@ -24,4 +24,4 @@ jobs:
           destination: coverage
       - run:
           name: Publish Coverage
-          command: "(curl -s https://codecov.io/bash > codecov) && bash codecov -f target/coverage/codecov.json"
+          command: 'bash <(curl -s https://codecov.io/bash) -f target/coverage/codecov.json'
