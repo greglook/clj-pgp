@@ -40,6 +40,7 @@
       PGPEncryptedDataList
       PGPLiteralData
       PGPLiteralDataGenerator
+      PGPMarker
       PGPObjectFactory
       PGPPublicKeyEncryptedData
       PGPUtil)
@@ -157,6 +158,22 @@
   (readable
     [packet opts]
     ;; PGPLiteralData is always readable
+    packet)
+
+
+  PGPMarker
+
+  (reduce-message
+    [packet opts rf acc]
+    ;; Such a packet MUST be ignored when received. It may be placed at the
+    ;; beginning of a message that uses features not available in PGP 2.6.x
+    ;; in order to cause that version to report that newer software is
+    ;; necessary to process the message.
+    [])
+
+  (readable
+    [packet opts]
+    ;; PGPMarker is always readable
     packet))
 
 
