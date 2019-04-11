@@ -169,7 +169,7 @@
     ;; beginning of a message that uses features not available in PGP 2.6.x
     ;; in order to cause that version to report that newer software is
     ;; necessary to process the message.
-    [])
+    acc)
 
   (readable
     [packet opts]
