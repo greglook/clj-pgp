@@ -35,7 +35,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 Start of CHANGELOG.
 
-[Unreleased]: https://github.com/greglook/blocks/compare/0.10.0...HEAD
-[0.10.0]: https://github.com/greglook/blocks/compare/0.9.0...0.10.0
-[0.9.0]: https://github.com/greglook/blocks/compare/0.8.3...0.9.0
-[0.8.3]: https://github.com/greglook/blocks/compare/0.8.2...0.8.3
+[Unreleased]: https://github.com/greglook/clj-pgp/compare/0.10.0...HEAD
+[0.10.0]: https://github.com/greglook/clj-pgp/compare/0.9.0...0.10.0
+[0.9.0]: https://github.com/greglook/clj-pgp/compare/0.8.3...0.9.0
+[0.8.3]: https://github.com/greglook/clj-pgp/compare/0.8.2...0.8.3
