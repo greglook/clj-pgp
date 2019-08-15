@@ -255,18 +255,21 @@
 
 ;; ## PGP Object Decoding
 
+(defn ^:no-doc read-next-object [factory]
+  (.nextObject factory))
+
 (defn ^:no-doc read-objects
   "Lazily decodes a sequence of PGP objects from an input stream."
   [^InputStream input]
   (let [factory (PGPObjectFactory. input (BcKeyFingerprintCalculator.))]
     (->> (range)
-         (map (fn [n]
+         (map (fn next-object [n]
                 (try
-                  (.nextObject factory)
+                  (read-next-object factory)
                   (catch Exception e
                     (error/*handler* ::read-object-error
                                      (.getMessage e)
-                                     (assoc (ex-data e) :stream input :nth n)
+                                     (assoc (ex-data e) ::stream input ::nth n)
                                      e)))))
          (take-while some?))))
 
