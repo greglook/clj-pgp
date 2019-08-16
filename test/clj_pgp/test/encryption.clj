@@ -15,7 +15,8 @@
      [gen-ec-keyspec
       gen-rsa-keyspec
       spec->keypair
-      memospec->keypair]])
+      memospec->keypair]]
+    [clj-pgp.error :as error])
   (:import
     java.io.ByteArrayOutputStream
     java.security.SecureRandom))
@@ -97,7 +98,16 @@
           "Decrypting with a keypair-retrieval function returns the data.")
       (is (thrown? IllegalArgumentException
             (pgp-msg/decrypt ciphertext "passphrase"))
-          "Decrypting without a matching key throws an exception"))))
+          "Decrypting without a matching key throws an exception")
+      (testing "should allow overriding error behavior with custom behavior"
+        (let [error-occured? (atom false)
+              error-handler (fn [type message data cause]
+                              (reset! error-occured? true)
+                              nil)]
+          (with-redefs [pgp/read-next-object (fn [_] (throw (Exception. "Simulating PGP nextObject error")))]
+            (binding [error/*handler* error-handler]
+              (pgp-msg/decrypt ciphertext (constantly keypair))
+              (is @error-occured? "A PGP error was simulated but not passed to the error handler."))))))))
 
 
 (deftest encryption-scenarios
