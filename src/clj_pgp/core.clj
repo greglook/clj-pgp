@@ -255,7 +255,9 @@
 
 ;; ## PGP Object Decoding
 
-(defn ^:no-doc read-next-object [factory]
+(defn read-next-object
+  "A thin wrapper on reading the next object from a PGPObjectFactory."
+  [^PGPObjectFactory factory]
   (.nextObject factory))
 
 (defn ^:no-doc read-objects

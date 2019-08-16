@@ -93,15 +93,12 @@
             "Message should wrap a literal packet around the data.")
         (is (bytes= data (:data (first (pgp-msg/read-messages envelope))))
             "Literal packet message should be readable with no decryptors.")))
-
-    
     (let [ciphertext (pgp-msg/encrypt data keypair)]
       (is (bytes= data (pgp-msg/decrypt ciphertext (constantly keypair)))
           "Decrypting with a keypair-retrieval function returns the data.")
       (is (thrown? IllegalArgumentException
             (pgp-msg/decrypt ciphertext "passphrase"))
           "Decrypting without a matching key throws an exception")
-
       (testing "should allow overriding error behavior with custom behavior"
         (let [error-occured? (atom false)
               error-handler (fn [type message data cause]
