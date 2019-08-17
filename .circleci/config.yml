@@ -10,6 +10,20 @@ executors:
 
 # Job definitions
 jobs:
+  style:
+    executor: clojure
+    steps:
+      - checkout
+      - run:
+          name: Install cljfmt CLI
+          command: "wget https://github.com/greglook/cljfmt/releases/download/0.8.0/cljfmt_0.8.1_linux.tar.gz && tar -xzf cljfmt_0.8.1_linux.tar.gz"
+      - run:
+          name: Check source formatting
+          command: "./cljfmt check --stats style-stats.tsv"
+      - store_artifacts:
+          path: style-stats.tsv
+          destination: style
+
   test:
     executor: clojure
     steps:
@@ -46,20 +60,6 @@ jobs:
       - run:
           name: Publish Coverage
           command: 'bash <(curl -s https://codecov.io/bash) -f target/coverage/codecov.json'
-
-  style:
-    executor: clojure
-    steps:
-      - checkout
-      - run:
-          name: Install cljfmt CLI
-          command: "wget https://github.com/greglook/cljfmt/releases/download/0.8.0/cljfmt_0.8.1_linux.tar.gz && tar -xzf cljfmt_0.8.1_linux.tar.gz"
-      - run:
-          name: Check source formatting
-          command: "./cljfmt check --stats style-stats.tsv"
-      - store_artifacts:
-          path: style-stats.tsv
-          destination: style
 
 
 # Workflow definitions
