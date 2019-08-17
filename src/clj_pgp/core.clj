@@ -2,10 +2,10 @@
   "Core functions for handling PGP objects."
   (:require
     [byte-streams :as bytes]
-    [clojure.java.io :as io]
-    [clojure.string :as str]
+    [clj-pgp.error :as error]
     [clj-pgp.tags :as tags]
-    [clj-pgp.error :as error])
+    [clojure.java.io :as io]
+    [clojure.string :as str])
   (:import
     (java.io
       ByteArrayOutputStream
@@ -212,7 +212,8 @@
   "Decodes a secret key with a passphrase to obtain the private key."
   [^PGPSecretKey seckey
    ^String passphrase]
-  (.extractPrivateKey seckey
+  (.extractPrivateKey
+    seckey
     (-> (BcPGPDigestCalculatorProvider.)
         (BcPBESecretKeyDecryptorBuilder.)
         (.build (.toCharArray passphrase)))))
@@ -260,12 +261,14 @@
   [^PGPObjectFactory factory]
   (.nextObject factory))
 
+
 (defn ^:no-doc read-objects
   "Lazily decodes a sequence of PGP objects from an input stream."
   [^InputStream input]
   (let [factory (PGPObjectFactory. input (BcKeyFingerprintCalculator.))]
     (->> (range)
-         (map (fn next-object [n]
+         (map (fn next-object
+                [n]
                 (try
                   (read-next-object factory)
                   (catch Exception e

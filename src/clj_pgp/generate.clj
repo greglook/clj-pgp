@@ -10,16 +10,17 @@
   roles and restrictions, use the `generate-keys` macro. This returns a map with
   `:public` and `:secret` entries containing the respective keyrings."
   (:require
-    [clojure.string :as str]
-    (clj-pgp
-      [core :as pgp]
-      [tags :as tags]
-      [util :refer [arg-seq]]))
+    [clj-pgp.core :as pgp]
+    [clj-pgp.tags :as tags]
+    [clj-pgp.util :refer [arg-seq]]
+    [clojure.string :as str])
   (:import
     java.security.SecureRandom
     java.util.Date
-    org.bouncycastle.asn1.sec.SECNamedCurves
-    org.bouncycastle.asn1.x9.X9ECParameters
+    (org.bouncycastle.asn1.sec
+      SECNamedCurves)
+    (org.bouncycastle.asn1.x9
+      X9ECParameters)
     (org.bouncycastle.bcpg.sig
       Features
       KeyFlags)
@@ -29,8 +30,8 @@
       ECKeyPairGenerator
       RSAKeyPairGenerator)
     (org.bouncycastle.crypto.params
-      ECNamedDomainParameters
       ECKeyGenerationParameters
+      ECNamedDomainParameters
       RSAKeyGenerationParameters)
     (org.bouncycastle.openpgp
       PGPKeyPair
@@ -154,6 +155,7 @@
   "Builds a function which sets preferences on a signature generator for
   secondary cryptographic algorithms to prefer."
   [pref-type tag->code]
+  ^:cljfmt/ignore
   `(defn ~(symbol (str "prefer-" (str/lower-case pref-type) "-algorithms!"))
      "Sets the list of preferred algorithms on a signature generator for
      use when sending messages to the key."
@@ -163,6 +165,7 @@
          ^PGPSignatureSubpacketGenerator generator#
          false
          (int-array (map ~tag->code prefs#))))))
+
 
 (defpreference Symmetric   tags/symmetric-key-algorithm-code)
 (defpreference Hash        tags/hash-algorithm-code)

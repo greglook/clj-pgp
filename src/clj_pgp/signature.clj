@@ -2,10 +2,9 @@
   "The functions in this namespace generate and verify PGP signatures."
   (:require
     [byte-streams :as bytes]
-    (clj-pgp
-      [core :as pgp]
-      [tags :as tags]
-      [util :refer [arg-map]]))
+    [clj-pgp.core :as pgp]
+    [clj-pgp.tags :as tags]
+    [clj-pgp.util :refer [arg-map]])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -75,8 +74,7 @@
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          ^PGPPublicKey (pgp/public-key pubkey))
-  (apply-bytes data
-    (.update signature buffer 0 n))
+  (apply-bytes data (.update signature buffer 0 n))
   (.verify signature))
 
 
@@ -103,6 +101,5 @@
       (.init generator
              PGPSignature/BINARY_DOCUMENT
              privkey)
-      (apply-bytes data
-        (.update generator buffer 0 n))
+      (apply-bytes data (.update generator buffer 0 n))
       (.generate generator))))

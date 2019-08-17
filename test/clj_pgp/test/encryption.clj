@@ -1,22 +1,21 @@
 (ns clj-pgp.test.encryption
   (:require
     [byte-streams :refer [bytes=] :as bytes]
-    [clojure.java.io :as io]
-    [clojure.test :refer :all]
-    [clojure.test.check :as check]
-    [clojure.test.check.generators :as gen]
-    [clojure.test.check.properties :as prop]
-    (clj-pgp
-      [core :as pgp]
-      [generate :as pgp-gen]
-      [message :as pgp-msg]
-      [tags :as tags])
+    [clj-pgp.core :as pgp]
+    [clj-pgp.error :as error]
+    [clj-pgp.generate :as pgp-gen]
+    [clj-pgp.message :as pgp-msg]
+    [clj-pgp.tags :as tags]
     [clj-pgp.test.keys :refer
      [gen-ec-keyspec
       gen-rsa-keyspec
       spec->keypair
       memospec->keypair]]
-    [clj-pgp.error :as error])
+    [clojure.java.io :as io]
+    [clojure.test :refer :all]
+    [clojure.test.check :as check]
+    [clojure.test.check.generators :as gen]
+    [clojure.test.check.properties :as prop])
   (:import
     java.io.ByteArrayOutputStream
     java.security.SecureRandom))
@@ -37,7 +36,7 @@
                        :cipher cipher
                        :armor armor)]
       (is (not (bytes= data ciphertext))
-        "ciphertext bytes differ from data")
+          "ciphertext bytes differ from data")
       (doseq [decryptor encryptors]
         (is (bytes= data (pgp-msg/decrypt ciphertext decryptor))
             "decrypting the ciphertext returns plaintext"))
@@ -81,8 +80,8 @@
         "Encryption with no encryptors throws an exception")
     (is (thrown? IllegalArgumentException
           (pgp-msg/encrypt data :not-an-encryptor
-                       :integrity-check false
-                       :random (SecureRandom.)))
+                           :integrity-check false
+                           :random (SecureRandom.)))
         "Encryption with an invalid encryptor throws an exception")
     (is (thrown? IllegalArgumentException
           (pgp-msg/encrypt data ["bar" "baz"]))

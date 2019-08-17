@@ -1,7 +1,7 @@
 (ns clj-pgp.test.util
   (:require
-    [clojure.test :refer :all]
-    [clj-pgp.util :refer :all]))
+    [clj-pgp.util :refer :all]
+    [clojure.test :refer :all]))
 
 
 (deftest arg-coll-tests

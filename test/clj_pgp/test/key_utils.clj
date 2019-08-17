@@ -1,12 +1,11 @@
 (ns clj-pgp.test.key-utils
   (:require
     [byte-streams :refer [bytes=]]
-    [clojure.test :refer :all]
-    (clj-pgp
-      [core :as pgp]
-      [keyring :as keyring])
+    [clj-pgp.core :as pgp]
+    [clj-pgp.keyring :as keyring]
     [clj-pgp.test.keys :as test-keys
-     :refer [privkey pubkey pubring seckey secring]])
+     :refer [privkey pubkey pubring seckey secring]]
+    [clojure.test :refer :all])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -46,7 +45,7 @@
     (is (= -7909697412827827830 (pgp/key-id "923b1c1c4392318a")))
     (is (=  4557904421870553981 (pgp/key-id "3f40edec41c6cb7d"))))
   (is (thrown? IllegalArgumentException
-               (pgp/key-id (Object.)))
+        (pgp/key-id (Object.)))
       "unknown types return an error"))
 
 
@@ -76,10 +75,10 @@
          (pgp/key-algorithm privkey))
       "keys return keyword values")
   (is (thrown? IllegalArgumentException
-               (pgp/key-algorithm ::invalid-algo))
+        (pgp/key-algorithm ::invalid-algo))
       "unknown algorithms return an error")
   (is (thrown? IllegalArgumentException
-               (pgp/key-algorithm (Object.)))
+        (pgp/key-algorithm (Object.)))
       "unknown types return an error"))
 
 
@@ -99,7 +98,7 @@
 
 (deftest secret-key-unlocking
   (is (instance? PGPPrivateKey privkey)
-    "secret keys unlock into private keys")
+      "secret keys unlock into private keys")
   (is (thrown? Exception (pgp/unlock-key seckey "wrong password"))
       "unlocking with the wrong password throws an exception"))
 

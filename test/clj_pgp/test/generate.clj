@@ -1,10 +1,9 @@
 (ns clj-pgp.test.generate
   (:require
-    [clojure.test :refer :all]
-    (clj-pgp
-      [core :as pgp]
-      [generate :as pgp-gen]
-      [keyring :as keyring]))
+    [clj-pgp.core :as pgp]
+    [clj-pgp.generate :as pgp-gen]
+    [clj-pgp.keyring :as keyring]
+    [clojure.test :refer :all])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing
