@@ -7,7 +7,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-...
+### Added
+- Support for a dynamically-bindable error handling function.
+  [#22](https://github.com/greglook/clj-pgp/pull/22)
+
+### Fixed
+- Ignore `PGPMarker` messages which are used as a light compatibility check
+  against very old PGP implementations.
+  [#12](https://github.com/greglook/clj-pgp/issues/12)
+  [#21](https://github.com/greglook/clj-pgp/pull/21)
 
 
 ## [0.10.0] - 2019-03-26
@@ -35,7 +43,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 Start of CHANGELOG.
 
-[Unreleased]: https://github.com/greglook/blocks/compare/0.10.0...HEAD
-[0.10.0]: https://github.com/greglook/blocks/compare/0.9.0...0.10.0
-[0.9.0]: https://github.com/greglook/blocks/compare/0.8.3...0.9.0
-[0.8.3]: https://github.com/greglook/blocks/compare/0.8.2...0.8.3
+[Unreleased]: https://github.com/greglook/clj-pgp/compare/0.10.0...HEAD
+[0.10.0]: https://github.com/greglook/clj-pgp/compare/0.9.0...0.10.0
+[0.9.0]: https://github.com/greglook/clj-pgp/compare/0.8.3...0.9.0
+[0.8.3]: https://github.com/greglook/clj-pgp/compare/0.8.2...0.8.3

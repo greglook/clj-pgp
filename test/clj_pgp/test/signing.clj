@@ -1,19 +1,18 @@
 (ns clj-pgp.test.signing
   (:require
-    [clojure.test :refer :all]
-    [clojure.test.check :as check]
-    [clojure.test.check.generators :as gen]
-    [clojure.test.check.properties :as prop]
     [byte-streams :refer [bytes=]]
-    (clj-pgp
-      [core :as pgp]
-      [generate :as pgp-gen]
-      [signature :as pgp-sig])
+    [clj-pgp.core :as pgp]
+    [clj-pgp.generate :as pgp-gen]
+    [clj-pgp.signature :as pgp-sig]
     [clj-pgp.test.keys :refer
      [master-pubkey pubkey privkey
       gen-ec-keyspec
       gen-rsa-keyspec
-      memospec->keypair]]))
+      memospec->keypair]]
+    [clojure.test :refer :all]
+    [clojure.test.check :as check]
+    [clojure.test.check.generators :as gen]
+    [clojure.test.check.properties :as prop]))
 
 
 (deftest signature-verification
@@ -22,7 +21,7 @@
     (is (= (pgp/key-id privkey) (pgp/key-id sig))
         "signature key-id matches key")
     (is (thrown? IllegalArgumentException
-                 (pgp-sig/verify data sig master-pubkey))
+          (pgp-sig/verify data sig master-pubkey))
         "verification with the wrong public key throws error")
     (is (pgp-sig/verify data sig pubkey)
         "verification with public key succeeds")))
@@ -38,8 +37,8 @@
     (is (pgp-sig/verify data sig' pubkey)
         "decoded signature can be verified")
     (is (thrown? IllegalArgumentException
-                 (pgp/decode-signatures (pgp/encode pubkey)))
-      "decoding non-signature value throws an exception")))
+          (pgp/decode-signatures (pgp/encode pubkey)))
+        "decoding non-signature value throws an exception")))
 
 
 
@@ -55,7 +54,8 @@
           sig (pgp-sig/sign data keypair :hash-algo hash-algo)]
       (is (= (pgp/key-id keypair) (pgp/key-id sig))
           "signature key-id matches key")
-      (is (thrown? IllegalArgumentException (pgp-sig/verify data sig pubkey))
+      (is (thrown? IllegalArgumentException
+            (pgp-sig/verify data sig pubkey))
           "verification with the wrong public key throws error")
       (is (pgp-sig/verify data sig keypair)
           "verification with public key succeeds")

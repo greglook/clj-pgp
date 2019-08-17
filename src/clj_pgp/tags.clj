@@ -69,6 +69,7 @@
                      str/lower-case
                      symbol)
         tag-map (symbol (str tag-name "-tags"))]
+    ^:cljfmt/ignore
     `(do
        (def ~tag-map
          ~(str "Map of " tag-name " tag codes.")

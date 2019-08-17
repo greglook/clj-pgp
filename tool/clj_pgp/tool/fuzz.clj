@@ -1,11 +1,10 @@
 (ns clj-pgp.tool.fuzz
+  (:gen-class)
   (:require
+    [clj-pgp.test.encryption :refer [data-encryption-property]]
+    [clj-pgp.test.signing :refer [keypair-signing-property]]
     [clojure.test.check :as check]
-    (clj-pgp.test
-      [encryption :refer [data-encryption-property]]
-      [signing :refer [keypair-signing-property]])
-    [puget.printer :as puget])
-  (:gen-class))
+    [puget.printer :as puget]))
 
 
 (def ^:private check-templates
@@ -29,9 +28,9 @@
         result (check/quick-check n prop)
         elapsed (- (System/currentTimeMillis) start)]
     (assoc result
-      :title title
-      :batch batch
-      :elapsed elapsed)))
+           :title title
+           :batch batch
+           :elapsed elapsed)))
 
 
 (defn- report-checks

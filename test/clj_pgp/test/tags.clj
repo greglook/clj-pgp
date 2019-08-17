@@ -1,7 +1,7 @@
 (ns clj-pgp.test.tags
   (:require
-    [clojure.test :refer :all]
-    [clj-pgp.tags :as tags]))
+    [clj-pgp.tags :as tags]
+    [clojure.test :refer :all]))
 
 
 (defmacro ^:private check-tags
@@ -23,13 +23,13 @@
 
 (deftest tag-coercion
   (is (= 3 (tags/compression-algorithm-code :bzip2))
-    "keyword lookup returns numeric code")
+      "keyword lookup returns numeric code")
   (is (= 1 (tags/compression-algorithm-code 1))
       "numeric lookup returns numeric value")
   (testing "unknown tag throws exception"
     (are [v] (thrown? IllegalArgumentException
-                      (tags/compression-algorithm-code v))
-         :foo 82 "abcd")))
+               (tags/compression-algorithm-code v))
+      :foo 82 "abcd")))
 
 
 (deftest tag-lookup

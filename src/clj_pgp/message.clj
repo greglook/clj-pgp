@@ -15,11 +15,10 @@
   to look it up or unlock the key on demand."
   (:require
     [byte-streams :as bytes]
-    [clojure.java.io :as io]
-    (clj-pgp
-      [core :as pgp]
-      [tags :as tags]
-      [util :refer [arg-coll arg-map]]))
+    [clj-pgp.core :as pgp]
+    [clj-pgp.tags :as tags]
+    [clj-pgp.util :refer [arg-coll arg-map]]
+    [clojure.java.io :as io])
   (:import
     (java.io
       ByteArrayOutputStream
@@ -32,7 +31,6 @@
     (org.bouncycastle.bcpg
       ArmoredOutputStream)
     (org.bouncycastle.openpgp
-      PGPPBEEncryptedData
       PGPCompressedData
       PGPCompressedDataGenerator
       PGPEncryptedData
@@ -40,13 +38,15 @@
       PGPEncryptedDataList
       PGPLiteralData
       PGPLiteralDataGenerator
+      PGPMarker
       PGPObjectFactory
+      PGPPBEEncryptedData
       PGPPublicKeyEncryptedData
       PGPUtil)
     (org.bouncycastle.openpgp.operator.bc
-      BcPGPDataEncryptorBuilder
       BcPBEDataDecryptorFactory
       BcPBEKeyEncryptionMethodGenerator
+      BcPGPDataEncryptorBuilder
       BcPGPDigestCalculatorProvider
       BcPublicKeyDataDecryptorFactory
       BcPublicKeyKeyEncryptionMethodGenerator)))
@@ -157,6 +157,22 @@
   (readable
     [packet opts]
     ;; PGPLiteralData is always readable
+    packet)
+
+
+  PGPMarker
+
+  (reduce-message
+    [packet opts rf acc]
+    ;; Such a packet MUST be ignored when received. It may be placed at the
+    ;; beginning of a message that uses features not available in PGP 2.6.x
+    ;; in order to cause that version to report that newer software is
+    ;; necessary to process the message.
+    acc)
+
+  (readable
+    [packet opts]
+    ;; PGPMarker is always readable
     packet))
 
 
@@ -204,12 +220,14 @@
   [^PGPEncryptedDataGenerator generator encryptor]
   (cond
     (string? encryptor)
-    (.addMethod generator
+    (.addMethod
+      generator
       (BcPBEKeyEncryptionMethodGenerator.
         (.toCharArray ^String encryptor)))
 
     (pgp/public-key encryptor)
-    (.addMethod generator
+    (.addMethod
+      generator
       (BcPublicKeyKeyEncryptionMethodGenerator.
         (pgp/public-key encryptor)))
 
@@ -324,7 +342,10 @@
       (reduce-content
         (.getDataStream packet decryptor-factory)
         opts
-        (with-reduce-attrs rf :encrypted-for for-key :cipher cipher :object packet )
+        (with-reduce-attrs rf
+          :encrypted-for for-key
+          :cipher cipher
+          :object packet)
         acc)))
 
   ;; If the decryptor is callable, use it to find a private key matching the id
