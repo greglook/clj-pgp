@@ -403,7 +403,8 @@
           (wrap-with literal-data-stream opts)
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]
-      (close []
+      (close
+        []
         (dorun (map #(.close ^OutputStream %) streams))))))
 
 

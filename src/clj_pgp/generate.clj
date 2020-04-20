@@ -162,9 +162,9 @@
      [generator# & algorithms#]
      (when-let [prefs# (arg-seq algorithms#)]
        (~(symbol (str ".setPreferred" pref-type "Algorithms"))
-         ^PGPSignatureSubpacketGenerator generator#
-         false
-         (int-array (map ~tag->code prefs#))))))
+        ^PGPSignatureSubpacketGenerator generator#
+        false
+        (int-array (map ~tag->code prefs#))))))
 
 
 (defpreference Symmetric   tags/symmetric-key-algorithm-code)
