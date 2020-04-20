@@ -4,7 +4,7 @@ version: 2.1
 executors:
   clojure:
     docker:
-      - image: circleci/clojure:lein-2.9.1
+      - image: circleci/clojure:openjdk-11-lein-2.9.1
     working_directory: ~/repo
 
 
@@ -15,14 +15,33 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install cljfmt CLI
-          command: "wget https://github.com/greglook/cljfmt/releases/download/0.8.1/cljfmt_0.8.1_linux.tar.gz && tar -xzf cljfmt_0.8.1_linux.tar.gz"
+          name: Install cljstyle
+          environment:
+            CLJSTYLE_VERSION: 0.12.1
+          command: |
+            wget https://github.com/greglook/cljstyle/releases/download/${CLJSTYLE_VERSION}/cljstyle_${CLJSTYLE_VERSION}_linux.tar.gz
+            tar -xzf cljstyle_${CLJSTYLE_VERSION}_linux.tar.gz
       - run:
           name: Check source formatting
-          command: "./cljfmt check --stats style-stats.tsv"
+          command: "./cljstyle check --stats style-stats.tsv"
       - store_artifacts:
           path: style-stats.tsv
           destination: style
+
+  lint:
+    executor: clojure
+    steps:
+      - checkout
+      - run:
+          name: Install clj-kondo
+          environment:
+            CLJ_KONDO_VERSION: 2019.12.14
+          command: |
+            wget https://github.com/borkdude/clj-kondo/releases/download/v${CLJ_KONDO_VERSION}/clj-kondo-${CLJ_KONDO_VERSION}-linux-amd64.zip
+            unzip clj-kondo-${CLJ_KONDO_VERSION}-linux-amd64.zip
+      - run:
+          name: Lint source code
+          command: "./clj-kondo --lint src test tool"
 
   test:
     executor: clojure
@@ -68,6 +87,7 @@ workflows:
   build:
     jobs:
       - style
+      - lint
       - test
       - coverage:
           requires:
