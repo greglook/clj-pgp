@@ -7,6 +7,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+...
+
+
+## [0.10.2] - 2020-04-19
+
 ### Changed
 - Upgrade various dependencies.
 - Update CI style and linter checks.
@@ -50,7 +55,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 Start of CHANGELOG.
 
-[Unreleased]: https://github.com/greglook/clj-pgp/compare/0.10.1...HEAD
+
+[Unreleased]: https://github.com/greglook/clj-pgp/compare/0.10.2...HEAD
+[0.10.2]: https://github.com/greglook/clj-pgp/compare/0.10.1...0.10.2
 [0.10.1]: https://github.com/greglook/clj-pgp/compare/0.10.0...0.10.1
 [0.10.0]: https://github.com/greglook/clj-pgp/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/greglook/clj-pgp/compare/0.8.3...0.9.0
