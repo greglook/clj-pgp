@@ -84,7 +84,7 @@ jobs:
 # Workflow definitions
 workflows:
   version: 2
-  build:
+  test:
     jobs:
       - style
       - lint
