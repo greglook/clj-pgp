@@ -25,7 +25,6 @@
       FilterOutputStream
       InputStream
       OutputStream)
-    java.nio.ByteBuffer
     java.security.SecureRandom
     java.util.Date
     (org.bouncycastle.bcpg
@@ -39,7 +38,6 @@
       PGPLiteralData
       PGPLiteralDataGenerator
       PGPMarker
-      PGPObjectFactory
       PGPPBEEncryptedData
       PGPPublicKeyEncryptedData
       PGPUtil)
@@ -403,7 +401,8 @@
           (wrap-with literal-data-stream opts)
           rest reverse)]
     (proxy [FilterOutputStream] [(first streams)]
-      (close []
+      (close
+        []
         (dorun (map #(.close ^OutputStream %) streams))))))
 
 

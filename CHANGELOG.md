@@ -7,6 +7,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Upgrade various dependencies.
+- Update CI style and linter checks.
+
+
+## [0.10.1] - 2019-08-17
+
 ### Added
 - Support for a dynamically-bindable error handling function.
   [#22](https://github.com/greglook/clj-pgp/pull/22)
@@ -43,7 +50,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 Start of CHANGELOG.
 
-[Unreleased]: https://github.com/greglook/clj-pgp/compare/0.10.0...HEAD
+[Unreleased]: https://github.com/greglook/clj-pgp/compare/0.10.1...HEAD
+[0.10.1]: https://github.com/greglook/clj-pgp/compare/0.10.0...0.10.1
 [0.10.0]: https://github.com/greglook/clj-pgp/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/greglook/clj-pgp/compare/0.8.3...0.9.0
 [0.8.3]: https://github.com/greglook/clj-pgp/compare/0.8.2...0.8.3

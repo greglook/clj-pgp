@@ -54,7 +54,7 @@
 (defn code->tag
   "Look up the keyword for a tag from the numeric code."
   [tags code]
-  (some #(if (= (val %) code) (key %)) tags))
+  (some #(when (= (val %) code) (key %)) tags))
 
 
 
@@ -69,7 +69,6 @@
                      str/lower-case
                      symbol)
         tag-map (symbol (str tag-name "-tags"))]
-    ^:cljfmt/ignore
     `(do
        (def ~tag-map
          ~(str "Map of " tag-name " tag codes.")

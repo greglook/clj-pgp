@@ -3,7 +3,6 @@
     [clj-pgp.core :as pgp]
     [clj-pgp.generate :as pgp-gen]
     [clj-pgp.keyring :as keyring]
-    [clj-pgp.tags :as tags]
     [clojure.java.io :as io]
     [clojure.test.check.generators :as gen]))
 

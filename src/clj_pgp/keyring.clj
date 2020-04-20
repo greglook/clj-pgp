@@ -20,16 +20,20 @@
 (defprotocol KeyRing
   "Protocol for obtaining PGP keys."
 
-  (list-public-keys [this]
+  (list-public-keys
+    [this]
     "Enumerates the available public keys.")
 
-  (list-secret-keys [this]
+  (list-secret-keys
+    [this]
     "Enumerates the available secret keys.")
 
-  (get-public-key [this id]
+  (get-public-key
+    [this id]
     "Loads a public key by id.")
 
-  (get-secret-key [this id]
+  (get-secret-key
+    [this id]
     "Loads a secret key by id."))
 
 
