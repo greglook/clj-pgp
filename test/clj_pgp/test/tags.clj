@@ -1,7 +1,7 @@
 (ns clj-pgp.test.tags
   (:require
     [clj-pgp.tags :as tags]
-    [clojure.test :refer :all]))
+    [clojure.test :refer [deftest testing is are]]))
 
 
 (defmacro ^:private check-tags

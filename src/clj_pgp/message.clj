@@ -25,7 +25,6 @@
       FilterOutputStream
       InputStream
       OutputStream)
-    java.nio.ByteBuffer
     java.security.SecureRandom
     java.util.Date
     (org.bouncycastle.bcpg
@@ -39,7 +38,6 @@
       PGPLiteralData
       PGPLiteralDataGenerator
       PGPMarker
-      PGPObjectFactory
       PGPPBEEncryptedData
       PGPPublicKeyEncryptedData
       PGPUtil)

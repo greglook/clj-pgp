@@ -9,8 +9,7 @@
       gen-ec-keyspec
       gen-rsa-keyspec
       memospec->keypair]]
-    [clojure.test :refer :all]
-    [clojure.test.check :as check]
+    [clojure.test :refer [deftest testing is]]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop]))
 

@@ -39,7 +39,6 @@
       PGPSignature
       PGPSignatureSubpacketGenerator)
     (org.bouncycastle.openpgp.operator
-      PBESecretKeyEncryptor
       PGPDigestCalculator)
     (org.bouncycastle.openpgp.operator.bc
       BcPBESecretKeyEncryptorBuilder
@@ -155,7 +154,6 @@
   "Builds a function which sets preferences on a signature generator for
   secondary cryptographic algorithms to prefer."
   [pref-type tag->code]
-  ^:cljfmt/ignore
   `(defn ~(symbol (str "prefer-" (str/lower-case pref-type) "-algorithms!"))
      "Sets the list of preferred algorithms on a signature generator for
      use when sending messages to the key."

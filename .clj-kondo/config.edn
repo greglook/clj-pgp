@@ -1,0 +1,23 @@
+{:linters
+ {:consistent-alias
+  {:level :warning
+   :aliases {clojure.java.io io
+             clojure.set set
+             clojure.string str}}
+
+  :unresolved-symbol
+  {:exclude [(clj-pgp.core/defalgorithms
+               [hash compression public-key symmetric-key])
+             (clj-pgp.generate/defpreference
+               [Symmetric Hash Compression])
+             (clj-pgp.generate/generate-keys
+               [master-key
+                keypair
+                prefer-symmetric
+                prefer-hash
+                prefer-compression
+                signing-key
+                expires
+                encryption-key])
+             (clj-pgp.signature/apply-bytes
+               [buffer n])]}}}

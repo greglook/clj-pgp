@@ -5,7 +5,7 @@
     [clj-pgp.keyring :as keyring]
     [clj-pgp.test.keys :as test-keys
      :refer [privkey pubkey pubring seckey secring]]
-    [clojure.test :refer :all])
+    [clojure.test :refer [deftest testing is]])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey

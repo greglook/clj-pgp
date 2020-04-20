@@ -3,7 +3,7 @@
     [clj-pgp.core :as pgp]
     [clj-pgp.generate :as pgp-gen]
     [clj-pgp.keyring :as keyring]
-    [clojure.test :refer :all])
+    [clojure.test :refer [deftest is]])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing

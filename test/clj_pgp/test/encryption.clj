@@ -5,19 +5,15 @@
     [clj-pgp.error :as error]
     [clj-pgp.generate :as pgp-gen]
     [clj-pgp.message :as pgp-msg]
-    [clj-pgp.tags :as tags]
     [clj-pgp.test.keys :refer
      [gen-ec-keyspec
       gen-rsa-keyspec
       spec->keypair
       memospec->keypair]]
-    [clojure.java.io :as io]
-    [clojure.test :refer :all]
-    [clojure.test.check :as check]
+    [clojure.test :refer [deftest testing is]]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop])
   (:import
-    java.io.ByteArrayOutputStream
     java.security.SecureRandom))
 
 
@@ -100,7 +96,7 @@
           "Decrypting without a matching key throws an exception")
       (testing "should allow overriding error behavior with custom behavior"
         (let [error-occured? (atom false)
-              error-handler (fn [type message data cause]
+              error-handler (fn [_ _ _ _]
                               (reset! error-occured? true)
                               nil)]
           (with-redefs [pgp/read-next-object (fn [_] (throw (Exception. "Simulating PGP nextObject error")))]
