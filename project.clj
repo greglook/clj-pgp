@@ -14,8 +14,8 @@
 
   :dependencies
   [[org.clojure/clojure "1.10.1" :scope "provided"]
-   [org.bouncycastle/bcpg-jdk15on "1.62"]
-   [org.bouncycastle/bcprov-jdk15on "1.62"]
+   [org.bouncycastle/bcpg-jdk15on "1.65"]
+   [org.bouncycastle/bcprov-jdk15on "1.65"]
    [byte-streams "0.2.4"]]
 
   :hiera
@@ -29,16 +29,16 @@
 
   :profiles
   {:dev
-   {:dependencies [[org.clojure/test.check "0.10.0"]]}
+   {:dependencies [[org.clojure/test.check "1.0.0"]]}
 
    :repl
    {:source-paths ["dev"]
-    :dependencies [[org.clojure/tools.namespace "0.3.1"]]}
+    :dependencies [[org.clojure/tools.namespace "1.0.0"]]}
 
    :coverage
    {:plugins [[lein-cloverage "1.1.0"]]}
 
    :tool
    {:source-paths ["tool"]
-    :dependencies [[mvxcvi/puget "1.1.2"]]
+    :dependencies [[mvxcvi/puget "1.2.1"]]
     :jvm-opts []}})
