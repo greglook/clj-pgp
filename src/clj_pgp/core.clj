@@ -278,20 +278,18 @@
 (defn ^:no-doc read-objects
   "Decodes a sequence of PGP objects from an input stream."
   [^InputStream input]
-  (reify
-    clojure.lang.IReduceInit
+  (reify clojure.lang.IReduceInit
     (reduce
       [_ rf init]
       (let [factory (PGPObjectFactory. input (BcKeyFingerprintCalculator.))]
         (loop [acc init
-               n 0
-               obj (try-read-object factory input n)]
-          (if (or (reduced? acc)
-                  (not obj))
-            (unreduced acc)
-            (recur (rf acc obj)
-                   (inc n)
-                   (try-read-object factory input (inc n)))))))))
+               n 0]
+          (let [obj (try-read-object factory input n)]
+            (if (or (reduced? acc)
+                    (not obj))
+              (unreduced acc)
+              (recur (rf acc obj)
+                     (inc n)))))))))
 
 
 (defn decode
@@ -300,7 +298,7 @@
   [data]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream data))]
-    (into '() (read-objects stream))))
+    (into [] (read-objects stream))))
 
 
 (defn decode-public-key
