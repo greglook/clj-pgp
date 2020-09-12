@@ -262,21 +262,34 @@
   (.nextObject factory))
 
 
+(defn ^:no-doc try-read-object
+  "Tries to read and return a single object from a given
+  PGPObjectFactory calling the error/*handler* upon an exception."
+  [factory input n]
+  (try
+    (read-next-object factory)
+    (catch Exception e
+      (error/*handler* ::read-object-error
+                       (.getMessage e)
+                       (assoc (ex-data e) ::stream input ::nth n)
+                       e))))
+
+
 (defn ^:no-doc read-objects
-  "Lazily decodes a sequence of PGP objects from an input stream."
+  "Decodes a sequence of PGP objects from an input stream."
   [^InputStream input]
-  (let [factory (PGPObjectFactory. input (BcKeyFingerprintCalculator.))]
-    (->> (range)
-         (map (fn next-object
-                [n]
-                (try
-                  (read-next-object factory)
-                  (catch Exception e
-                    (error/*handler* ::read-object-error
-                                     (.getMessage e)
-                                     (assoc (ex-data e) ::stream input ::nth n)
-                                     e)))))
-         (take-while some?))))
+  (reify clojure.lang.IReduceInit
+    (reduce
+      [_ rf init]
+      (let [factory (PGPObjectFactory. input (BcKeyFingerprintCalculator.))]
+        (loop [acc init
+               n 0]
+          (let [obj (try-read-object factory input n)]
+            (if (or (reduced? acc)
+                    (not obj))
+              (unreduced acc)
+              (recur (rf acc obj)
+                     (inc n)))))))))
 
 
 (defn decode
@@ -285,7 +298,7 @@
   [data]
   (with-open [stream (PGPUtil/getDecoderStream
                        (bytes/to-input-stream data))]
-    (doall (read-objects stream))))
+    (into [] (read-objects stream))))
 
 
 (defn decode-public-key
