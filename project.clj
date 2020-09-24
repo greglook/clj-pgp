@@ -5,8 +5,7 @@
             :url "http://unlicense.org/"}
 
   :aliases
-  {"doc-lit" ["marg" "--multi" "--dir" "doc/marginalia"]
-   "coverage" ["with-profile" "+coverage" "cloverage"]
+  {"coverage" ["with-profile" "+coverage" "cloverage"]
    "fuzz" ["with-profile" "+tool" "run" "-m" "clj-pgp.tool.fuzz"]}
 
   :deploy-branches ["master"]
@@ -20,12 +19,6 @@
 
   :hiera
   {:cluster-depth 1}
-
-  :codox
-  {:metadata {:doc/format :markdown}
-   :exclude #{clj-pgp.tags clj-pgp.util}
-   :source-uri "https://github.com/greglook/clj-pgp/blob/master/"
-   :output-path "target/doc/api"}
 
   :profiles
   {:dev
