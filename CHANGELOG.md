@@ -10,6 +10,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ...
 
 
+## [1.0.0] - 2020-09-24
+
+Finally admitting that this project is stable.
+
+### Changed
+- Upgrade BouncyCastle and other dependencies.
+- `clj-pgp.core/read-objects` now returns an `IReduceInit` instead of a lazy
+  sequence for improved performance and control of message consumption.
+  [#23](https://github.com/greglook/clj-pgp/pull/23)
+
+
 ## [0.10.2] - 2020-04-19
 
 ### Changed
