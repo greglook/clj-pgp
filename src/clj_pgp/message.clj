@@ -451,8 +451,8 @@
           ;; Make sure to call the reducing function and then verify the message.
           (let [results (rf acc message)]
             (when (and (instance? PGPEncryptedData object)
-                       (.isIntegrityProtected object)
-                       (not (.verify object)))
+                       (.isIntegrityProtected ^PGPEncryptedData object)
+                       (not (.verify ^PGPEncryptedData object)))
               (throw (IllegalStateException.
                        (str "Encrypted data object " object
                             " failed integrity verification!"))))
