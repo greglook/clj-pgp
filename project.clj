@@ -15,8 +15,7 @@
   [[org.clojure/clojure "1.10.3" :scope "provided"]
    [org.bouncycastle/bcpg-jdk15on "1.70"]
    [org.bouncycastle/bcprov-jdk15on "1.70"]
-   [org.clj-commons/byte-streams "0.2.10"]
-   [org.clojure/tools.logging "1.2.4"]]
+   [org.clj-commons/byte-streams "0.2.10"]]
 
   :hiera
   {:cluster-depth 1}
@@ -30,7 +29,8 @@
     :dependencies [[org.clojure/tools.namespace "1.2.0"]]}
 
    :coverage
-   {:plugins [[lein-cloverage "1.2.2"]]}
+   {:plugins [[lein-cloverage "1.2.2"]]
+    :dependencies [[org.clojure/tools.logging "1.2.4"]]}
 
    :tool
    {:source-paths ["tool"]
