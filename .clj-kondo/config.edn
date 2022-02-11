@@ -20,4 +20,8 @@
                 expires
                 encryption-key])
              (clj-pgp.signature/apply-bytes
-               [buffer n])]}}}
+               [buffer n])]}}
+
+ :hooks
+ {:analyze-call {clj-pgp.core/defalgorithms hooks.clj-pgp/defalgorithms
+                 clj-pgp.tags/deftags hooks.clj-pgp/deftags}}}
