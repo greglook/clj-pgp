@@ -142,7 +142,7 @@
   PGPLiteralData
 
   (reduce-message
-    [packet opts rf acc]
+    [packet _ rf acc]
     (let [data (.getInputStream packet)
           format (tags/code->tag data-formats (char (.getFormat packet)))]
       (rf acc {:format format
@@ -151,7 +151,7 @@
                :data data})))
 
   (readable
-    [packet opts]
+    [packet _]
     ;; PGPLiteralData is always readable
     packet)
 
@@ -159,7 +159,7 @@
   PGPMarker
 
   (reduce-message
-    [packet opts rf acc]
+    [_ _ _ acc]
     ;; Such a packet MUST be ignored when received. It may be placed at the
     ;; beginning of a message that uses features not available in PGP 2.6.x
     ;; in order to cause that version to report that newer software is
@@ -167,7 +167,7 @@
     acc)
 
   (readable
-    [packet opts]
+    [packet _]
     ;; PGPMarker is always readable
     packet))
 
@@ -200,7 +200,7 @@
         (pgp/read-objects (.getDataStream packet)))))
 
   (readable
-    [packet opts]
+    [packet _]
     ;; PGPCompressedData is always readable
     packet))
 
@@ -315,8 +315,8 @@
   ;; If the decryptor is a string, try to use it to decrypt the passphrase
   ;; protected session key.
   (readable
-    [packet {:keys [decryptor] :as opts}]
-    (when (string? decryptor)
+    [packet opts]
+    (when (string? (:decryptor opts))
       packet))
 
 
@@ -346,8 +346,9 @@
   ;; on the data packet. Otherwise, use it directly as a private key. If the
   ;; decryptor doesn't match the id, return nil.
   (readable
-    [packet {:keys [decryptor] :as opts}]
-    (let [for-key (.getKeyID packet)]
+    [packet opts]
+    (let [decryptor (:decryptor opts)
+          for-key (.getKeyID packet)]
       (when (some-> (if (ifn? decryptor)
                       (decryptor for-key)
                       decryptor)
