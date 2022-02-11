@@ -7,7 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-...
+### Changed
+- Upgrade BouncyCastle and other dependencies to fix a CVE.
+  [#25](https://github.com/greglook/clj-pgp/issues/25)
+  [PR#24](https://github.com/greglook/clj-pgp/pull/24)
 
 
 ## [1.0.0] - 2020-09-24
@@ -18,7 +21,7 @@ Finally admitting that this project is stable.
 - Upgrade BouncyCastle and other dependencies.
 - `clj-pgp.core/read-objects` now returns an `IReduceInit` instead of a lazy
   sequence for improved performance and control of message consumption.
-  [#23](https://github.com/greglook/clj-pgp/pull/23)
+  [PR#23](https://github.com/greglook/clj-pgp/pull/23)
 
 
 ## [0.10.2] - 2020-04-19
@@ -32,26 +35,26 @@ Finally admitting that this project is stable.
 
 ### Added
 - Support for a dynamically-bindable error handling function.
-  [#22](https://github.com/greglook/clj-pgp/pull/22)
+  [PR#22](https://github.com/greglook/clj-pgp/pull/22)
 
 ### Fixed
 - Ignore `PGPMarker` messages which are used as a light compatibility check
   against very old PGP implementations.
   [#12](https://github.com/greglook/clj-pgp/issues/12)
-  [#21](https://github.com/greglook/clj-pgp/pull/21)
+  [PR#21](https://github.com/greglook/clj-pgp/pull/21)
 
 
 ## [0.10.0] - 2019-03-26
 
 ### Changed
 - Update BouncyCastle to 1.61.
-  [#18](//github.com/greglook/clj-pgp/pull/18)
+  [PR#18](//github.com/greglook/clj-pgp/pull/18)
 
 ### Added
 - A new `clj-pgp.message/reduce-messages` function allows for consuming
   encrypted data without buffering the entire message in memory. This makes it
   possible to handle very large messages in a streaming fashion.
-  [#19](//github.com/greglook/clj-pgp/pull/19)
+  [PR#19](//github.com/greglook/clj-pgp/pull/19)
 
 
 ## [0.9.0] - 2017-11-04
@@ -67,7 +70,8 @@ Finally admitting that this project is stable.
 Start of CHANGELOG.
 
 
-[Unreleased]: https://github.com/greglook/clj-pgp/compare/0.10.2...HEAD
+[Unreleased]: https://github.com/greglook/clj-pgp/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/greglook/clj-pgp/compare/0.10.2...1.0.0
 [0.10.2]: https://github.com/greglook/clj-pgp/compare/0.10.1...0.10.2
 [0.10.1]: https://github.com/greglook/clj-pgp/compare/0.10.0...0.10.1
 [0.10.0]: https://github.com/greglook/clj-pgp/compare/0.9.0...0.10.0
