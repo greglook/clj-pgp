@@ -7,7 +7,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+...
+
+
+## [1.1.0] - 2022-02-11
+
 ### Changed
+- Renamed `master` branch to `main`.
 - Upgrade BouncyCastle and other dependencies to fix a CVE.
   [#25](https://github.com/greglook/clj-pgp/issues/25)
   [PR#24](https://github.com/greglook/clj-pgp/pull/24)
@@ -70,7 +76,8 @@ Finally admitting that this project is stable.
 Start of CHANGELOG.
 
 
-[Unreleased]: https://github.com/greglook/clj-pgp/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/greglook/clj-pgp/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/greglook/clj-pgp/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/greglook/clj-pgp/compare/0.10.2...1.0.0
 [0.10.2]: https://github.com/greglook/clj-pgp/compare/0.10.1...0.10.2
 [0.10.1]: https://github.com/greglook/clj-pgp/compare/0.10.0...0.10.1
