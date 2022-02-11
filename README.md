@@ -1,8 +1,8 @@
 clj-pgp
 =======
 
-[![CircleCI](https://circleci.com/gh/greglook/clj-pgp/tree/master.svg?style=shield&circle-token=4779449f186dd17cab4c69bbe4f524bef076bd67)](https://circleci.com/gh/greglook/clj-pgp/tree/master)
-[![codecov](https://codecov.io/gh/greglook/clj-pgp/branch/master/graph/badge.svg)](https://codecov.io/gh/greglook/clj-pgp)
+[![CircleCI](https://circleci.com/gh/greglook/clj-pgp/tree/main.svg?style=shield&circle-token=4779449f186dd17cab4c69bbe4f524bef076bd67)](https://circleci.com/gh/greglook/clj-pgp/tree/main)
+[![codecov](https://codecov.io/gh/greglook/clj-pgp/branch/main/graph/badge.svg)](https://codecov.io/gh/greglook/clj-pgp)
 [![cljdoc lib](https://img.shields.io/badge/cljdoc-lib-blue.svg)](https://cljdoc.org/d/mvxcvi/clj-pgp/)
 
 This is a Clojure library which wraps the

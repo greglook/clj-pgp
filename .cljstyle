@@ -1,5 +1,4 @@
 ;; Clojure formatting rules
 ;; vim: filetype=clojure
-{:file-ignore #{"checkouts" "target"}
- :padding-lines 2
- :max-consecutive-blank-lines 3}
+{:files
+ {:ignore #{".git" "checkouts" "target"}}}
