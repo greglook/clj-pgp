@@ -61,7 +61,6 @@
     (rf acc (apply assoc value kvs))))
 
 
-
 ;; ## PGP Data Encoding
 
 (defprotocol ^:no-doc MessagePacket
@@ -95,7 +94,6 @@
   ^OutputStream
   [^OutputStream output]
   (ArmoredOutputStream. output))
-
 
 
 ;; ## Literal Data Packets
@@ -174,7 +172,6 @@
     packet))
 
 
-
 ;; ## Compressed Data Packets
 
 (defn compressed-data-stream
@@ -206,7 +203,6 @@
     [packet opts]
     ;; PGPCompressedData is always readable
     packet))
-
 
 
 ;; ## Encrypted Data Packets
@@ -361,7 +357,6 @@
         packet))))
 
 
-
 ;; ## Constructing PGP Messages
 
 (defn message-output-stream
@@ -431,7 +426,6 @@
   (apply package data
          :encryptors encryptors
          opts))
-
 
 
 ;; ## Reading PGP Messages

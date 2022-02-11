@@ -37,7 +37,6 @@
     "Loads a secret key by id."))
 
 
-
 ;; ## Public Key Rings
 
 (defn public-keyring-coll
@@ -94,7 +93,6 @@
   (encode
     [this]
     (.getEncoded this)))
-
 
 
 ;; ## Secret Key Rings

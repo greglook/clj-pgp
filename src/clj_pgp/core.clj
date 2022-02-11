@@ -46,7 +46,6 @@
 (defalgorithms symmetric-key)
 
 
-
 ;; ## Public Key Coercion
 
 (defprotocol PublicKeyContainer
@@ -77,7 +76,6 @@
   (public-key [keyring] (.getPublicKey keyring)))
 
 
-
 ;; ## Private Key Coercion
 
 (defprotocol PrivateKeyContainer
@@ -100,7 +98,6 @@
 
   PGPKeyPair
   (private-key [keypair] (.getPrivateKey keypair)))
-
 
 
 ;; ## Keypair Identifiers
@@ -139,7 +136,6 @@
     (->> (.getFingerprint pubkey)
          (map (partial format "%02X"))
          str/join)))
-
 
 
 ;; ## Keypair Algorithms
@@ -181,7 +177,6 @@
       (.getAlgorithm (.getPublicKey keypair)))))
 
 
-
 ;; ## Key Utilities
 
 (defn key-info
@@ -219,7 +214,6 @@
         (.build (.toCharArray passphrase)))))
 
 
-
 ;; ## PGP Object Encoding
 
 (defprotocol Encodable
@@ -251,7 +245,6 @@
     (with-open [encoder (ArmoredOutputStream. buffer)]
       (io/copy (encode data) encoder))
     (str buffer)))
-
 
 
 ;; ## PGP Object Decoding

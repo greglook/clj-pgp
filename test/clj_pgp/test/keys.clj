@@ -37,7 +37,6 @@
 (def privkey (pgp/unlock-key seckey "test password"))
 
 
-
 ;; ## Generative Utilities
 
 (defn gen-rsa-keyspec

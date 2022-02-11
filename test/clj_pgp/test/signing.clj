@@ -40,7 +40,6 @@
         "decoding non-signature value throws an exception")))
 
 
-
 ;; ## Generative Checks
 
 (defn test-signing-keypair

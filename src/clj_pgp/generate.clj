@@ -111,7 +111,6 @@
                random)))))
 
 
-
 ;; ## Key Signatures
 
 (defn signature-subpacket-generator
@@ -136,8 +135,8 @@
     (doto (signature-subpacket-generator
             KeyFlags/SIGN_DATA
             KeyFlags/CERTIFY_OTHER)
-      ; Request senders add additional checksums to the message (useful
-      ; when verifying unsigned messages).
+      ;; Request senders add additional checksums to the message (useful
+      ;; when verifying unsigned messages).
       (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
 
     :signing
@@ -176,7 +175,6 @@
   [^PGPSignatureSubpacketGenerator generator
    ^long lifetime]
   (.setKeyExpirationTime generator true lifetime))
-
 
 
 ;; ## Keyring Construction
@@ -237,7 +235,6 @@
   [^PGPKeyRingGenerator keyring-gen]
   {:public (.generatePublicKeyRing keyring-gen)
    :secret (.generateSecretKeyRing keyring-gen)})
-
 
 
 ;; ## Keyring Specification

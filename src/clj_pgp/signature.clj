@@ -31,7 +31,6 @@
            (recur (.read stream# ~'buffer)))))))
 
 
-
 ;; ## Provider Protocol
 
 (defprotocol SignatureProvider
@@ -76,7 +75,6 @@
          ^PGPPublicKey (pgp/public-key pubkey))
   (apply-bytes data (.update signature buffer 0 n))
   (.verify signature))
-
 
 
 ;; ## Private-Key Signatures

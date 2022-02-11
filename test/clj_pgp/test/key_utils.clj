@@ -154,4 +154,4 @@
           "encoded key is canonical"))))
 
 
-; TODO: keyring encoding tests
+;; TODO: keyring encoding tests
