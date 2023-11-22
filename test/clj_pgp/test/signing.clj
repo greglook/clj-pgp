@@ -36,7 +36,7 @@
     (is (pgp-sig/verify data sig' pubkey)
         "decoded signature can be verified")
     (is (thrown? IllegalArgumentException
-                 (pgp/decode-signatures (pgp/encode pubkey)))
+          (pgp/decode-signatures (pgp/encode pubkey)))
         "decoding non-signature value throws an exception")))
 
 
@@ -53,7 +53,7 @@
       (is (= (pgp/key-id keypair) (pgp/key-id sig))
           "signature key-id matches key")
       (is (thrown? IllegalArgumentException
-                   (pgp-sig/verify data sig pubkey))
+            (pgp-sig/verify data sig pubkey))
           "verification with the wrong public key throws error")
       (is (pgp-sig/verify data sig keypair)
           "verification with public key succeeds")
