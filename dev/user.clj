@@ -1,6 +1,6 @@
 (ns user
   (:require
-    [byte-streams :as bytes]
+    [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp]
     [clj-pgp.tags :as tags]
     [clj-pgp.test.keys :as test-keys]

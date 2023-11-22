@@ -1,7 +1,7 @@
 (ns clj-pgp.signature
   "The functions in this namespace generate and verify PGP signatures."
   (:require
-    [byte-streams :as bytes]
+    [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp]
     [clj-pgp.tags :as tags]
     [clj-pgp.util :refer [arg-map]])

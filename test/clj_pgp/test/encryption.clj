@@ -1,6 +1,6 @@
 (ns clj-pgp.test.encryption
   (:require
-    [byte-streams :refer [bytes=] :as bytes]
+    [clj-commons.byte-streams :refer [bytes=] :as bytes]
     [clj-pgp.core :as pgp]
     [clj-pgp.error :as error]
     [clj-pgp.generate :as pgp-gen]

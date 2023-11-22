@@ -4,7 +4,7 @@
   Literal keyring files are directly supported, and key servers and other
   stores can extend the `KeyRing` protocol for further extension."
   (:require
-    [byte-streams :as bytes]
+    [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp])
   (:import
     (org.bouncycastle.openpgp
