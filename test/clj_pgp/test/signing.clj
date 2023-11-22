@@ -1,17 +1,17 @@
 (ns clj-pgp.test.signing
   (:require
-   [clj-commons.byte-streams :refer [bytes=]]
-   [clj-pgp.core :as pgp]
-   [clj-pgp.generate :as pgp-gen]
-   [clj-pgp.signature :as pgp-sig]
-   [clj-pgp.test.keys :refer
-    [master-pubkey pubkey privkey
-     gen-ec-keyspec
-     gen-rsa-keyspec
-     memospec->keypair]]
-   [clojure.test :refer [deftest testing is]]
-   [clojure.test.check.generators :as gen]
-   [clojure.test.check.properties :as prop]))
+    [clj-commons.byte-streams :refer [bytes=]]
+    [clj-pgp.core :as pgp]
+    [clj-pgp.generate :as pgp-gen]
+    [clj-pgp.signature :as pgp-sig]
+    [clj-pgp.test.keys :refer
+     [master-pubkey pubkey privkey
+      gen-ec-keyspec
+      gen-rsa-keyspec
+      memospec->keypair]]
+    [clojure.test :refer [deftest testing is]]
+    [clojure.test.check.generators :as gen]
+    [clojure.test.check.properties :as prop]))
 
 
 (deftest signature-verification
@@ -67,24 +67,24 @@
 
 (def keypair-signing-property
   (prop/for-all*
-   [(gen/one-of
-     [(gen-rsa-keyspec [1024 2048 4096])
-      (gen-ec-keyspec :ecdsa pgp-gen/elliptic-curve-names)])
-    (gen/not-empty gen/bytes)
-    (gen/elements [:md5 :sha1 :sha256 :sha512])]
-   test-signing-keypair))
+    [(gen/one-of
+       [(gen-rsa-keyspec [1024 2048 4096])
+        (gen-ec-keyspec :ecdsa pgp-gen/elliptic-curve-names)])
+     (gen/not-empty gen/bytes)
+     (gen/elements [:md5 :sha1 :sha256 :sha512])]
+    test-signing-keypair))
 
 
 (deftest data-signatures
   (test-signing-keypair
-   [:rsa :rsa-sign 1024]
-   "Important message!"
-   :sha1)
+    [:rsa :rsa-sign 1024]
+    "Important message!"
+    :sha1)
   (test-signing-keypair
-   [:rsa :rsa-general 2048]
-   "Hello, world!"
-   :sha256)
+    [:rsa :rsa-general 2048]
+    "Hello, world!"
+    :sha256)
   (test-signing-keypair
-   [:rsa :rsa-general 4096]
-   "This needs protection"
-   :sha512))
+    [:rsa :rsa-general 4096]
+    "This needs protection"
+    :sha512))
