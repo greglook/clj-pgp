@@ -14,7 +14,7 @@
   a function which accepts a key id and returns the corresponding private-key,
   to look it up or unlock the key on demand."
   (:require
-    [byte-streams :as bytes]
+    [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp]
     [clj-pgp.tags :as tags]
     [clj-pgp.util :refer [arg-coll arg-map]]

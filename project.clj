@@ -13,9 +13,9 @@
 
   :dependencies
   [[org.clojure/clojure "1.10.3" :scope "provided"]
-   [org.bouncycastle/bcpg-jdk15on "1.70"]
-   [org.bouncycastle/bcprov-jdk15on "1.70"]
-   [org.clj-commons/byte-streams "0.2.10"]]
+   [org.bouncycastle/bcpg-jdk18on "1.77"]
+   [org.bouncycastle/bcprov-jdk18on "1.77"]
+   [org.clj-commons/byte-streams "0.3.4"]]
 
   :hiera
   {:cluster-depth 1}

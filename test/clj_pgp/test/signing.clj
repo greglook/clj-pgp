@@ -1,6 +1,6 @@
 (ns clj-pgp.test.signing
   (:require
-    [byte-streams :refer [bytes=]]
+    [clj-commons.byte-streams :refer [bytes=]]
     [clj-pgp.core :as pgp]
     [clj-pgp.generate :as pgp-gen]
     [clj-pgp.signature :as pgp-sig]
