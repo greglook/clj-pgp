@@ -1,4 +1,4 @@
-(defproject mvxcvi/clj-pgp "1.1.0"
+(defproject mvxcvi/clj-pgp "1.1.1"
   :description "Wrapper for the Bouncy Castle OpenPGP library"
   :url "https://github.com/greglook/clj-pgp"
   :license {:name "Public Domain"
@@ -12,7 +12,7 @@
   :pedantic? :abort
 
   :dependencies
-  [[org.clojure/clojure "1.10.3" :scope "provided"]
+  [[org.clojure/clojure "1.11.1" :scope "provided"]
    [org.bouncycastle/bcpg-jdk18on "1.77"]
    [org.bouncycastle/bcprov-jdk18on "1.77"]
    [org.clj-commons/byte-streams "0.3.4"]]
@@ -26,7 +26,7 @@
 
    :repl
    {:source-paths ["dev"]
-    :dependencies [[org.clojure/tools.namespace "1.2.0"]]}
+    :dependencies [[org.clojure/tools.namespace "1.4.4"]]}
 
    :coverage
    {:plugins [[lein-cloverage "1.2.2"]]
@@ -34,5 +34,5 @@
 
    :tool
    {:source-paths ["tool"]
-    :dependencies [[mvxcvi/puget "1.3.2"]]
+    :dependencies [[mvxcvi/puget "1.3.4"]]
     :jvm-opts []}})
