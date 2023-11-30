@@ -1,6 +1,6 @@
 (ns clj-pgp.test.key-utils
   (:require
-    [byte-streams :refer [bytes=]]
+    [clj-commons.byte-streams :refer [bytes=]]
     [clj-pgp.core :as pgp]
     [clj-pgp.keyring :as keyring]
     [clj-pgp.test.keys :as test-keys

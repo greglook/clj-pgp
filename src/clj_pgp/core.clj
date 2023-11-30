@@ -1,7 +1,7 @@
 (ns clj-pgp.core
   "Core functions for handling PGP objects."
   (:require
-    [byte-streams :as bytes]
+    [clj-commons.byte-streams :as bytes]
     [clj-pgp.error :as error]
     [clj-pgp.tags :as tags]
     [clojure.java.io :as io]
