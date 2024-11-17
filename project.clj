@@ -1,4 +1,4 @@
-(defproject mvxcvi/clj-pgp "1.1.1"
+(defproject mvxcvi/clj-pgp "1.1.2"
   :description "Wrapper for the Bouncy Castle OpenPGP library"
   :url "https://github.com/greglook/clj-pgp"
   :license {:name "Public Domain"
