@@ -14,7 +14,8 @@
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop])
   (:import
-    java.security.SecureRandom))
+    java.security.SecureRandom
+    org.bouncycastle.openpgp.PGPEncryptedDataList))
 
 
 (defn test-encryption-scenario
@@ -103,6 +104,46 @@
             (binding [error/*handler* error-handler]
               (pgp-msg/decrypt ciphertext (constantly keypair))
               (is @error-occured? "A PGP error was simulated but not passed to the error handler."))))))))
+
+
+
+(def ^:private packet-header-byte
+  "
+  From right to left:
+    - Bits 1–0 are set to `00` to indicate a one-octet length packet.
+    - Bits 5–2 specify the packet's tag, which is `0001`.
+    - Bit 6 is `0` to indicate an 'old format' packet.
+    - Bit 7 is always `1` in a packet header.
+  See RFC 4880 section 4.2.
+  "
+  2r10000100)
+
+
+(def ^:private packet-length-byte
+  "
+  A packet's length doesn't include the first two header bytes.
+  This is an empty packet, so we're just using `0`
+  "
+  2r00000000)
+
+
+(def ^:private packet-count-byte
+  "
+  I honestly don't understand why we need this byte or what it represents
+  but bouncycastle's constructor will throw without it.
+  Arrived at it via LLM + trial + error
+  "
+  2r10000000)
+
+
+(deftest empty-packet-handling
+  (let [empty-packet (PGPEncryptedDataList.
+                       (byte-array [packet-header-byte
+                                    packet-length-byte
+                                    packet-count-byte]))
+        accumulator [:accumulated :data]]
+    (is (= accumulator (pgp-msg/reduce-message empty-packet {} #() accumulator))
+        "When given an empty packet, we should return the accumulator instead of throwing")))
 
 
 (deftest encryption-scenarios
