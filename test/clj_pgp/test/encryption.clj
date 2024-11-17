@@ -106,7 +106,6 @@
               (is @error-occured? "A PGP error was simulated but not passed to the error handler."))))))))
 
 
-
 (def ^:private packet-header-byte
   "
   From right to left:
