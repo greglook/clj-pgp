@@ -10,6 +10,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ...
 
 
+## [1.1.2] - 2024-11-16
+
+### Changed
+- Add handling for empty `PGPEncryptedDataList` packets.
+  [PR#30](https://github.com/greglook/clj-pgp/pull/30)
+
 ## [1.1.1] - 2023-11-30
 
 ### Changed
