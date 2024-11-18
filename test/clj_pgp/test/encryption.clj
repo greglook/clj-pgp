@@ -14,7 +14,8 @@
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop])
   (:import
-    java.security.SecureRandom))
+    java.security.SecureRandom
+    org.bouncycastle.openpgp.PGPEncryptedDataList))
 
 
 (defn test-encryption-scenario
@@ -103,6 +104,21 @@
             (binding [error/*handler* error-handler]
               (pgp-msg/decrypt ciphertext (constantly keypair))
               (is @error-occured? "A PGP error was simulated but not passed to the error handler."))))))))
+
+
+(deftest empty-packet-handling
+  (let [packet-header-byte 2r10000100
+        packet-length-byte 0
+        packet-count-byte 2r10000000
+        empty-packet (PGPEncryptedDataList.
+                       (byte-array [packet-header-byte
+                                    packet-length-byte
+                                    packet-count-byte]))
+        accumulator [:accumulated :data]
+        rf (fn [_acc {_data :data}]
+             (is false "reducing function should not be called"))]
+    (is (= accumulator (pgp-msg/reduce-message empty-packet {} rf accumulator))
+        "When given an empty packet, we should return the accumulator instead of throwing")))
 
 
 (deftest encryption-scenarios

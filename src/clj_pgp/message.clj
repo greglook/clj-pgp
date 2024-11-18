@@ -285,9 +285,11 @@
     [packet opts rf acc]
     (if-let [readable-packet (readable packet opts)]
       (reduce-message readable-packet opts rf acc)
-      (throw (IllegalArgumentException.
-               (str "Cannot decrypt " (pr-str packet) " with " (pr-str opts)
-                    " (no matching encrypted session key)")))))
+      (if (.isEmpty packet)
+        acc
+        (throw (IllegalArgumentException.
+                 (str "Cannot decrypt " (pr-str packet) " with " (pr-str opts)
+                      " (no matching encrypted session key)"))))))
 
   (readable
     [packet opts]
