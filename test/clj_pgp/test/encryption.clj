@@ -141,7 +141,7 @@
     (test-encryption-scenario
       ["frobble bisvarkian"
        [:rsa :rsa-general 1024]
-       [:ec :ecdh "sect409r1"]]
+       [:ec :ecdh "secp521r1"]]
       "Good news, everyone!"
       :bzip2 :aes-256 true)))
 

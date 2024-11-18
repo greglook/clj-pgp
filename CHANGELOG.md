@@ -10,6 +10,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Add handling for empty `PGPEncryptedDataList` packets.
   [PR#30](https://github.com/greglook/clj-pgp/pull/30)
+- Update dependencies, including Clojure and BouncyCastle.
+
 
 ## [1.1.1] - 2023-11-30
 
@@ -17,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Upgrade BouncyCastle and other dependencies to fix a CVE.
   [#26](https://github.com/greglook/clj-pgp/issues/26)
   [PR#28](https://github.com/greglook/clj-pgp/pull/28)
+
 
 ## [1.1.0] - 2022-02-11
 
