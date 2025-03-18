@@ -10,6 +10,8 @@
       gen-rsa-keyspec
       spec->keypair
       memospec->keypair]]
+    [clojure.java.io :as io]
+    [clojure.string :as str]
     [clojure.test :refer [deftest testing is]]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop])
@@ -104,6 +106,29 @@
             (binding [error/*handler* error-handler]
               (pgp-msg/decrypt ciphertext (constantly keypair))
               (is @error-occured? "A PGP error was simulated but not passed to the error handler."))))))))
+
+
+(deftest decrypting-pgp-file-terminated-with-junk
+  (testing
+    "Base case—decrypting a normal file does what you'd expect"
+    (is (= "🐢"
+           (pgp-msg/reduce-messages
+             (io/input-stream
+               (io/resource "terminated-without-junk-bytes.txt.gpg"))
+             (fn [acc {:keys [data]}]
+               (str acc (str/trim (slurp data))))
+             ""
+             :decryptor "Open sesame!"))))
+  (testing
+    "Bad case—decrypting the same file with extra junk bytes appended throws"
+    (is (thrown? Exception
+          (pgp-msg/reduce-messages
+            (io/input-stream
+              (io/resource "terminated-with-junk-bytes.txt.gpg"))
+            (fn [acc {:keys [data]}]
+              (str acc (str/trim (slurp data))))
+            ""
+            :decryptor "Open sesame!")))))
 
 
 (deftest empty-packet-handling
