@@ -109,26 +109,46 @@
 
 
 (deftest decrypting-pgp-file-terminated-with-junk
-  (testing
-    "Base case—decrypting a normal file does what you'd expect"
+  (testing "`reduce-messages`"
     (is (= "🐢"
            (pgp-msg/reduce-messages
              (io/input-stream
                (io/resource "terminated-without-junk-bytes.txt.gpg"))
-             (fn [acc {:keys [data]}]
-               (str acc (str/trim (slurp data))))
+             (fn [_acc {:keys [data]}]
+               (str/trim (slurp data)))
              ""
-             :decryptor "Open sesame!"))))
-  (testing
-    "Bad case—decrypting the same file with extra junk bytes appended throws"
+             :decryptor "Open sesame!"))
+        "Base case—decrypting a normal file does what you'd expect")
     (is (thrown? Exception
           (pgp-msg/reduce-messages
             (io/input-stream
               (io/resource "terminated-with-junk-bytes.txt.gpg"))
-            (fn [acc {:keys [data]}]
-              (str acc (str/trim (slurp data))))
+            (fn [_acc {:keys [data]}]
+              (str/trim (slurp data)))
             ""
-            :decryptor "Open sesame!")))))
+            :decryptor "Open sesame!"))
+        "Bad case—decrypting the same file with extra junk bytes appended throws"))
+  (testing "reduce-messages-v2"
+    (is (= "🐢"
+           (reduce
+             (fn [_acc {:keys [data]}]
+               (str/trim (slurp data)))
+             ""
+             (pgp-msg/reduce-messages-v2
+               (io/input-stream
+                 (io/resource "terminated-without-junk-bytes.txt.gpg"))
+               :decryptor "Open sesame!")))
+        "Base case—decrypting a normal file does what you'd expect")
+    (is (thrown? Exception
+          (reduce
+            (fn [_acc {:keys [data]}]
+              (str/trim (slurp data)))
+            ""
+            (pgp-msg/reduce-messages-v2
+              (io/input-stream
+                (io/resource "terminated-with-junk-bytes.txt.gpg"))
+              :decryptor "Open sesame!")))
+        "Bad case—decrypting the same file with extra junk bytes appended throws")))
 
 
 (deftest empty-packet-handling
