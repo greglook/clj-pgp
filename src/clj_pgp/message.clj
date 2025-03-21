@@ -17,7 +17,7 @@
     [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp]
     [clj-pgp.tags :as tags]
-    [clj-pgp.util :refer [arg-coll arg-map]]
+    [clj-pgp.util :refer [arg-coll arg-map preserving-reduce]]
     [clojure.java.io :as io])
   (:import
     (java.io
@@ -82,7 +82,7 @@
   objects data.
   See `reduce-messages` for options"
   [^InputStream input opts rf acc]
-  (reduce
+  (preserving-reduce
     #(reduce-message %2 opts rf %1)
     acc
     (pgp/read-objects input)))
@@ -193,7 +193,7 @@
     [packet opts rf acc]
     (let [zip-algo (tags/compression-algorithm-tag
                      (.getAlgorithm packet))]
-      (reduce
+      (preserving-reduce
         (fn [acc packet]
           (reduce-message packet opts (with-reduce-attrs rf :compress zip-algo) acc))
         acc
@@ -260,7 +260,7 @@
                "Only one passphrase encryptor is supported")))
     (.open
       ^PGPEncryptedDataGenerator
-      (reduce
+      (preserving-reduce
         add-encryption-method!
         (PGPEncryptedDataGenerator.
           (cond->
@@ -437,7 +437,7 @@
   "Reduces over the PGP objects the returns the resulting accumulator.
   Verifys the integrity of each object and throws if its invalid."
   [opts rf acc objects]
-  (reduce
+  (preserving-reduce
     (fn reduce-and-verify!
       [acc message]
       (reduce-message
