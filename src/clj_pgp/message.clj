@@ -488,12 +488,14 @@
   (reify IReduceInit
     (reduce
       [_ rf acc]
-      (preserving-reduce
+      (reduce
         (fn reduce-and-verify!
           [acc message]
           (reduce-message message opts rf acc))
         acc
-        (pgp/read-objects (PGPUtil/getDecoderStream input))))))
+        (pgp/read-objects
+          (PGPUtil/getDecoderStream
+            (bytes/to-input-stream input)))))))
 
 
 (defn read-messages
