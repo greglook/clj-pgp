@@ -33,3 +33,25 @@
     (map? args) args
     (= 1 (count args)) (recur (first args))
     :else (apply array-map args)))
+
+
+(defn preserving-reduced
+  "Returns a reducing function that double-wraps reduced values so that nested
+  reductions properly halt an outer reduction.
+
+  Adapted from `clojure.core`, which declares it as private."
+  [rf]
+  (fn wrapper
+    ([acc]
+     (rf acc))
+    ([acc x]
+     (let [ret (rf acc x)]
+       (if (reduced? ret)
+         (reduced ret)
+         ret)))))
+
+
+(defn preserving-reduce
+  "TODO"
+  [f & args]
+  (apply reduce (preserving-reduced f) args))
