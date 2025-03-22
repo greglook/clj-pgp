@@ -17,7 +17,7 @@
     [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp]
     [clj-pgp.tags :as tags]
-    [clj-pgp.util :refer [arg-coll arg-map preserving-reduce]]
+    [clj-pgp.util :refer [arg-coll arg-map preserving-reduced]]
     [clojure.java.io :as io])
   (:import
     (java.io
@@ -82,8 +82,9 @@
   objects data.
   See `reduce-messages` for options"
   [^InputStream input opts rf acc]
-  (preserving-reduce
-    #(reduce-message %2 opts rf %1)
+  (reduce
+    (preserving-reduced
+      #(reduce-message %2 opts rf %1))
     acc
     (pgp/read-objects input)))
 
@@ -193,9 +194,10 @@
     [packet opts rf acc]
     (let [zip-algo (tags/compression-algorithm-tag
                      (.getAlgorithm packet))]
-      (preserving-reduce
-        (fn [acc packet]
-          (reduce-message packet opts (with-reduce-attrs rf :compress zip-algo) acc))
+      (reduce
+        (preserving-reduced
+          (fn [acc packet]
+            (reduce-message packet opts (with-reduce-attrs rf :compress zip-algo) acc)))
         acc
         (pgp/read-objects (.getDataStream packet)))))
 
@@ -260,7 +262,7 @@
                "Only one passphrase encryptor is supported")))
     (.open
       ^PGPEncryptedDataGenerator
-      (preserving-reduce
+      (reduce
         add-encryption-method!
         (PGPEncryptedDataGenerator.
           (cond->
@@ -437,24 +439,25 @@
   "Reduces over the PGP objects the returns the resulting accumulator.
   Verifys the integrity of each object and throws if its invalid."
   [opts rf acc objects]
-  (preserving-reduce
-    (fn reduce-and-verify!
-      [acc message]
-      (reduce-message
-        message
-        opts
-        (fn [acc {:keys [object] :as message}]
-          ;; To be able to verify the integrity we must have consumed the stream itself.
-          ;; Make sure to call the reducing function and then verify the message.
-          (let [results (rf acc message)]
-            (when (and (instance? PGPEncryptedData object)
-                       (.isIntegrityProtected ^PGPEncryptedData object)
-                       (not (.verify ^PGPEncryptedData object)))
-              (throw (IllegalStateException.
-                       (str "Encrypted data object " object
-                            " failed integrity verification!"))))
-            results))
-        acc))
+  (reduce
+    (preserving-reduced
+      (fn reduce-and-verify!
+        [acc message]
+        (reduce-message
+          message
+          opts
+          (fn [acc {:keys [object] :as message}]
+            ;; To be able to verify the integrity we must have consumed the stream itself.
+            ;; Make sure to call the reducing function and then verify the message.
+            (let [results (rf acc message)]
+              (when (and (instance? PGPEncryptedData object)
+                         (.isIntegrityProtected ^PGPEncryptedData object)
+                         (not (.verify ^PGPEncryptedData object)))
+                (throw (IllegalStateException.
+                         (str "Encrypted data object " object
+                              " failed integrity verification!"))))
+              results))
+          acc)))
     acc
     objects))
 

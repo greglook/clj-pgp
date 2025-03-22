@@ -49,9 +49,3 @@
        (if (reduced? ret)
          (reduced ret)
          ret)))))
-
-
-(defn preserving-reduce
-  "TODO"
-  [f & args]
-  (apply reduce (preserving-reduced f) args))
