@@ -42,10 +42,8 @@
   Adapted from `clojure.core`, which declares it as private."
   [rf]
   (fn wrapper
-    ([acc]
-     (rf acc))
-    ([acc x]
-     (let [ret (rf acc x)]
-       (if (reduced? ret)
-         (reduced ret)
-         ret)))))
+    [acc x]
+    (let [ret (rf acc x)]
+      (if (reduced? ret)
+        (reduced ret)
+        ret))))
