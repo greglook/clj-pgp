@@ -16,12 +16,10 @@
   (:require
     [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp]
-    [clj-pgp.error :as error]
     [clj-pgp.tags :as tags]
     [clj-pgp.util :refer [arg-coll arg-map preserving-reduced]]
     [clojure.java.io :as io])
   (:import
-    clojure.lang.IReduceInit
     (java.io
       ByteArrayOutputStream
       FilterOutputStream
@@ -484,27 +482,6 @@
        PGPUtil/getDecoderStream
        pgp/read-objects
        (reduce-objects (apply hash-map opts) rf acc)))
-
-
-(defn reduce-messages-v2
-  [input & {:as opts}]
-  (reify IReduceInit
-    (reduce
-      [_ rf acc]
-      (try
-        (reduce
-          (fn reduce-and-verify!
-            [acc message]
-            (reduce-message message opts rf acc))
-          acc
-          (pgp/read-objects
-            (PGPUtil/getDecoderStream
-              (bytes/to-input-stream input))))
-        (catch Exception e
-          (error/*handler* ::read-object-error
-                           (.getMessage e)
-                           (assoc (ex-data e) ::stream input)
-                           e))))))
 
 
 (defn read-messages
