@@ -129,13 +129,13 @@
             :decryptor "Open sesame!"))
         "Bad case—decrypting the same file with extra junk bytes appended throws")
     (is (= "🐢"
-           @(pgp-msg/reduce-messages
-              (io/input-stream
-                (io/resource "terminated-with-junk-bytes.txt.gpg"))
-              (fn [_acc {:keys [data]}]
-                (reduced (str/trim (slurp data))))
-              ""
-              :decryptor "Open sesame!"))
+           (pgp-msg/reduce-messages
+             (io/input-stream
+               (io/resource "terminated-with-junk-bytes.txt.gpg"))
+             (fn [_acc {:keys [data]}]
+               (reduced (str/trim (slurp data))))
+             ""
+             :decryptor "Open sesame!"))
         "Good case—decrypting the same file with extra junk bytes succeeds when returning an eagerly `reduced` value"))
   (testing "reduce-messages-v2"
     (is (= "🐢"

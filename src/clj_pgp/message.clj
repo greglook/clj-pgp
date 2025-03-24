@@ -442,24 +442,23 @@
   Verifys the integrity of each object and throws if its invalid."
   [opts rf acc objects]
   (reduce
-    (preserving-reduced
-      (fn reduce-and-verify!
-        [acc message]
-        (reduce-message
-          message
-          opts
-          (fn [acc {:keys [object] :as message}]
-            ;; To be able to verify the integrity we must have consumed the stream itself.
-            ;; Make sure to call the reducing function and then verify the message.
-            (let [results (rf acc message)]
-              (when (and (instance? PGPEncryptedData object)
-                         (.isIntegrityProtected ^PGPEncryptedData object)
-                         (not (.verify ^PGPEncryptedData object)))
-                (throw (IllegalStateException.
-                         (str "Encrypted data object " object
-                              " failed integrity verification!"))))
-              results))
-          acc)))
+    (fn reduce-and-verify!
+      [acc message]
+      (reduce-message
+        message
+        opts
+        (fn [acc {:keys [object] :as message}]
+          ;; To be able to verify the integrity we must have consumed the stream itself.
+          ;; Make sure to call the reducing function and then verify the message.
+          (let [results (rf acc message)]
+            (when (and (instance? PGPEncryptedData object)
+                       (.isIntegrityProtected ^PGPEncryptedData object)
+                       (not (.verify ^PGPEncryptedData object)))
+              (throw (IllegalStateException.
+                       (str "Encrypted data object " object
+                            " failed integrity verification!"))))
+            results))
+        acc))
     acc
     objects))
 
