@@ -111,7 +111,7 @@
 (deftest decrypting-pgp-file-terminated-with-junk
   (is (= "🐢"
          (with-open [stream (io/input-stream
-                              (io/resource "resources/terminated-without-junk-bytes.txt.gpg"))]
+                              (io/resource "samples/terminated-without-junk-bytes.txt.gpg"))]
            (pgp-msg/reduce-messages
              stream
              (fn [_acc {:keys [data]}]
@@ -121,7 +121,7 @@
       "Base case—decrypting a normal file does what you'd expect")
   (is (thrown? Exception
         (with-open [stream (io/input-stream
-                             (io/resource "resources/terminated-with-junk-bytes.txt.gpg"))]
+                             (io/resource "samples/terminated-with-junk-bytes.txt.gpg"))]
           (pgp-msg/reduce-messages
             stream
             (fn [_acc {:keys [data]}]
@@ -131,7 +131,7 @@
       "Bad case—decrypting the same file with extra junk bytes appended throws")
   (is (= "🐢"
          (with-open [stream (io/input-stream
-                              (io/resource "resources/terminated-with-junk-bytes.txt.gpg"))]
+                              (io/resource "samples/terminated-with-junk-bytes.txt.gpg"))]
            (pgp-msg/reduce-messages
              stream
              (fn [_acc {:keys [data]}]
