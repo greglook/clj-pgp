@@ -13,8 +13,9 @@
 
   :dependencies
   [[org.clojure/clojure "1.12.0" :scope "provided"]
-   [org.bouncycastle/bcpg-jdk18on "1.79"]
-   [org.bouncycastle/bcprov-jdk18on "1.79"]
+   [org.bouncycastle/bcpg-jdk18on "1.80" :exclusions [org.bouncycastle/bcprov-jdk18on]]
+   [org.bouncycastle/bcutil-jdk18on "1.80" :exclusions [org.bouncycastle/bcprov-jdk18on]]
+   [org.bouncycastle/bcprov-jdk18on "1.80"]
    [org.clj-commons/byte-streams "0.3.4"]]
 
   :hiera
