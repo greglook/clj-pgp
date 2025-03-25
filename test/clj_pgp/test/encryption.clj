@@ -113,7 +113,7 @@
     (is (= "🐢"
            (pgp-msg/reduce-messages
              (io/input-stream
-               (io/resource "terminated-without-junk-bytes.txt.gpg"))
+               (io/resource "resources/terminated-without-junk-bytes.txt.gpg"))
              (fn [_acc {:keys [data]}]
                (str/trim (slurp data)))
              ""
@@ -122,7 +122,7 @@
     (is (thrown? Exception
           (pgp-msg/reduce-messages
             (io/input-stream
-              (io/resource "terminated-with-junk-bytes.txt.gpg"))
+              (io/resource "resources/terminated-with-junk-bytes.txt.gpg"))
             (fn [_acc {:keys [data]}]
               (str/trim (slurp data)))
             ""
@@ -131,7 +131,7 @@
     (is (= "🐢"
            (pgp-msg/reduce-messages
              (io/input-stream
-               (io/resource "terminated-with-junk-bytes.txt.gpg"))
+               (io/resource "resources/terminated-with-junk-bytes.txt.gpg"))
              (fn [_acc {:keys [data]}]
                (reduced (str/trim (slurp data))))
              ""

@@ -22,16 +22,14 @@
 
   :profiles
   {:dev
-   {:resource-paths ["test/resources"]
-    :dependencies [[org.clojure/test.check "1.1.1"]]}
+   {:dependencies [[org.clojure/test.check "1.1.1"]]}
 
    :repl
    {:source-paths ["dev"]
     :dependencies [[org.clojure/tools.namespace "1.5.0"]]}
 
    :coverage
-   {:resource-paths ["test/resources"]
-    :plugins [[lein-cloverage "1.2.2"]]
+   {:plugins [[lein-cloverage "1.2.2"]]
     :dependencies [[org.clojure/tools.logging "1.3.0"]]}
 
    :tool
