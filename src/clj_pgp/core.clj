@@ -277,12 +277,11 @@
       (let [factory (PGPObjectFactory. input (BcKeyFingerprintCalculator.))]
         (loop [acc init
                n 0]
-          (let [obj (try-read-object factory input n)]
-            (if (or (reduced? acc)
-                    (not obj))
-              (unreduced acc)
-              (recur (rf acc obj)
-                     (inc n)))))))))
+          (if (reduced? acc)
+            (unreduced acc)
+            (if-let [obj (try-read-object factory input n)]
+              (recur (rf acc obj) (inc n))
+              acc)))))))
 
 
 (defn decode

@@ -17,7 +17,7 @@
     [clj-commons.byte-streams :as bytes]
     [clj-pgp.core :as pgp]
     [clj-pgp.tags :as tags]
-    [clj-pgp.util :refer [arg-coll arg-map]]
+    [clj-pgp.util :refer [arg-coll arg-map preserving-reduced]]
     [clojure.java.io :as io])
   (:import
     (java.io
@@ -83,7 +83,8 @@
   See `reduce-messages` for options"
   [^InputStream input opts rf acc]
   (reduce
-    #(reduce-message %2 opts rf %1)
+    (preserving-reduced
+      #(reduce-message %2 opts rf %1))
     acc
     (pgp/read-objects input)))
 
@@ -194,8 +195,9 @@
     (let [zip-algo (tags/compression-algorithm-tag
                      (.getAlgorithm packet))]
       (reduce
-        (fn [acc packet]
-          (reduce-message packet opts (with-reduce-attrs rf :compress zip-algo) acc))
+        (preserving-reduced
+          (fn [acc packet]
+            (reduce-message packet opts (with-reduce-attrs rf :compress zip-algo) acc)))
         acc
         (pgp/read-objects (.getDataStream packet)))))
 
