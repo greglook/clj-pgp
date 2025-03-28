@@ -328,7 +328,7 @@
 
   (reduce-message
     [packet {:keys [decryptor] :as opts} rf acc]
-    (let [for-key (.getKeyID packet)
+    (let [for-key (.getKeyId (.getKeyIdentifier packet))
           privkey (pgp/private-key
                     (if (ifn? decryptor)
                       (decryptor for-key)
@@ -352,7 +352,7 @@
   (readable
     [packet opts]
     (let [decryptor (:decryptor opts)
-          for-key (.getKeyID packet)]
+          for-key (.getKeyId (.getKeyIdentifier packet))]
       (when (some-> (if (ifn? decryptor)
                       (decryptor for-key)
                       decryptor)

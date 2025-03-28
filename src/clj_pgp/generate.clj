@@ -21,6 +21,8 @@
       SECNamedCurves)
     (org.bouncycastle.asn1.x9
       X9ECParameters)
+    (org.bouncycastle.bcpg
+      PublicKeyPacket)
     (org.bouncycastle.bcpg.sig
       Features
       KeyFlags)
@@ -55,6 +57,7 @@
   [^AsymmetricCipherKeyPairGenerator generator
    algorithm]
   (BcPGPKeyPair.
+    PublicKeyPacket/VERSION_4
     (tags/public-key-algorithm-code algorithm)
     (.generateKeyPair generator)
     (Date.)))
