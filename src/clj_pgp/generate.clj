@@ -142,12 +142,12 @@
       ;; when verifying unsigned messages).
       (.setFeature false Features/FEATURE_MODIFICATION_DETECTION))
 
-    :signing
+    :encryption
     (signature-subpacket-generator
       KeyFlags/ENCRYPT_COMMS
       KeyFlags/ENCRYPT_STORAGE)
 
-    :encryption
+    :signing
     (signature-subpacket-generator
       KeyFlags/SIGN_DATA)))
 
