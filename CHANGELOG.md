@@ -7,10 +7,24 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Key generation swapped the encryption and signature subkey directives.
+  [#35](https://github.com/greglook/clj-pgp/issues/35)
+  [PR#36](https://github.com/greglook/clj-pgp/pull/36)
+
 ### Changed
 - Add handling for empty `PGPEncryptedDataList` packets.
   [PR#30](https://github.com/greglook/clj-pgp/pull/30)
-- Update dependencies, including Clojure and BouncyCastle.
+- Update BouncyCastle to 1.80 to fix a CVE.
+  [#29](https://github.com/greglook/clj-pgp/issues/29)
+  [PR#31](https://github.com/greglook/clj-pgp/pull/31)
+- Update deprecated constructor usage in BC.
+  [PR#34](https://github.com/greglook/clj-pgp/pull/34)
+- Update other dependencies to latest versions.
+
+### Added
+- Support early returns when encountering reduced values.
+  [PR#33](https://github.com/greglook/clj-pgp/pull/33)
 
 
 ## [1.1.1] - 2023-11-30
