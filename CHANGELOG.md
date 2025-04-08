@@ -7,6 +7,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+...
+
+
+## [1.2.0] - 2025-04-08
+
 ### Fixed
 - Key generation swapped the encryption and signature subkey directives.
   [#35](https://github.com/greglook/clj-pgp/issues/35)
@@ -101,7 +106,8 @@ Finally admitting that this project is stable.
 Start of CHANGELOG.
 
 
-[Unreleased]: https://github.com/greglook/clj-pgp/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/greglook/clj-pgp/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/greglook/clj-pgp/compare/1.1.1...1.2.0
 [1.1.1]: https://github.com/greglook/clj-pgp/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/greglook/clj-pgp/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/greglook/clj-pgp/compare/0.10.2...1.0.0
